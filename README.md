@@ -25,7 +25,7 @@
 
 Video Link(s)
 
-- PCF-NSX Demo (March 20, 2017): [stream-video](http://pcf-bt-vmware.s3-us-west-2.amazonaws.com/btvid.html) or [download-video](http://d14sp2t6d7yqxo.cloudfront.net/pcf-nsx-demo.mp4)(800MB | 24:44)
+- PCF-NSX Demo (March 20, 2017): [stream-video](http://pcf-bt-vmware.s3-us-west-2.amazonaws.com/btvid.html) or [download-video](http://pcf-bt-vmware.s3-us-west-2.amazonaws.com/pcf-nsx-demo.mp4) (800MB | 24:44)
 
 
 ## Running the Pipeline
