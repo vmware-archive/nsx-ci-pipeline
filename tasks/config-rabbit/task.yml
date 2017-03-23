@@ -10,16 +10,17 @@ params:
   OPS_MGR_HOST:
   OPS_MGR_USR:
   OPS_MGR_PWD:
-  AZ_1:
   NETWORK_NAME:
-  JMX_ADMIN_USR:
-  JMX_ADMIN_PWD:
-  JMX_SECURITY_LOGGING:
-  JMX_USE_SSL:
+  TILE_AZ_RABBIT_SINGLETON:
+  TILE_AZS_RABBIT:
+  TILE_RABBIT_PROXY_IPS:
+  TILE_RABBIT_PROXY_VIP:
+  TILE_RABBIT_ADMIN_USER:
+  TILE_RABBIT_ADMIN_PASSWD:
 
 inputs:
   - name: concourse-vsphere
   - name: om-cli
 
 run:
-  path: concourse-vsphere/tasks/config-ops-metrics/task.sh
+  path: concourse-vsphere/tasks/config-rabbit/task.sh

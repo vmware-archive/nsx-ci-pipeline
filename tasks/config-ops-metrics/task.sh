@@ -2,10 +2,10 @@
 
 chmod +x om-cli/om-linux
 
-METRICS_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-metrics`
+TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-metrics`
 
-PRODUCT_NAME=`echo $METRICS_RELEASE | cut -d"|" -f2 | tr -d " "`
-PRODUCT_VERSION=`echo $METRICS_RELEASE | cut -d"|" -f3 | tr -d " "`
+PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
+PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
 
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
 

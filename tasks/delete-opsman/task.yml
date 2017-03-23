@@ -4,14 +4,15 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source: {repository: rjain/buildbox}
+  source: {repository: virtmerlin/nsx-edge-gen-worker}
 
 params:
-  OPS_MGR_HOST:
-  OPS_MGR_IP:
-  VCENTER_HOST:
-  VCENTER_USR:
-  VCENTER_PWD:
+  GOVC_INSECURE:
+  GOVC_URL:
+  GOVC_USERNAME:
+  GOVC_PASSWORD:
+  GOVC_DATACENTER:
+  OM_VM_NAME:
 
 inputs:
   - name: concourse-vsphere

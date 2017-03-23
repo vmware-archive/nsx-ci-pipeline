@@ -1,0 +1,41 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: {repository: virtmerlin/nsx-edge-gen-worker}
+
+params:
+  VCENTER_HOST:
+  VCENTER_USR:
+  VCENTER_PWD:
+  VCENTER_DATA_CENTER:
+  NSX_EDGE_GEN_NSX_MANAGER_ADDRESS:
+  NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER:
+  NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD:
+  NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE:
+  NSX_EDGE_GEN_EDGE_DATASTORE:
+  NSX_EDGE_GEN_EDGE_CLUSTER:
+  NSX_EDGE_GEN_NAME:
+  ESG_SIZE:
+  ESG_CLI_USERNAME_1:
+  ESG_CLI_PASSWORD_1:
+  ESG_CERTS_NAME_1:
+  ESG_CERTS_CONFIG_SYSTEMDOMAIN_1:
+  ESG_CERTS_CONFIG_APPDOMAIN_1:
+  ESG_OPSMGR_UPLINK_IP_1:
+  ESG_GO_ROUTER_UPLINK_IP_1:
+  ESG_DIEGO_BRAIN_UPLINK_IP_1:
+  ESG_TCP_ROUTER_UPLINK_IP_1:
+  ESG_DEFAULT_UPLINK_IP_1:
+  ESG_DEFAULT_UPLINK_PG_1:
+  ESG_GATEWAY_1:
+
+inputs:
+  - name: concourse-vsphere
+  - name: nsx-edge-gen
+
+
+run:
+  path: concourse-vsphere/tasks/nsx-edge-destroy/task.sh

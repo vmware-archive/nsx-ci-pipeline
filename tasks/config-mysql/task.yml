@@ -10,16 +10,16 @@ params:
   OPS_MGR_HOST:
   OPS_MGR_USR:
   OPS_MGR_PWD:
-  AZ_1:
   NETWORK_NAME:
-  JMX_ADMIN_USR:
-  JMX_ADMIN_PWD:
-  JMX_SECURITY_LOGGING:
-  JMX_USE_SSL:
+  TILE_AZ_MYSQL_SINGLETON:
+  TILE_AZS_MYSQL:
+  TILE_MYSQL_PROXY_IPS:
+  TILE_MYSQL_PROXY_VIP:
+  TILE_MYSQL_MONITOR_EMAIL:
 
 inputs:
   - name: concourse-vsphere
   - name: om-cli
 
 run:
-  path: concourse-vsphere/tasks/config-ops-metrics/task.sh
+  path: concourse-vsphere/tasks/config-mysql/task.sh

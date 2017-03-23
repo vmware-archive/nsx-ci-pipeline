@@ -131,6 +131,9 @@ $CF_PROPERTIES
   ".mysql_proxy.static_ips": {
     "value": "$ERT_MYSQL_STATIC_IPS"
   },
+  ".mysql_proxy.service_hostname": {
+    "value": "192.168.23.250"
+  },
   ".properties.uaa": {
     "value": "$UAA_METHOD"
   },
@@ -225,7 +228,7 @@ $CF_PROPERTIES
     "value": "$TCP_ROUTER_STATIC_IPS"
   },
   ".push-apps-manager.company_name": {
-    "value": "Homelab"
+    "value": "NSXIntPipeline"
   },
   ".diego_brain.static_ips": {
     "value": "$SSH_STATIC_IPS"

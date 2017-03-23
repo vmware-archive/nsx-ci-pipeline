@@ -87,8 +87,8 @@ echo "Detecting NSX Logical Switch Backing Port Groups..."
   ./nsx-gen/bin/nsxgen -i $NSX_EDGE_GEN_NAME init
   if [[ $INFRA_VCENTER_NETWORK = "nsxgen" ]]; then export INFRA_VCENTER_NETWORK=$(fn_get_pg "Infra"); echo "Found $INFRA_VCENTER_NETWORK"; fi
   if [[ $DEPLOYMENT_VCENTER_NETWORK = "nsxgen" ]]; then export DEPLOYMENT_VCENTER_NETWORK=$(fn_get_pg "Ert"); echo "Found $DEPLOYMENT_VCENTER_NETWORK"; fi
-  if [[ $SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export SERVICES_VCENTER_NETWORK=$(fn_get_pg "CF-Tiles"); echo "Found $SERVICES_VCENTER_NETWORK"; fi
-  if [[ $DYNAMIC_SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "Services"); echo "Found $DYNAMIC_SERVICES_VCENTER_NETWORK"; fi
+  if [[ $SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export SERVICES_VCENTER_NETWORK=$(fn_get_pg "PCF-Tiles"); echo "Found $SERVICES_VCENTER_NETWORK"; fi
+  if [[ $DYNAMIC_SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "Dynamic-Services"); echo "Found $DYNAMIC_SERVICES_VCENTER_NETWORK"; fi
   popd >/dev/null 2>&1
 
 
@@ -130,7 +130,7 @@ NETWORK_CONFIGURATION=$(cat <<-EOF
     },
     {
       "name": "$SERVICES_NETWORK_NAME",
-      "service_network": true,
+      "service_network": false,
       "subnets": [
         {
           "iaas_identifier": "$SERVICES_VCENTER_NETWORK",

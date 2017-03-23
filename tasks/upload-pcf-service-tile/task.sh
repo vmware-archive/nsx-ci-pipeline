@@ -5,11 +5,11 @@ chmod +x $PIVNET_CLI
 
 chmod +x om-cli/om-linux
 
-FILE_PATH=`find ./pivnet-metrics-product -name *.pivotal`
+FILE_PATH=`find ./pivnet-$SERVICE_STRING-product -name *.pivotal`
 
-STEMCELL_VERSION=`cat ./pivnet-metrics-product/metadata.json | jq '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Version'`
+STEMCELL_VERSION=`cat ./pivnet-$SERVICE_STRING-product/metadata.json | jq '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Version'`
 
-echo "Downloading stemcell $STEMCELL_VERSION"
+echo "Downloading stemcell $STEMCELL_VERSION for $SERVICE_STRING product"
 $PIVNET_CLI login --api-token="$PIVNET_API_TOKEN"
 $PIVNET_CLI download-product-files -p stemcells -r $STEMCELL_VERSION -g "*vsphere*" --accept-eula
 

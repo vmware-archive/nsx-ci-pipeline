@@ -1,8 +1,8 @@
 #!/bin/bash
-set -e
+set -ex
 
 
-pushd nsx-edge-gen  >/dev/null 2>&1
+pushd nsx-edge-gen
 
 # Remove any existing config file template from the repo
 if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
@@ -37,7 +37,7 @@ if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
 -nsxmanager_tz $NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE   \
 -nsxmanager_uplink_ip $ESG_DEFAULT_UPLINK_IP_1  \
 -nsxmanager_uplink_port "$ESG_DEFAULT_UPLINK_PG_1" \
-build
+delete
 
 
-popd  >/dev/null 2>&1
+popd

@@ -40,6 +40,9 @@ Video Link(s)
 **To use this pipeline create the env1-params.yml file with the following sample.  Replace all variables commented as `REQUIRED`!!!**
 
 ```
+#########################
+## ERT & Opsman config ##
+#########################
 ---
 # Core Concourse Resource Params
 pivnet_token: <YOUR PIVNET TOKEN> #REQUIRED
@@ -232,6 +235,33 @@ diego_cell_instances: 3
 doppler_instances: 1
 loggregator_traffic_controller_instances: 1
 tcp_router_instances: 1
+
+##################
+## MYSQL config ##
+##################
+tile_az_mysql_singleton: az1
+tile_azs_mysql: az1,az2,az3
+tile_mysql_proxy_ips: 192.168.24.10,192.168.24.11,192.168.24.12
+tile_mysql_proxy_vip: #Hardcoded to 192.168.27.250 in nsxgen leave blank
+tile_mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED example: mglynn@pivotal.io
+
+###################
+## Rabbit config ##
+###################
+tile_az_rabbit_singleton: az1
+tile_azs_rabbit: az1,az2,az3
+tile_rabbit_proxy_ips: 192.168.24.30,192.168.24.31,192.168.24.32
+tile_rabbit_proxy_vip: #Hardcoded to 192.168.27.251 in nsxgen leave blank
+tile_rabbit_admin_user: rabbitadmin
+tile_rabbit_admin_passwd: rabbitadmin
+
+###################
+## SCS config ##
+###################
+tile_az_scs_singleton: az1
+tile_azs_scs: az1,az2,az3
+
+
 ```
 
 5. Now you can execute the following commands:
