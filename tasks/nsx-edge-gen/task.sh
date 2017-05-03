@@ -11,6 +11,19 @@ if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
 # Init new config file template
 ./nsx-gen/bin/nsxgen -i $NSX_EDGE_GEN_NAME init
 
+if [[ ISOZONE_SWITCH_NAME_1 ]]; then
+  ARGS="
+  -isozone_switch_name_1 $ISOZONE_SWITCH_NAME_1
+  -isozone_switch_cidr_1 $ISOZONE_SWITCH_CIDR_1
+  -esg_go_router_isozone_1_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1
+  -esg_go_router_isozone_1_switch_1 $ESG_GO_ROUTER_ISOZONE_1_SWITCH_1
+  -esg_go_router_isozone_1_inst_1 $ESG_GO_ROUTER_ISOZONE_1_INST_1
+  -esg_tcp_router_isozone_1_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1 
+  -esg_tcp_router_isozone_1_switch_1 $ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1
+  -esg_tcp_router_isozone_1_inst_1 $ESG_TCP_ROUTER_ISOZONE_1_INST_1
+  "
+fi
+
 ./nsx-gen/bin/nsxgen \
 -c $NSX_EDGE_GEN_NAME \
 -esg_name_1 $NSX_EDGE_GEN_NAME \
@@ -37,6 +50,7 @@ if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
 -nsxmanager_tz $NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE   \
 -nsxmanager_uplink_ip $ESG_DEFAULT_UPLINK_IP_1  \
 -nsxmanager_uplink_port "$ESG_DEFAULT_UPLINK_PG_1" \
+$ARGS \
 build
 
 
