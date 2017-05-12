@@ -46,7 +46,7 @@ PROPERTIES=$(cat <<-EOF
     }
   },
   ".rabbitmq-broker.dns_host": {
-    "value": "192.168.27.251"
+    "value": "$TILE_RABBIT_PROXY_VIP"
   },
   ".properties.metrics_tls_disabled": {
     "value": false

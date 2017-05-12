@@ -60,6 +60,7 @@ nsx_edge_gen_nsx_manager_address: <YOUR NSX MANAGER URL|IP> #REQUIRED
 nsx_edge_gen_nsx_manager_admin_user: admin #REQUIRED
 nsx_edge_gen_nsx_manager_admin_passwd: <YOUR NSX MANAGER PASSWORD> #REQUIRED
 nsx_edge_gen_nsx_manager_transport_zone: <YOUR NSX TRANSPORT ZONE> #REQUIRED
+nsx_edge_gen_nsx_manager_distributed_port_switch: <YOUR NSX DISTRIBUTED PORTSWITCH> #REQUIRED
 nsx_edge_gen_egde_datastore: <YOUR DATASTORE FOR NSX EDGES> #REQUIRED example: vsanDatastore
 nsx_edge_gen_egde_cluster: <YOUR CLUSTER FOR NSX EDGES> #REQUIRED example: Cluster1
 nsx_edge_gen_name: nsx-pipeline-sample #string name for NSX objects
@@ -156,6 +157,12 @@ dynamic_services_nw_az: az1,az2,az3
 
 isozone_switch_name_1: IsoZone-1
 isozone_switch_cidr_1: 192.168.32.0/22
+isozone_switch_1_vsphere_network: nxsgen
+isozone_switch_1_excluded_range: 192.168.32.1-192.168.32.9,192.168.32.250-192.168.32.253
+isozone_switch_1_nw_dns: <YOUR PCF DYN-SERVCIES NET DNS> #REQUIRED
+isozone_switch_1_nw_gateway: 192.168.32.1
+isozone_switch_1_nw_az: az1,az2,az3
+
 loggregator_endpoint_port: 443
 
 #### ERT configuration
@@ -247,7 +254,7 @@ tcp_router_instances: 1
 tile_az_mysql_singleton: az1
 tile_azs_mysql: az1,az2,az3
 tile_mysql_proxy_ips: 192.168.24.10,192.168.24.11,192.168.24.12
-tile_mysql_proxy_vip: #Hardcoded to 192.168.27.250 in nsxgen leave blank
+tile_mysql_proxy_vip: 172.16.100.20 #Default 
 tile_mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED example: mglynn@pivotal.io
 
 ###################
@@ -256,7 +263,7 @@ tile_mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED example: mglynn@pivo
 tile_az_rabbit_singleton: az1
 tile_azs_rabbit: az1,az2,az3
 tile_rabbit_proxy_ips: 192.168.24.30,192.168.24.31,192.168.24.32
-tile_rabbit_proxy_vip: #Hardcoded to 192.168.27.251 in nsxgen leave blank
+tile_rabbit_proxy_vip: 172.16.100.30 #Default 
 tile_rabbit_admin_user: rabbitadmin
 tile_rabbit_admin_passwd: rabbitadmin
 

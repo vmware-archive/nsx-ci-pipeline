@@ -28,6 +28,7 @@ function fn_get_pg {
   -nsxmanager_user $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER   \
   -nsxmanager_pass $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD   \
   -nsxmanager_tz $NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE   \
+  -nsx_manager_distributed_port_switch $NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORT_SWITCH \ 
   -nsxmanager_uplink_ip 172.16.0.0 \
   list 2>/dev/null | \
   grep ${search_string} | \
@@ -80,6 +81,7 @@ MY_INFRA_AZS=$(fn_get_azs $INFRA_NW_AZ)
 MY_DEPLOYMENT_AZS=$(fn_get_azs $DEPLOYMENT_NW_AZ)
 MY_SERVICES_AZS=$(fn_get_azs $SERVICES_NW_AZ)
 MY_DYNAMIC_SERVICES_AZS=$(fn_get_azs $DYNAMIC_SERVICES_NW_AZ)
+MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
 
 echo "Detecting NSX Logical Switch Backing Port Groups..."
   pushd nsx-edge-gen >/dev/null 2>&1
@@ -89,6 +91,7 @@ echo "Detecting NSX Logical Switch Backing Port Groups..."
   if [[ $DEPLOYMENT_VCENTER_NETWORK = "nsxgen" ]]; then export DEPLOYMENT_VCENTER_NETWORK=$(fn_get_pg "Ert"); echo "Found $DEPLOYMENT_VCENTER_NETWORK"; fi
   if [[ $SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export SERVICES_VCENTER_NETWORK=$(fn_get_pg "PCF-Tiles"); echo "Found $SERVICES_VCENTER_NETWORK"; fi
   if [[ $DYNAMIC_SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "Dynamic-Services"); echo "Found $DYNAMIC_SERVICES_VCENTER_NETWORK"; fi
+  if [[ $ISOZONE_SWITCH_1_VCENTER_NETWORK = "nsxgen" ]]; then export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "IsoZone-1"); echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"; fi
   popd >/dev/null 2>&1
 
 
@@ -156,6 +159,22 @@ NETWORK_CONFIGURATION=$(cat <<-EOF
           "gateway": "$DYNAMIC_SERVICES_NW_GATEWAY",
           "availability_zone_names": [
             $MY_DYNAMIC_SERVICES_AZS
+          ]
+        }
+      ]
+    },
+    {
+      "name": "$ISOZONE_SWITCH_NAME_1",
+      "service_network": false,
+      "subnets": [
+        {
+          "iaas_identifier": "$ISOZONE_SWITCH_1_VSPHERE_NETWORK",
+          "cidr": "$ISOZONE_SWITCH_CIDR_1",
+          "reserved_ip_ranges": "$ISOZONE_SWITCH_1_EXCLUDED_RANGE",
+          "dns": "$ISOZONE_SWITCH_1_NW_DNS",
+          "gateway": "$ISOZONE_SWITCH_1_NW_GATEWAY",
+          "availability_zone_names": [
+            $MY_ISOZONE_SWITCH_1_AZS
           ]
         }
       ]

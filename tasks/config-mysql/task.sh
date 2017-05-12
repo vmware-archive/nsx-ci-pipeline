@@ -40,7 +40,7 @@ PROPERTIES=$(cat <<-EOF
     "value": "$TILE_MYSQL_PROXY_IPS"
   },
   ".cf-mysql-broker.bind_hostname": {
-    "value": "192.168.27.250"
+    "value": "$TILE_MYSQL_PROXY_VIP"
   },
   ".properties.optional_protections.enable.recipient_email": {
     "value": "$TILE_MYSQL_MONITOR_EMAIL"
