@@ -164,7 +164,7 @@ NETWORK_CONFIGURATION=$(cat <<-EOF
       ]
     },
     {
-      "name": "$ISOZONE_SWITCH_NAME_1",
+      "name": "$ISOZONE_SWITCH_1_NETWORK_NAME",
       "service_network": false,
       "subnets": [
         {
