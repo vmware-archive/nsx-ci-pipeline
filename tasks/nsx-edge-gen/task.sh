@@ -48,7 +48,7 @@ fi
 -nsxmanager_user $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER   \
 -nsxmanager_pass $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD   \
 -nsxmanager_tz $NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE   \
--nsxmanager_dportswitch $NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORT_SWITCH \ 
+-nsxmanager_dportswitch $NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORT_SWITCH \
 -nsxmanager_uplink_ip $ESG_DEFAULT_UPLINK_IP_1  \
 -nsxmanager_uplink_port "$ESG_DEFAULT_UPLINK_PG_1" \
 $ARGS \
