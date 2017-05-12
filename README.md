@@ -74,7 +74,10 @@ esg_go_router_uplink_ip_1: <YOUR ERT-VIP> #REQUIRED example: 10.172.16.102
 esg_diego_brain_uplink_ip_1: <YOUR SSH-PROXY-VIP> #REQUIRED example: 10.172.16.103
 esg_tcp_router_uplink_ip_1: <YOUR TCP-ROUTER-VIP> #REQUIRED example: 10.172.16.104
 esg_gateway_1: <YOUR ROUTED-UPLINK-NETWORK GATEWAY> #REQUIRED example: 10.172.16.1
-
+esg_go_router_isozone_1_uplink_ip_1: <YOUR ISO1-VIP> #REQUIRED example: 10.172.16.105
+esg_go_router_isozone_1_inst_1: 2 # Number of go-routers for IsoZone1
+esg_tcp_router_isozone_1_uplink_ip_1: <YOUR TCP-ROUTER_ISO1-VIP> #REQUIRED example: 10.172.16.105
+esg_tcp_router_isozone_1_inst_1: 2 # Number of tcp-routers for IsoZone1
 
 #### Opsman configuration
 ## Ops Manager installation meta data
@@ -151,6 +154,8 @@ dynamic_services_nw_dns: <YOUR PCF DYN-SERVCIES NET DNS> #REQUIRED
 dynamic_services_nw_gateway: 192.168.28.1
 dynamic_services_nw_az: az1,az2,az3
 
+isozone_switch_name_1: IsoZone-1
+isozone_switch_cidr_1: 192.168.32.0/22
 loggregator_endpoint_port: 443
 
 #### ERT configuration
