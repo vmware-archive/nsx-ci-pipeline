@@ -91,7 +91,7 @@ echo "Detecting NSX Logical Switch Backing Port Groups..."
   if [[ $DEPLOYMENT_VCENTER_NETWORK = "nsxgen" ]]; then export DEPLOYMENT_VCENTER_NETWORK=$(fn_get_pg "Ert"); echo "Found $DEPLOYMENT_VCENTER_NETWORK"; fi
   if [[ $SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export SERVICES_VCENTER_NETWORK=$(fn_get_pg "PCF-Tiles"); echo "Found $SERVICES_VCENTER_NETWORK"; fi
   if [[ $DYNAMIC_SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "Dynamic-Services"); echo "Found $DYNAMIC_SERVICES_VCENTER_NETWORK"; fi
-  if [[ $ISOZONE_SWITCH_1_VCENTER_NETWORK = "nsxgen" ]]; then export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "IsoZone-1"); echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"; fi
+  if [[ $ISOZONE_SWITCH_1_VCENTER_NETWORK = "nsxgen" ]]; then export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "IsoZone-01"); echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"; fi
   popd >/dev/null 2>&1
 
 
