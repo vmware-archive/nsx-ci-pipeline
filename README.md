@@ -65,6 +65,7 @@ nsx_edge_gen_egde_datastore: <YOUR DATASTORE FOR NSX EDGES> #REQUIRED example: v
 nsx_edge_gen_egde_cluster: <YOUR CLUSTER FOR NSX EDGES> #REQUIRED example: Cluster1
 nsx_edge_gen_name: nsx-pipeline-sample #string name for NSX objects
 esg_size: compact
+esg_ospf_password_1: P1v0t4l!
 esg_cli_username_1: admin 
 esg_cli_password_1: P1v0t4l!P1v0t4l!
 esg_certs_name_1: nsx-gen-created

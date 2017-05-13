@@ -28,6 +28,7 @@ fi
 -c $NSX_EDGE_GEN_NAME \
 -esg_name_1 $NSX_EDGE_GEN_NAME \
 -esg_size_1 $ESG_SIZE  \
+-esg_ospf_password_1 $ESG_OSPF_PASSWORD_1  \
 -esg_cli_user_1 $ESG_CLI_USERNAME_1   \
 -esg_cli_pass_1 $ESG_CLI_PASSWORD_1   \
 -esg_certs_1 $ESG_CERTS_NAME_1   \
