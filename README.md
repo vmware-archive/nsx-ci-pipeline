@@ -161,7 +161,7 @@ dynamic_services_nw_gateway: 192.168.28.1
 dynamic_services_nw_az: az1,az2,az3
 
 isozone_switch_1_network_name: "ISOZONE-01"
-isozone_switch_1_vsphere_network: nxsgen
+isozone_switch_1_vsphere_network: nsxgen
 isozone_switch_1_excluded_range: 192.168.32.1-192.168.32.9,192.168.32.250-192.168.32.253
 isozone_switch_1_nw_dns: <YOUR PCF DYN-SERVCIES NET DNS> #REQUIRED
 isozone_switch_1_nw_gateway: 192.168.32.1
