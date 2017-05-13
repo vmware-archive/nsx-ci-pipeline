@@ -168,7 +168,7 @@ NETWORK_CONFIGURATION=$(cat <<-EOF
       "service_network": false,
       "subnets": [
         {
-          "iaas_identifier": "$ISOZONE_SWITCH_1_VSPHERE_NETWORK",
+          "iaas_identifier": "$ISOZONE_SWITCH_1_VCENTER_NETWORK",
           "cidr": "$ISOZONE_SWITCH_CIDR_1",
           "reserved_ip_ranges": "$ISOZONE_SWITCH_1_EXCLUDED_RANGE",
           "dns": "$ISOZONE_SWITCH_1_NW_DNS",
