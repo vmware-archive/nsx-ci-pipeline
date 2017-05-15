@@ -71,7 +71,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: elastic-runtime
-    product_version: '1\.10\..*'
+    product_version: '1\.10\.7\.*'
     sort_by: semver
 
 jobs:
