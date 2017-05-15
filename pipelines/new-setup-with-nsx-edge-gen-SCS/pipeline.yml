@@ -155,6 +155,7 @@ jobs:
       NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
       NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
       NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
+      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
       NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
       NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
@@ -172,6 +173,15 @@ jobs:
       ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
       ESG_DEFAULT_UPLINK_IP_1: {{esg_default_uplink_ip_1}}
       ESG_DEFAULT_UPLINK_PG_1: {{esg_default_uplink_pg_1}}
+      ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
+      ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
+      ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_go_router_isozone_1_uplink_ip_1}}
+      ESG_GO_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
+      ESG_GO_ROUTER_ISOZONE_1_INST_1: {{esg_go_router_isozone_1_inst_1}}
+      ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
+      ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
+      ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
+
 
 - name: install-opsmgr
   plan:

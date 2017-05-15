@@ -60,7 +60,7 @@ nsx_edge_gen_nsx_manager_address: <YOUR NSX MANAGER URL|IP> #REQUIRED
 nsx_edge_gen_nsx_manager_admin_user: admin #REQUIRED
 nsx_edge_gen_nsx_manager_admin_passwd: <YOUR NSX MANAGER PASSWORD> #REQUIRED
 nsx_edge_gen_nsx_manager_transport_zone: <YOUR NSX TRANSPORT ZONE> #REQUIRED
-nsx_edge_gen_nsx_manager_distributed_port_switch: <YOUR NSX DISTRIBUTED PORTSWITCH> #REQUIRED
+nsx_edge_gen_nsx_manager_distributed_portgroup: <YOUR NSX DISTRIBUTED PORTGROUP> #REQUIRED
 nsx_edge_gen_egde_datastore: <YOUR DATASTORE FOR NSX EDGES> #REQUIRED example: vsanDatastore
 nsx_edge_gen_egde_cluster: <YOUR CLUSTER FOR NSX EDGES> #REQUIRED example: Cluster1
 nsx_edge_gen_name: nsx-pipeline-sample #string name for NSX objects
