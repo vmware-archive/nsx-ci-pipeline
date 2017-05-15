@@ -8,17 +8,23 @@
 	- A NSX Transport Zone must exist
 - vSphere environment must have at least **1** of the following ***[Standard PortGroup|Distributed PortGroup|Logical Switch]*** for an `uplink` port group.  
    - This port group must have a network that is routable in the environment.  This is the `uplink` network
+- vSphere environment must have at least **1** of the following ***[Distributed PortGroup]*** for an `uplink` port group, required for DLR uplink (as transit network between the deployed esg and the dlr).  
+   - This port group must have a network that is routable in the environment.  This is the `uplink` network
 - vSphere Environment must have **5** routable ip addresses on the `uplink` network for NSX Edge Load Balancer VIPs & NAT configuration.
     - NSX Edge Primary Uplink Interface IP (Default SNAT)
     - DNAT _VIP-Opsman_
     - Load Balancer _VIP-ERT_ (Go Routers)
     - Load Balancer _VIP-SSH-Proxy_ (Diego Brains)
     - Load Balancer _VIP-TCP-ROUTER(s)_
+    - any additional ips for exposed isolation segements
 - DNS must resolve mapped to the following VIPs
-    - **opsman.[your.system.cf.domain]** -> _VIP-Opsman_
-    - ***.[your.system.cf.domain]** -> _VIP-ERT_
-    - ***.[your.default-apps.cf.domain]** -> _VIP-ERT_
-    - **ssh.[your.system.cf.domain]** -> _VIP-SSH-PROXY_
+    - **opsman.[your-system.cf.domain]** -> _VIP-Opsman_
+    - ***.[your-system.cf.domain]** -> _VIP-ERT_
+    - ***.[uaa.your-system.cf.domain]** -> _VIP-ERT_
+    - ***.[login.your-system.cf.domain]** -> _VIP-ERT_    
+    - ***.[your-default-apps.cf.domain]** -> _VIP-ERT_
+    - **ssh.[your-system.cf.domain]** -> _VIP-SSH-PROXY_
+    Note: system.cf.domain, default-apps.cf.domain would be subdomain under cf.domain
 - All desired vSphere Datacenter,Cluster,& Resource Pool objects must exist.  The pipeline will not create them
 - vCenter Account must have proper permissions.
 
@@ -60,7 +66,7 @@ nsx_edge_gen_nsx_manager_address: <YOUR NSX MANAGER URL|IP> #REQUIRED
 nsx_edge_gen_nsx_manager_admin_user: admin #REQUIRED
 nsx_edge_gen_nsx_manager_admin_passwd: <YOUR NSX MANAGER PASSWORD> #REQUIRED
 nsx_edge_gen_nsx_manager_transport_zone: <YOUR NSX TRANSPORT ZONE> #REQUIRED
-nsx_edge_gen_nsx_manager_distributed_portgroup: <YOUR NSX DISTRIBUTED PORTGROUP> #REQUIRED
+nsx_edge_gen_nsx_manager_distributed_portgroup: <YOUR NSX DISTRIBUTED PORTGROUP> #REQUIRED - used for DLR uplink, as transit network between the deployed esg and the dlr
 nsx_edge_gen_egde_datastore: <YOUR DATASTORE FOR NSX EDGES> #REQUIRED example: vsanDatastore
 nsx_edge_gen_egde_cluster: <YOUR CLUSTER FOR NSX EDGES> #REQUIRED example: Cluster1
 nsx_edge_gen_name: nsx-pipeline-sample #string name for NSX objects
@@ -69,7 +75,7 @@ esg_ospf_password_1: P1v0t4l
 esg_cli_username_1: admin 
 esg_cli_password_1: P1v0t4l!P1v0t4l!
 esg_certs_name_1: nsx-gen-created
-esg_default_uplink_pg_1: "<YOUR NSX-EDGE-UPLINK PORT GROUP>" #REQUIRED "VM Network"
+esg_default_uplink_pg_1: "<YOUR NSX-EDGE-UPLINK PORT GROUP>" #REQUIRED "VM Network" - used for NSX Edge uplink
 esg_default_uplink_ip_1: <YOUR NSX-EDGE-PRIMARY-VIP> #REQUIRED example: 10.172.16.100
 esg_opsmgr_uplink_ip_1: <YOUR OPSMAN-VIP> #REQUIRED example: 10.172.16.101
 esg_go_router_uplink_ip_1: <YOUR ERT-VIP> #REQUIRED example: 10.172.16.102

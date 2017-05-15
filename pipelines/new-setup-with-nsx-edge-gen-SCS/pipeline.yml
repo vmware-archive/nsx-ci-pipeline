@@ -235,6 +235,7 @@ jobs:
       NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
       NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
       NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
+      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
       NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
       NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
@@ -738,7 +739,7 @@ jobs:
       NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
       NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
       NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
-      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORT_SWITCH: {{nsx_edge_gen_nsx_manager_distributed_port_switch}}
+      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
       NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
       NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
@@ -813,7 +814,7 @@ jobs:
       NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
       NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
       NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
-      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORT_SWITCH: {{nsx_edge_gen_nsx_manager_distributed_port_switch}}
+      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
       NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
       NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
