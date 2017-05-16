@@ -94,6 +94,19 @@ echo "Detecting NSX Logical Switch Backing Port Groups..."
   if [[ $ISOZONE_SWITCH_1_VCENTER_NETWORK = "nsxgen" ]]; then export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "IsoZone-01"); echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"; fi
   popd >/dev/null 2>&1
 
+# Check for Errors with obtaining the networks
+if [ "$INFRA_VCENTER_NETWORK" == "" \
+  -o "$DEPLOYMENT_VCENTER_NETWORK" == "" \
+  -o "$SERVICES_VCENTER_NETWORK" == "" \
+  -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" \
+  -o "$ISOZONE_SWITCH_1_VCENTER_NETWORK" == "" ]; then
+  echo "Some networks could not be located from NSX!!"
+  echo "      INFRASTRUCTURE: $INFRA_VCENTER_NETWORK"
+  echo "      ERT DEPLOYMENT: $DEPLOYMENT_VCENTER_NETWORK"
+  echo "      SERVICES: $SERVICES_VCENTER_NETWORK"
+  echo "      DYNAMIC SERVICES: $DYNAMIC_SERVICES_VCENTER_NETWORK"
+  echo "      ISOZONE-01: $ISOZONE_SWITCH_1_VCENTER_NETWORK"
+fi
 
 NETWORK_CONFIGURATION=$(cat <<-EOF
 {
@@ -214,15 +227,35 @@ EOF
 $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
             -i "$IAAS_CONFIGURATION" \
             -d "$DIRECTOR_CONFIG"
+# Check for errors
+if [ $? != 0 ]; then
+  echo "Bosh Director configuration failed!!"
+  exit 1
+fi
 
 $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/director/availability_zones" \
             -x PUT -d "$AZ_CONFIGURATION"
+# Check for errors
+if [ $? != 0 ]; then
+  echo "Availability Zones configuration failed!!"
+  exit 1
+fi
 
 $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/director/networks" \
             -x PUT -d "$NETWORK_CONFIGURATION"
+# Check for errors
+if [ $? != 0 ]; then
+  echo "Networks configuration failed!!"
+  exit 1
+fi
 
 $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/director/network_and_az" \
             -x PUT -d "$NETWORK_ASSIGNMENT"
+# Check for errors
+if [ $? != 0 ]; then
+  echo "Network and AZ assignment failed!!"
+  exit 1
+fi
