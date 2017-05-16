@@ -28,7 +28,7 @@ function fn_get_pg {
   -nsxmanager_user $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER   \
   -nsxmanager_pass $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD   \
   -nsxmanager_tz $NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE   \
-  -nsxmanager_dportswitch $NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP \
+  -nsxmanager_dportgroup $NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP \
   -nsxmanager_uplink_ip 172.16.0.0 \
   list 2>/dev/null | \
   grep ${search_string} | \
