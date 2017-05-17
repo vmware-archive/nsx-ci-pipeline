@@ -53,7 +53,7 @@ fi
 -nsxmanager_uplink_ip $ESG_DEFAULT_UPLINK_IP_1  \
 -nsxmanager_uplink_port "$ESG_DEFAULT_UPLINK_PG_1" \
 $ARGS \
-build 
+list | tee ../nsx-gen-output/nsx-gen-out.log 2>&1 
 
 
 popd  >/dev/null 2>&1
