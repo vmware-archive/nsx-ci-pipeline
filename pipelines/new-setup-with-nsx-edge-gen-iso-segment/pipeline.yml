@@ -48,7 +48,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-ci-pipeline.git
-    branch: dlr
+    branch: master
 
 - name: nsx-edge-gen
   type: git
