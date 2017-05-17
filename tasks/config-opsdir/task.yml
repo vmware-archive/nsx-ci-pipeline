@@ -76,6 +76,7 @@ inputs:
   - name: concourse-vsphere
   - name: om-cli
   - name: nsx-edge-gen
+  - name: nsx-gen-output
 
 run:
   path: concourse-vsphere/tasks/config-opsdir/task.sh

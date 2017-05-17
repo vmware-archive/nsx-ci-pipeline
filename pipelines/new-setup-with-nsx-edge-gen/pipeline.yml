@@ -48,7 +48,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-ci-pipeline.git
-    branch: master
+    branch: test
 
 - name: nsx-edge-gen
   type: git
@@ -118,6 +118,8 @@ jobs:
       ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
       ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
       ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
+  - put: nsx-gen-output
+    #params: file: nsx-gen-output/nsx-gen-out.log
 
 
 - name: install-opsmgr
@@ -137,6 +139,7 @@ jobs:
         globs:
         - "*.ova"
     - get: nsx-edge-gen
+    - get: nsx-gen-output
 
   - task: deploy-opsman
     file: concourse-vsphere/tasks/import-opsman/task.yml

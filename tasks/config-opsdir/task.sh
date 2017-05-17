@@ -37,6 +37,9 @@ function fn_get_pg {
   echo $vwire_pg
 }
 
+echo "Nsx gen output:"
+cat ./nsx-gen-output/*.log
+
 IAAS_CONFIGURATION=$(cat <<-EOF
 {
   "vcenter_host": "$VCENTER_HOST",

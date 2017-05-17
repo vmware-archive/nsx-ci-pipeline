@@ -38,5 +38,8 @@ inputs:
   - name: concourse-vsphere
   - name: nsx-edge-gen
 
+outputs:
+  - name: nsx-gen-output
+  
 run:
   path: concourse-vsphere/tasks/nsx-edge-gen/task.sh
