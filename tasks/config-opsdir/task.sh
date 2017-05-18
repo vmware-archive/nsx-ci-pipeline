@@ -1,9 +1,28 @@
 #!/bin/bash
 set -e
 
+export SCRIPT_DIR=$(dirname $0)
 chmod +x om-cli/om-linux
 
 CMD=./om-cli/om-linux
+
+echo SCRIPT_DIR is ${SCRIPT_DIR}
+pwd
+ls -alR
+
+export NSX_GEN_OUTPUT_DIR=${SCRIPT_DIR}/nsx-gen-output
+export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
+export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
+
+if [ -e "${NSX_GEN_OUTPUT}" ]; then
+  echo "Saved nsx gen output:"
+  cat ${NSX_GEN_OUTPUT}
+  source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+else
+  echo "Unable to retreive nsx gen output!!"
+  exit 1
+fi
+
 
 #CSV parsing Function for mutiple AZs
 
@@ -118,18 +137,6 @@ MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
 #   if [[ $ISOZONE_SWITCH_1_VCENTER_NETWORK = "nsxgen" ]]; then export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "IsoZone-01"); echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"; fi
 #   popd >/dev/null 2>&1
 
-export NSX_GEN_OUTPUT_DIR=./nsx-gen-output
-export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
-export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
-
-if [ -e "${NSX_GEN_OUTPUT}" ]; then
-  echo "Saved nsx gen output:"
-  cat ${NSX_GEN_OUTPUT}
-  source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
-else
-  echo "Unable to retreive nsx gen output!!"
-  exit 1
-fi
 
 echo "Detecting NSX Logical Switch Backing Port Groups..."
 
