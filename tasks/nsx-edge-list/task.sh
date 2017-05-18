@@ -136,10 +136,10 @@ if [[ ISOZONE_SWITCH_NAME_1 ]]; then
   export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "$NSX_FILE_OUTPUT" "IsoZone-1")
   echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"
   
-  export GOROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "go-router")
+  export GOROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_component_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "go-router")
   echo "Found GoRouter IsoZone static ip: $GOROUTER_ISOZONE_SWITCH_1_STATIC_IPS"
   
-  export TCPROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "tcp-router")
+  export TCPROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_component_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "tcp-router")
   echo "Found TcpRouter IsoZone static ip: $TCPROUTER_ISOZONE_SWITCH_1_STATIC_IPS"
 
   if [ "$ISOZONE_SWITCH_1_VCENTER_NETWORK" == "" ]; then
