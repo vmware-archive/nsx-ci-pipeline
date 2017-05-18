@@ -61,14 +61,6 @@ function fn_get_component_static_ips {
   echo $component_static_ips
 }
 
-if [ -e "./nsx-gen-output/*.log" ]; then
-  echo "Saved nsx gen output:"
-cat ./nsx-gen-output/*.log
-else
-  echo "Unable to retreive nsx gen output!!"
-  exit 1
-fi
-
 IAAS_CONFIGURATION=$(cat <<-EOF
 {
   "vcenter_host": "$VCENTER_HOST",
@@ -125,6 +117,19 @@ MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
 #   if [[ $DYNAMIC_SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "Dynamic-Services"); echo "Found $DYNAMIC_SERVICES_VCENTER_NETWORK"; fi
 #   if [[ $ISOZONE_SWITCH_1_VCENTER_NETWORK = "nsxgen" ]]; then export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "IsoZone-01"); echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"; fi
 #   popd >/dev/null 2>&1
+
+export NSX_GEN_OUTPUT_DIR=./nsx-gen-output
+export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
+export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
+
+if [ -e "${NSX_GEN_OUTPUT}" ]; then
+  echo "Saved nsx gen output:"
+  cat ${NSX_GEN_OUTPUT}
+  source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+else
+  echo "Unable to retreive nsx gen output!!"
+  exit 1
+fi
 
 echo "Detecting NSX Logical Switch Backing Port Groups..."
 
