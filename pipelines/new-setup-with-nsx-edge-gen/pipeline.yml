@@ -231,7 +231,6 @@ jobs:
       globs: om-linux
       passed: [install-opsmgr]
     - get: nsx-edge-gen    
-    #- get: nsx-gen-output
 
   - task: nsx-edge-list
     file: concourse-vsphere/tasks/nsx-edge-list/task.yml
@@ -394,6 +393,43 @@ jobs:
     - get: om-cli
       globs: om-linux
       passed: [upload-elastic-runtime-tile]
+
+  - task: nsx-edge-list
+    file: concourse-vsphere/tasks/nsx-edge-list/task.yml
+    params:
+      VCENTER_HOST: {{vcenter_host}}
+      VCENTER_USR: {{vcenter_usr}}
+      VCENTER_PWD: {{vcenter_pwd}}
+      VCENTER_DATA_CENTER: {{vcenter_data_center}}
+      NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
+      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
+      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
+      NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
+      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
+      NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
+      NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
+      NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
+      ESG_GATEWAY_1: {{esg_gateway_1}}
+      ESG_OSPF_PASSWORD_1: {{esg_ospf_password_1}}
+      ESG_CLI_USERNAME_1: {{esg_cli_username_1}}
+      ESG_CLI_PASSWORD_1: {{esg_cli_password_1}}
+      ESG_CERTS_NAME_1: {{esg_certs_name_1}}
+      ESG_CERTS_CONFIG_SYSTEMDOMAIN_1: {{system_domain}}
+      ESG_CERTS_CONFIG_APPDOMAIN_1: {{apps_domain}}
+      ESG_OPSMGR_UPLINK_IP_1: {{esg_opsmgr_uplink_ip_1}}
+      ESG_GO_ROUTER_UPLINK_IP_1: {{esg_go_router_uplink_ip_1}}
+      ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}
+      ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
+      ESG_DEFAULT_UPLINK_IP_1: {{esg_default_uplink_ip_1}}
+      ESG_DEFAULT_UPLINK_PG_1: {{esg_default_uplink_pg_1}}
+      ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
+      ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
+      ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_go_router_isozone_1_uplink_ip_1}}
+      ESG_GO_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
+      ESG_GO_ROUTER_ISOZONE_1_INST_1: {{esg_go_router_isozone_1_inst_1}}
+      ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
+      ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
+      ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
 
   - task: config-er-tile
     file: concourse-vsphere/tasks/config-ert/task.yml

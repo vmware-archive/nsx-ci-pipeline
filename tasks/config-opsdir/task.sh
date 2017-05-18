@@ -1,21 +1,12 @@
 #!/bin/bash
 set -e
 
-export ROOT_DIR=`pwd`
-export SCRIPT_DIR=$(dirname $0)
 chmod +x om-cli/om-linux
 
 CMD=./om-cli/om-linux
 
-pwd
-ls -alR
+export ROOT_DIR=`pwd`
 export SCRIPT_DIR=$(dirname $0)
-echo pwd is $PWD and `pwd`
-ls -alR
-echo SCRIPT_DIR is $SCRIPT_DIR
-ls -alR $SCRIPT_DIR
-
-
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
 export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
@@ -23,7 +14,7 @@ export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
 if [ -e "${NSX_GEN_OUTPUT}" ]; then
   echo "Saved nsx gen output:"
   cat ${NSX_GEN_OUTPUT}
-  source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+  echo source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
 else
   echo "Unable to retreive nsx gen output!!"
   exit 1
@@ -144,47 +135,47 @@ MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
 #   popd >/dev/null 2>&1
 
 
-echo "Detecting NSX Logical Switch Backing Port Groups..."
+# echo "Detecting NSX Logical Switch Backing Port Groups..."
 
-echo "Found $INFRA_VCENTER_NETWORK"
-echo "Found $DEPLOYMENT_VCENTER_NETWORK"
-echo "Found $SERVICES_VCENTER_NETWORK"
-echo "Found $DYNAMIC_SERVICES_VCENTER_NETWORK"
-echo ""
-echo "Found Ops Infra static ip: $OPS_INFRA_STATIC_IPS"
-echo "Found GoRouter Ert static ips: $GOROUTER_ERT_STATIC_IPS"
-echo "Found TcpRouter Ert static ips: $TCP_ROUTER_ERT_STATIC_IPS"
-echo "Found Diego Brain Ert static ips: $SSH_ERT_STATIC_IPS"
-echo "Found MySQL Ert static ips: $MYSQL_ERT_STATIC_IPS"
-echo "Found MySQL Tile static ips: $MYSQL_TILE_STATIC_IPS"
-echo "Found RabbitMQ Tile static ips: $RABBITMQ_TILE_STATIC_IPS"
+# echo "Found $INFRA_VCENTER_NETWORK"
+# echo "Found $DEPLOYMENT_VCENTER_NETWORK"
+# echo "Found $SERVICES_VCENTER_NETWORK"
+# echo "Found $DYNAMIC_SERVICES_VCENTER_NETWORK"
+# echo ""
+# echo "Found Ops Infra static ip: $OPS_INFRA_STATIC_IPS"
+# echo "Found GoRouter Ert static ips: $GOROUTER_ERT_STATIC_IPS"
+# echo "Found TcpRouter Ert static ips: $TCP_ROUTER_ERT_STATIC_IPS"
+# echo "Found Diego Brain Ert static ips: $SSH_ERT_STATIC_IPS"
+# echo "Found MySQL Ert static ips: $MYSQL_ERT_STATIC_IPS"
+# echo "Found MySQL Tile static ips: $MYSQL_TILE_STATIC_IPS"
+# echo "Found RabbitMQ Tile static ips: $RABBITMQ_TILE_STATIC_IPS"
 
-# Check for Errors with obtaining the networks
-if [ "$INFRA_VCENTER_NETWORK" == "" \
-  -o "$DEPLOYMENT_VCENTER_NETWORK" == "" \
-  -o "$SERVICES_VCENTER_NETWORK" == "" \
-  -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" ]; then 
-  echo "Some networks could not be located from NSX!!"
-  echo "      INFRASTRUCTURE: $INFRA_VCENTER_NETWORK"
-  echo "      ERT DEPLOYMENT: $DEPLOYMENT_VCENTER_NETWORK"
-  echo "      SERVICES: $SERVICES_VCENTER_NETWORK"
-  echo "      DYNAMIC SERVICES: $DYNAMIC_SERVICES_VCENTER_NETWORK"
-  exit 1
-fi
+# # Check for Errors with obtaining the networks
+# if [ "$INFRA_VCENTER_NETWORK" == "" \
+#   -o "$DEPLOYMENT_VCENTER_NETWORK" == "" \
+#   -o "$SERVICES_VCENTER_NETWORK" == "" \
+#   -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" ]; then 
+#   echo "Some networks could not be located from NSX!!"
+#   echo "      INFRASTRUCTURE: $INFRA_VCENTER_NETWORK"
+#   echo "      ERT DEPLOYMENT: $DEPLOYMENT_VCENTER_NETWORK"
+#   echo "      SERVICES: $SERVICES_VCENTER_NETWORK"
+#   echo "      DYNAMIC SERVICES: $DYNAMIC_SERVICES_VCENTER_NETWORK"
+#   exit 1
+# fi
 
-if [[ ISOZONE_SWITCH_NAME_1 ]]; then
-#  export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "$NSX_FILE_OUTPUT" "IsoZone-1")
-#  export GOROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "go-router")
-#  export TCPROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "tcp-router")
+# if [[ ISOZONE_SWITCH_NAME_1 ]]; then
+# #  export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "$NSX_FILE_OUTPUT" "IsoZone-1")
+# #  export GOROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "go-router")
+# #  export TCPROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "tcp-router")
 
-  echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"
-  echo "Found GoRouter IsoZone static ip: $GOROUTER_ISOZONE_SWITCH_1_STATIC_IPS"
-  echo "Found TcpRouter IsoZone static ip: $TCPROUTER_ISOZONE_SWITCH_1_STATIC_IPS"
+#   echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"
+#   echo "Found GoRouter IsoZone static ip: $GOROUTER_ISOZONE_SWITCH_1_STATIC_IPS"
+#   echo "Found TcpRouter IsoZone static ip: $TCPROUTER_ISOZONE_SWITCH_1_STATIC_IPS"
   
-  if [ "$ISOZONE_SWITCH_1_VCENTER_NETWORK" == "" ]; then
-    echo "ISOZONE-01 network could not be located from NSX!!"
-  fi
-fi
+#   if [ "$ISOZONE_SWITCH_1_VCENTER_NETWORK" == "" ]; then
+#     echo "ISOZONE-01 network could not be located from NSX!!"
+#   fi
+# fi
 
 NETWORK_CONFIGURATION=$(cat <<-EOF
 {

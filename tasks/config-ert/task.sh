@@ -4,6 +4,22 @@ set -e
 
 chmod +x om-cli/om-linux
 
+export ROOT_DIR=`pwd`
+export SCRIPT_DIR=$(dirname $0)
+export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
+export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
+export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
+
+if [ -e "${NSX_GEN_OUTPUT}" ]; then
+  echo "Saved nsx gen output:"
+  cat ${NSX_GEN_OUTPUT}
+  echo source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+else
+  echo "Unable to retreive nsx gen output!!"
+  exit 1
+fi
+
+
 CF_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep cf`
 
 PRODUCT_NAME=`echo $CF_RELEASE | cut -d"|" -f2 | tr -d " "`
@@ -204,7 +220,7 @@ $CF_PROPERTIES
     "value": $SKIP_CERT_VERIFY
   },
   ".router.static_ips": {
-    "value": "$ROUTER_STATIC_IPS"
+    "value": "$ERT_GOROUTER_STATIC_IPS"
   },
   ".router.disable_insecure_cookies": {
     "value": false
@@ -225,7 +241,7 @@ $CF_PROPERTIES
     "value": 10000
   },
   ".tcp_router.static_ips": {
-    "value": "$TCP_ROUTER_STATIC_IPS"
+    "value": "$ERT_TCPROUTER_STATIC_IPS"
   },
   ".push-apps-manager.company_name": {
     "value": "NSXIntPipeline"
