@@ -97,13 +97,14 @@ export INFRA_VCENTER_NETWORK=$(fn_get_pg "$NSX_FILE_OUTPUT" "Infra")
 export DEPLOYMENT_VCENTER_NETWORK=$(fn_get_pg "$NSX_FILE_OUTPUT" "Ert")
 export SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_FILE_OUTPUT" "PCF-Tiles")
 export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_FILE_OUTPUT" "Dynamic-Services")
-export OPS_INFRA_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "Infra" "ops")
-export GOROUTER_ERT_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "Ert" "go-router")
-export TCP_ROUTER_ERT_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "Ert" "tcp-router")
-export SSH_ERT_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "Ert" "diego-brain")
-export MYSQL_ERT_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "Ert" "mysql")
-export MYSQL_TILE_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "PCF-Tiles" "mysql")
-export RABBITMQ_TILE_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "PCF-Tiles" "rabbitmq")
+
+export OPS_INFRA_STATIC_IPS=$(fn_get_component_static_ips "$NSX_FILE_OUTPUT" "Infra" "ops")
+export GOROUTER_ERT_STATIC_IPS=$(fn_get_component_static_ips "$NSX_FILE_OUTPUT" "Ert" "go-router")
+export TCP_ROUTER_ERT_STATIC_IPS=$(fn_get_component_static_ips "$NSX_FILE_OUTPUT" "Ert" "tcp-router")
+export SSH_ERT_STATIC_IPS=$(fn_get_component_static_ips "$NSX_FILE_OUTPUT" "Ert" "diego-brain")
+export MYSQL_ERT_STATIC_IPS=$(fn_get_component_static_ips "$NSX_FILE_OUTPUT" "Ert" "mysql")
+export MYSQL_TILE_STATIC_IPS=$(fn_get_component_static_ips "$NSX_FILE_OUTPUT" "PCF-Tiles" "mysql")
+export RABBITMQ_TILE_STATIC_IPS=$(fn_get_component_static_ips "$NSX_FILE_OUTPUT" "PCF-Tiles" "rabbitmq")
 
 echo "Found $INFRA_VCENTER_NETWORK"
 echo "Found $DEPLOYMENT_VCENTER_NETWORK"
