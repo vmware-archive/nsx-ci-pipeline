@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+export ROOT_DIR=`pwd`
 export SCRIPT_DIR=$(dirname $0)
 echo pwd is $PWD and `pwd`
 ls -alR
@@ -9,7 +10,7 @@ ls -alR $SCRIPT_DIR
 
 pushd nsx-edge-gen  >/dev/null 2>&1
 
-export NSX_GEN_OUTPUT_DIR="${SCRIPT_DIR}/../nsx-gen-output"
+export NSX_GEN_OUTPUT_DIR="${ROOT_DIR}/nsx-gen-output"
 mkdir -p ${NSX_GEN_OUTPUT_DIR}
 
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -17,7 +18,6 @@ export NSX_GEN_UTIL="${SCRIPT_DIR}/nsx_parse_util.sh"
 
 # Remove any existing config file template from the repo
 if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
-
 
 # Init new config file template
 ./nsx-gen/bin/nsxgen -i $NSX_EDGE_GEN_NAME init

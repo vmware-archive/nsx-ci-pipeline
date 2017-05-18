@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+export ROOT_DIR=`pwd`
 export SCRIPT_DIR=$(dirname $0)
 chmod +x om-cli/om-linux
 
@@ -15,7 +16,7 @@ echo SCRIPT_DIR is $SCRIPT_DIR
 ls -alR $SCRIPT_DIR
 
 
-export NSX_GEN_OUTPUT_DIR=${SCRIPT_DIR}/nsx-gen-output
+export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
 export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
 
