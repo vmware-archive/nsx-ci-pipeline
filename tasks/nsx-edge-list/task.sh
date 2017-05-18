@@ -2,6 +2,11 @@
 set -e
 
 export SCRIPT_DIR=$(dirname $0)
+echo pwd is $PWD and `pwd`
+ls -alR
+echo SCRIPT_DIR is $SCRIPT_DIR
+ls -alR $SCRIPT_DIR
+
 pushd nsx-edge-gen  >/dev/null 2>&1
 
 export NSX_GEN_OUTPUT_DIR="${SCRIPT_DIR}/../nsx-gen-output"

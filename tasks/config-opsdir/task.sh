@@ -6,9 +6,14 @@ chmod +x om-cli/om-linux
 
 CMD=./om-cli/om-linux
 
-echo SCRIPT_DIR is ${SCRIPT_DIR}
 pwd
 ls -alR
+export SCRIPT_DIR=$(dirname $0)
+echo pwd is $PWD and `pwd`
+ls -alR
+echo SCRIPT_DIR is $SCRIPT_DIR
+ls -alR $SCRIPT_DIR
+
 
 export NSX_GEN_OUTPUT_DIR=${SCRIPT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
