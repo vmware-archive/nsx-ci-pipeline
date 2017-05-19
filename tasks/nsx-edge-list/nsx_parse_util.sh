@@ -49,13 +49,13 @@ function fn_get_component_lb_ip {
   echo $component_lbr_ip
 }
 
-
 echo "Detecting NSX Logical Switch Backing Port Groups..."
 
 export INFRA_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Infra")
 export DEPLOYMENT_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Ert")
 export SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "PCF-Tiles")
 export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Dynamic-Services")
+
 echo ""
 echo "Found INFRASTRUCTURE   : $INFRA_VCENTER_NETWORK"
 echo "Found ERT DEPLOYMENT   : $DEPLOYMENT_VCENTER_NETWORK"
