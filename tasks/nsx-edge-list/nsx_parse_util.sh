@@ -64,13 +64,13 @@ export ERT_MYSQL_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT"
 export MYSQL_TILE_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "PCF-Tiles" "mysql")
 export RABBITMQ_TILE_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "PCF-Tiles" "rabbitmq")
 
-echo "Found INFRA Ops static ip                 : $INFRA_OPS_STATIC_IPS"
-echo "Found ERT GoRouter static ips             : $ERT_GOROUTER_STATIC_IPS"
-echo "Found ERT TcpRouter static ips            : $ERT_TCPROUTER_STATIC_IPS"
-echo "Found ERT Diego Brain static ips          : $SSH_STATIC_IPS"
-echo "Found ERT MySQL static ips                : $ERT_MYSQL_STATIC_IPS"
-echo "Found SERVICES MySQL Tile static ips      : $MYSQL_TILE_STATIC_IPS"
-echo "Found SERVICES RabbitMQ Tile static ips   : $RABBITMQ_TILE_STATIC_IPS"
+echo "Found static ip  for INFRA Ops              : $INFRA_OPS_STATIC_IPS"
+echo "Found static ips for ERT GoRouter           : $ERT_GOROUTER_STATIC_IPS"
+echo "Found static ips for ERT TcpRouter          : $ERT_TCPROUTER_STATIC_IPS"
+echo "Found static ips for ERT Diego Brain        : $SSH_STATIC_IPS"
+echo "Found static ips for ERT MySQL              : $ERT_MYSQL_STATIC_IPS"
+echo "Found static ips for SERVICES MySQL Tile    : $MYSQL_TILE_STATIC_IPS"
+echo "Found static ips for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_STATIC_IPS"
 echo ""
 
 if [[ ISOZONE_SWITCH_NAME_1 ]]; then
@@ -82,8 +82,8 @@ if [[ ISOZONE_SWITCH_NAME_1 ]]; then
   export ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "IsoZone-01" "go-router")
   export ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "IsoZone-01" "tcp-router")
 
-  echo "Found ISOZONE-01                     : $ISOZONE_SWITCH_1_VCENTER_NETWORK"
-  echo "Found ISOZONE-01 GoRouter static ip  : $ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS"
-  echo "Found ISOZONE-01 TcpRouter static ip : $ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS"
-
+  echo "Found ISOZONE-01                          : $ISOZONE_SWITCH_1_VCENTER_NETWORK"
+  echo "Found static ips for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS"
+  echo "Found static ips for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS"
+  echo ""
 fi

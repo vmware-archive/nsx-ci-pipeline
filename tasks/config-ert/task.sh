@@ -67,6 +67,12 @@ else
 fi
 
 
+# Stay with a static ip for MySQL Proxy for ERT
+export MYSQL_ERT_PROXY_IP=$(echo ${DEPLOYMENT_NW_CIDR} | \
+                           sed -e 's/\/.*//g' | \
+                           awk -F '.' '{print $1"."$2"."$3".250"}' ) 
+
+
 CF_PROPERTIES=$(cat <<-EOF
 {
   ".properties.logger_endpoint_port": {
@@ -148,7 +154,7 @@ $CF_PROPERTIES
     "value": "$ERT_MYSQL_STATIC_IPS"
   },
   ".mysql_proxy.service_hostname": {
-    "value": "192.168.23.250"
+    "value": "$MYSQL_ERT_PROXY_IP"
   },
   ".properties.uaa": {
     "value": "$UAA_METHOD"

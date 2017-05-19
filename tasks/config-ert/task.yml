@@ -73,6 +73,8 @@ params:
   DOPPLER_INSTANCES:
   LOGGREGATOR_TC_INSTANCES:
   TCP_ROUTER_INSTANCES:
+  DEPLOYMENT_NW_CIDR:
+
 
 inputs:
   - name: concourse-vsphere
