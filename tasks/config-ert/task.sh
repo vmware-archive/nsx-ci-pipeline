@@ -19,6 +19,11 @@ else
   exit 1
 fi
 
+# Stay with a static ip for MySQL Proxy for ERT
+export MYSQL_ERT_PROXY_IP=$(echo ${DEPLOYMENT_NW_CIDR} | \
+                           sed -e 's/\/.*//g' | \
+                           awk -F '.' '{print $1"."$2"."$3".250"}' ) 
+
 
 CF_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep cf`
 
@@ -65,13 +70,6 @@ EOF
 else
   echo "Using certs passed in YML"
 fi
-
-
-# Stay with a static ip for MySQL Proxy for ERT
-export MYSQL_ERT_PROXY_IP=$(echo ${DEPLOYMENT_NW_CIDR} | \
-                           sed -e 's/\/.*//g' | \
-                           awk -F '.' '{print $1"."$2"."$3".250"}' ) 
-
 
 CF_PROPERTIES=$(cat <<-EOF
 {

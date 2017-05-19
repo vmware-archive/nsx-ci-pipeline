@@ -35,6 +35,12 @@ function fn_get_component_static_ips {
   echo $component_static_ips
 }
 
+INFRA_NETWORK=${INFRA_VCENTER_NETWORK:-"nsxgen"}
+INFRA_NETWORK=${DEPLOYMENT_VCENTER_NETWORK:-"nsxgen"}
+SERVICES_VCENTER_NETWORK=${SERVICES_VCENTER_NETWORK:-"nsxgen"}
+DYNAMIC_SERVICES_NETWORK=${DYNAMIC_SERVICES_VCENTER_NETWORK:-"nsxgen"}
+ISOZONE_SWITCH_1_NETWORK=${ISOZONE_SWITCH_1_VCENTER_NETWORK:-"nsxgen"}
+
 echo "Detecting NSX Logical Switch Backing Port Groups..."
 
 if [[ $INFRA_VCENTER_NETWORK = "nsxgen" ]]; then export INFRA_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Infra"); fi
@@ -53,7 +59,6 @@ if [ "$INFRA_VCENTER_NETWORK" == "" \
   -o "$SERVICES_VCENTER_NETWORK" == "" \
   -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" ]; then 
   echo "Some networks could not be located from NSX!!"
-  exit 1
 fi
 
 export INFRA_OPS_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "Infra" "ops")

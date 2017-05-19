@@ -150,18 +150,44 @@ MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
 # echo "Found MySQL Tile static ips: $MYSQL_TILE_STATIC_IPS"
 # echo "Found RabbitMQ Tile static ips: $RABBITMQ_TILE_STATIC_IPS"
 
-# # Check for Errors with obtaining the networks
-# if [ "$INFRA_VCENTER_NETWORK" == "" \
-#   -o "$DEPLOYMENT_VCENTER_NETWORK" == "" \
-#   -o "$SERVICES_VCENTER_NETWORK" == "" \
-#   -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" ]; then 
-#   echo "Some networks could not be located from NSX!!"
-#   echo "      INFRASTRUCTURE: $INFRA_VCENTER_NETWORK"
-#   echo "      ERT DEPLOYMENT: $DEPLOYMENT_VCENTER_NETWORK"
-#   echo "      SERVICES: $SERVICES_VCENTER_NETWORK"
-#   echo "      DYNAMIC SERVICES: $DYNAMIC_SERVICES_VCENTER_NETWORK"
-#   exit 1
-# fi
+# Check for Errors with obtaining the networks
+if [ "$INFRA_VCENTER_NETWORK" == "" \
+  -o "$DEPLOYMENT_VCENTER_NETWORK" == "" \
+  -o "$SERVICES_VCENTER_NETWORK" == "" \
+  -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" ]; then 
+  echo "Some networks could not be located from NSX!!"
+  echo "      INFRASTRUCTURE: $INFRA_VCENTER_NETWORK"
+  echo "      ERT DEPLOYMENT: $DEPLOYMENT_VCENTER_NETWORK"
+  echo "      SERVICES: $SERVICES_VCENTER_NETWORK"
+  echo "      DYNAMIC SERVICES: $DYNAMIC_SERVICES_VCENTER_NETWORK"
+  exit 1
+fi
+
+if [ "$INFRA_OPS_STATIC_IPS" == "" \
+  -o "$ERT_GOROUTER_STATIC_IPS" == "" \
+  -o "$ERT_TCPROUTER_STATIC_IPS" == "" \
+  -o "$SSH_STATIC_IPS" ==  "" \
+  -o "$ERT_MYSQL_STATIC_IPS" == "" \  
+  -o "$MYSQL_TILE_STATIC_IPS" == ""  \
+  -o "$RABBITMQ_TILE_STATIC_IPS" == "" ]; then 
+  echo "Some of the static ips could not be located from NSX!!"
+  echo "  Found static ip  for INFRA Ops              : $INFRA_OPS_STATIC_IPS"
+  echo "  Found static ips for ERT GoRouter           : $ERT_GOROUTER_STATIC_IPS"
+  echo "  Found static ips for ERT TcpRouter          : $ERT_TCPROUTER_STATIC_IPS"
+  echo "  Found static ips for ERT Diego Brain        : $SSH_STATIC_IPS"
+  echo "  Found static ips for ERT MySQL              : $ERT_MYSQL_STATIC_IPS"
+  echo "  Found static ips for SERVICES MySQL Tile    : $MYSQL_TILE_STATIC_IPS"
+  echo "  Found static ips for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_STATIC_IPS"
+  exit 1
+fi
+# echo "Found Ops Infra static ip: $OPS_INFRA_STATIC_IPS"
+# echo "Found GoRouter Ert static ips: $GOROUTER_ERT_STATIC_IPS"
+# echo "Found TcpRouter Ert static ips: $TCP_ROUTER_ERT_STATIC_IPS"
+# echo "Found Diego Brain Ert static ips: $SSH_ERT_STATIC_IPS"
+# echo "Found MySQL Ert static ips: $MYSQL_ERT_STATIC_IPS"
+# echo "Found MySQL Tile static ips: $MYSQL_TILE_STATIC_IPS"
+# echo "Found RabbitMQ Tile static ips: $RABBITMQ_TILE_STATIC_IPS"
+
 
 # if [[ ISOZONE_SWITCH_NAME_1 ]]; then
 # #  export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "$NSX_FILE_OUTPUT" "IsoZone-1")
