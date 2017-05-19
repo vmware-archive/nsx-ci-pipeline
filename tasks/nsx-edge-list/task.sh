@@ -3,10 +3,8 @@ set -e
 
 export ROOT_DIR=`pwd`
 export SCRIPT_DIR=$(dirname $0)
-echo pwd is $PWD and `pwd`
-ls -al
-echo SCRIPT_DIR is $SCRIPT_DIR
-ls -alR $SCRIPT_DIR
+#echo pwd is $PWD and `pwd`
+#echo SCRIPT_DIR is $SCRIPT_DIR
 export NSX_GEN_OUTPUT_DIR="${ROOT_DIR}/nsx-gen-output"
 mkdir -p ${NSX_GEN_OUTPUT_DIR}
 
