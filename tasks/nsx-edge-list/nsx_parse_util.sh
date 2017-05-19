@@ -39,7 +39,7 @@ function fn_get_component_lbr_ip {
   local nsx_log=$1
   local search_switch=$2
   local search_component=$3
-  component_static_ips=$(
+  component_lbr_ip=$(
   cat ${nsx_log} | \
    grep -i "static ips assig" |
    grep -i ${search_switch} | \
@@ -80,13 +80,13 @@ export MYSQL_TILE_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_OUTPUT" "PCF-Tiles"
 export RABBITMQ_TILE_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_OUTPUT" "PCF-Tiles" "rabbitmq")
 
 echo ""
-echo "Found LBR ip for INFRA    Ops           : $INFRA_OPS_LBR_IP"
-echo "Found LBR ip for ERT      GoRouter      : $ERT_GOROUTER_LBR_IP"
-echo "Found LBR ip for ERT      TcpRouter     : $ERT_TCPROUTER_LBR_IP"
-echo "Found LBR ip for ERT      Diego Brain   : $SSH_LBR_IP"
-echo "Found LBR ip for ERT      MySQL         : $ERT_MYSQL_LBR_IP"
-echo "Found LBR ip for SERVICES MySQL Tile    : $MYSQL_TILE_LBR_IP"
-echo "Found LBR ip for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_LBR_IP"
+echo "Found LBR IP for INFRA    Ops           : $INFRA_OPS_LBR_IP"
+echo "Found LBR IP for ERT      GoRouter      : $ERT_GOROUTER_LBR_IP"
+echo "Found LBR IP for ERT      TcpRouter     : $ERT_TCPROUTER_LBR_IP"
+echo "Found LBR IP for ERT      Diego Brain   : $SSH_LBR_IP"
+echo "Found LBR IP for ERT      MySQL         : $ERT_MYSQL_LBR_IP"
+echo "Found LBR IP for SERVICES MySQL Tile    : $MYSQL_TILE_LBR_IP"
+echo "Found LBR IP for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_LBR_IP"
 echo ""
 
 export INFRA_OPS_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "Infra" "ops")
@@ -98,13 +98,13 @@ export MYSQL_TILE_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "PC
 export RABBITMQ_TILE_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "PCF-Tiles" "rabbitmq")
 
 echo ""
-echo "Found Static ip  for INFRA    Ops           : $INFRA_OPS_STATIC_IPS"
-echo "Found Static ips for ERT      GoRouter      : $ERT_GOROUTER_STATIC_IPS"
-echo "Found Static ips for ERT      TcpRouter     : $ERT_TCPROUTER_STATIC_IPS"
-echo "Found Static ips for ERT      Diego Brain   : $SSH_STATIC_IPS"
-echo "Found Static ips for ERT      MySQL         : $ERT_MYSQL_STATIC_IPS"
-echo "Found Static ips for SERVICES MySQL Tile    : $MYSQL_TILE_STATIC_IPS"
-echo "Found Static ips for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_STATIC_IPS"
+echo "Found Static IP  for INFRA    Ops           : $INFRA_OPS_STATIC_IPS"
+echo "Found Static IPs for ERT      GoRouter      : $ERT_GOROUTER_STATIC_IPS"
+echo "Found Static IPs for ERT      TcpRouter     : $ERT_TCPROUTER_STATIC_IPS"
+echo "Found Static IPs for ERT      Diego Brain   : $SSH_STATIC_IPS"
+echo "Found Static IPs for ERT      MySQL         : $ERT_MYSQL_STATIC_IPS"
+echo "Found Static IPs for SERVICES MySQL Tile    : $MYSQL_TILE_STATIC_IPS"
+echo "Found Static IPs for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_STATIC_IPS"
 echo ""
 
 if [[ ISOZONE_SWITCH_NAME_1 ]]; then
@@ -120,9 +120,9 @@ if [[ ISOZONE_SWITCH_NAME_1 ]]; then
 
   echo "Found ISOZONE-01                          : $ISOZONE_SWITCH_1_VCENTER_NETWORK"
   echo ""
-  echo "Found LBR    ip  for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_LBR_IP"
-  echo "Found Static ips for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS"
-  echo "Found LBR    ip  for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_1_TCPROUTER_LBR_IP"
-  echo "Found Static ips for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS"
+  echo "Found LBR    IP  for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_LBR_IP"
+  echo "Found Static IPs for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS"
+  echo "Found LBR    IP  for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_1_TCPROUTER_LBR_IP"
+  echo "Found Static IPs for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS"
   echo ""
 fi

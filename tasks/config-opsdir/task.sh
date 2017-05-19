@@ -167,7 +167,7 @@ if [ "$INFRA_OPS_STATIC_IPS" == "" \
   -o "$ERT_GOROUTER_STATIC_IPS" == "" \
   -o "$ERT_TCPROUTER_STATIC_IPS" == "" \
   -o "$SSH_STATIC_IPS" ==  "" \
-  -o "$ERT_MYSQL_STATIC_IPS" == "" \  
+  -o "$ERT_MYSQL_STATIC_IPS" == "" \
   -o "$MYSQL_TILE_STATIC_IPS" == ""  \
   -o "$RABBITMQ_TILE_STATIC_IPS" == "" ]; then 
   echo "Some of the static ips could not be located from NSX!!"

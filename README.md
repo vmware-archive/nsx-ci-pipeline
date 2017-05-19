@@ -70,7 +70,7 @@ nsx_edge_gen_nsx_manager_distributed_portgroup: <YOUR NSX DISTRIBUTED PORTGROUP>
 nsx_edge_gen_egde_datastore: <YOUR DATASTORE FOR NSX EDGES> #REQUIRED example: vsanDatastore
 nsx_edge_gen_egde_cluster: <YOUR CLUSTER FOR NSX EDGES> #REQUIRED example: Cluster1
 nsx_edge_gen_name: nsx-pipeline-sample #string name for NSX objects
-esg_size: compact
+esg_size: compact # valid values are compact, large, xlarge, quadlarge
 esg_ospf_password_1: P1v0t4l
 esg_cli_username_1: admin 
 esg_cli_password_1: P1v0t4l!P1v0t4l!
