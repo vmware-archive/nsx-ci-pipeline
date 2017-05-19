@@ -11,11 +11,11 @@ export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
 export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
 
 if [ -e "${NSX_GEN_OUTPUT}" ]; then
-  echo "Saved nsx gen output:"
-  cat ${NSX_GEN_OUTPUT}
-  echo source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+  #echo "Saved nsx gen output:"
+  #cat ${NSX_GEN_OUTPUT}
+  source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
 else
-  echo "Unable to retreive nsx gen output!!"
+  echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
 fi
 

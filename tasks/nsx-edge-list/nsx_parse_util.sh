@@ -2,10 +2,10 @@
 
 export NSX_GEN_FILE_OUTPUT=$1
 if [ -e "$NSX_GEN_FILE_OUTPUT" ]; then
-  echo "Found nsx gen output:"
-  cat $NSX_GEN_FILE_OUTPUT
+  echo "Found nsx gen output"
+  #cat $NSX_GEN_FILE_OUTPUT
 else
-  echo "Unable to retreive nsx gen output!!"
+  echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
 fi
 
@@ -34,8 +34,6 @@ function fn_get_component_static_ips {
   )
   echo $component_static_ips
 }
-
-
 
 echo "Detecting NSX Logical Switch Backing Port Groups..."
 
@@ -71,8 +69,8 @@ echo "Found ERT GoRouter static ips             : $ERT_GOROUTER_STATIC_IPS"
 echo "Found ERT TcpRouter static ips            : $ERT_TCPROUTER_STATIC_IPS"
 echo "Found ERT Diego Brain static ips          : $SSH_STATIC_IPS"
 echo "Found ERT MySQL static ips                : $ERT_MYSQL_STATIC_IPS"
-echo "Found PCF-TILES MySQL Tile static ips     : $MYSQL_TILE_STATIC_IPS"
-echo "Found PCF-TILES RabbitMQ Tile static ips  : $RABBITMQ_TILE_STATIC_IPS"
+echo "Found SERVICES MySQL Tile static ips      : $MYSQL_TILE_STATIC_IPS"
+echo "Found SERVICES RabbitMQ Tile static ips   : $RABBITMQ_TILE_STATIC_IPS"
 echo ""
 
 if [[ ISOZONE_SWITCH_NAME_1 ]]; then

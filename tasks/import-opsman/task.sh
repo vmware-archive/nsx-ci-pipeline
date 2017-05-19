@@ -4,6 +4,21 @@ set -e
 gunzip ./govc/govc_linux_amd64.gz
 chmod +x ./govc/govc_linux_amd64
 
+export ROOT_DIR=`pwd`
+export SCRIPT_DIR=$(dirname $0)
+export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
+export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
+export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
+
+if [ -e "${NSX_GEN_OUTPUT}" ]; then
+  #echo "Saved nsx gen output:"
+  #cat ${NSX_GEN_OUTPUT}
+  source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+else
+  echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
+  exit 1
+fi
+
 export GOVC_INSECURE=1
 export GOVC_URL=$GOVC_URL
 export GOVC_USERNAME=$GOVC_USERNAME
@@ -13,24 +28,35 @@ export GOVC_DATASTORE=$GOVC_DATASTORE
 export GOVC_NETWORK=$GOVC_NETWORK
 export GOVC_RESOURCE_POOL=$GOVC_RESOURCE_POOL
 
+# function fn_get_pg {
+#   local search_string_net=$1
+#   local search_string="lswitch-${NSX_EDGE_GEN_NAME}-${search_string_net}"
+#   vwire_pg=$(
+#   ./nsx-gen/bin/nsxgen \
+#   -c $NSX_EDGE_GEN_NAME \
+#   -vcenter_addr $VCENTER_HOST   \
+#   -vcenter_user $VCENTER_USR   \
+#   -vcenter_pass $VCENTER_PWD   \
+#   -vcenter_dc $VCENTER_DATA_CENTER   \
+#   -vcenter_ds $NSX_EDGE_GEN_EDGE_DATASTORE   \
+#   -vcenter_cluster $NSX_EDGE_GEN_EDGE_CLUSTER  \
+#   -nsxmanager_addr $NSX_EDGE_GEN_NSX_MANAGER_ADDRESS   \
+#   -nsxmanager_user $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER   \
+#   -nsxmanager_pass $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD   \
+#   -nsxmanager_tz $NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE   \
+#   -nsxmanager_uplink_ip 172.16.0.0 \
+#   list 2>/dev/null | \
+#   grep ${search_string} | \
+#   grep -v "Effective" | awk '{print$5}' |  grep "virtualwire" | sort -u
+#   )
+#   echo $vwire_pg
+# }
+
 function fn_get_pg {
   local search_string_net=$1
   local search_string="lswitch-${NSX_EDGE_GEN_NAME}-${search_string_net}"
   vwire_pg=$(
-  ./nsx-gen/bin/nsxgen \
-  -c $NSX_EDGE_GEN_NAME \
-  -vcenter_addr $VCENTER_HOST   \
-  -vcenter_user $VCENTER_USR   \
-  -vcenter_pass $VCENTER_PWD   \
-  -vcenter_dc $VCENTER_DATA_CENTER   \
-  -vcenter_ds $NSX_EDGE_GEN_EDGE_DATASTORE   \
-  -vcenter_cluster $NSX_EDGE_GEN_EDGE_CLUSTER  \
-  -nsxmanager_addr $NSX_EDGE_GEN_NSX_MANAGER_ADDRESS   \
-  -nsxmanager_user $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER   \
-  -nsxmanager_pass $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD   \
-  -nsxmanager_tz $NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE   \
-  -nsxmanager_uplink_ip 172.16.0.0 \
-  list 2>/dev/null | \
+  cat ${NSX_GEN_OUTPUT} | \
   grep ${search_string} | \
   grep -v "Effective" | awk '{print$5}' |  grep "virtualwire" | sort -u
   )
@@ -116,14 +142,14 @@ function update() {
 }
 
   echo "Detecting NSX Logical Switch Backing Port Groups..."
-  pushd nsx-edge-gen >/dev/null 2>&1
-  if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
-  ./nsx-gen/bin/nsxgen -i $NSX_EDGE_GEN_NAME init
+  # pushd nsx-edge-gen >/dev/null 2>&1
+  # if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
+  # ./nsx-gen/bin/nsxgen -i $NSX_EDGE_GEN_NAME init
 
   if [[ $OM_VM_NETWORK = "nsxgen" ]]; then
      export OM_VM_NETWORK=$(fn_get_pg "Infra"); echo "Found $OM_VM_NETWORK"
   fi
-  popd >/dev/null 2>&1
+  # popd >/dev/null 2>&1
 
 
 FILE_PATH=`find ./pivnet-opsman-product/ -name *.ova`

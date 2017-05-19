@@ -20,6 +20,7 @@ params:
 inputs:
   - name: concourse-vsphere
   - name: om-cli
-
+  - name: nsx-gen-output
+  
 run:
   path: concourse-vsphere/tasks/config-mysql/task.sh

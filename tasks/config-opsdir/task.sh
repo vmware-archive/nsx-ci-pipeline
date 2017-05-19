@@ -12,11 +12,11 @@ export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
 export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
 
 if [ -e "${NSX_GEN_OUTPUT}" ]; then
-  echo "Saved nsx gen output:"
-  cat ${NSX_GEN_OUTPUT}
-  echo source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+  #echo "Saved nsx gen output:"
+  #cat ${NSX_GEN_OUTPUT}
+  source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
 else
-  echo "Unable to retreive nsx gen output!!"
+  echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
 fi
 
@@ -57,7 +57,7 @@ function fn_get_pg {
   local search_string_net=$1
   local search_string="lswitch-${NSX_EDGE_GEN_NAME}-${search_string_net}"
   vwire_pg=$(
-  cat ./nsx-gen-output/*.log | \
+  cat ${NSX_GEN_OUTPUT} | \
   grep ${search_string} | \
   grep -v "Effective" | awk '{print$5}' |  grep "virtualwire" | sort -u
   )
@@ -68,7 +68,7 @@ function fn_get_component_static_ips {
   local search_switch=$1
   local search_component=$2
   component_static_ips=$(
-  cat ./nsx-gen-output/*.log | \
+  cat ${NSX_GEN_OUTPUT} | \
    grep  "static ips" |
    grep ${search_switch} | \
    grep ${search_component} | \
