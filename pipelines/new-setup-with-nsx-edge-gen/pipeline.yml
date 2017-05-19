@@ -15,6 +15,7 @@ nsx_edge_params: &nsx-edge-params
   NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
   NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
   ESG_GATEWAY_1: {{esg_gateway_1}}
+  ESG_SIZE: {{esg_size}}
   ESG_OSPF_PASSWORD_1: {{esg_ospf_password_1}}
   ESG_CLI_USERNAME_1: {{esg_cli_username_1}}
   ESG_CLI_PASSWORD_1: {{esg_cli_password_1}}
@@ -35,7 +36,6 @@ nsx_edge_params: &nsx-edge-params
   ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
   ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
   ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
-
 
 
 groups:
