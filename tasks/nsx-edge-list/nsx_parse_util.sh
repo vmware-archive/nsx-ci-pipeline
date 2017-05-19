@@ -35,18 +35,28 @@ function fn_get_component_static_ips {
   echo $component_static_ips
 }
 
-INFRA_NETWORK=${INFRA_VCENTER_NETWORK:-"nsxgen"}
-INFRA_NETWORK=${DEPLOYMENT_VCENTER_NETWORK:-"nsxgen"}
-SERVICES_VCENTER_NETWORK=${SERVICES_VCENTER_NETWORK:-"nsxgen"}
-DYNAMIC_SERVICES_NETWORK=${DYNAMIC_SERVICES_VCENTER_NETWORK:-"nsxgen"}
-ISOZONE_SWITCH_1_NETWORK=${ISOZONE_SWITCH_1_VCENTER_NETWORK:-"nsxgen"}
+function fn_get_component_lb_ip {
+  local nsx_log=$1
+  local search_switch=$2
+  local search_component=$3
+  component_static_ips=$(
+  cat ${nsx_log} | \
+   grep -i "static ips assig" |
+   grep -i ${search_switch} | \
+   grep -i ${search_component} | \
+   awk -F '|' '{print$4}' 
+  )
+  echo $component_lbr_ip
+}
+
 
 echo "Detecting NSX Logical Switch Backing Port Groups..."
 
-if [[ $INFRA_VCENTER_NETWORK = "nsxgen" ]]; then export INFRA_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Infra"); fi
-if [[ $DEPLOYMENT_VCENTER_NETWORK = "nsxgen" ]]; then export DEPLOYMENT_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Ert"); fi
-if [[ $SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "PCF-Tiles"); fi
-if [[ $DYNAMIC_SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Dynamic-Services"); fi
+export INFRA_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Infra"); fi
+export DEPLOYMENT_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Ert"); fi
+export SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "PCF-Tiles"); fi
+export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_FILE_OUTPUT" "Dynamic-Services"); fi
+echo ""
 echo "Found INFRASTRUCTURE   : $INFRA_VCENTER_NETWORK"
 echo "Found ERT DEPLOYMENT   : $DEPLOYMENT_VCENTER_NETWORK"
 echo "Found SERVICES         : $SERVICES_VCENTER_NETWORK"
@@ -61,6 +71,24 @@ if [ "$INFRA_VCENTER_NETWORK" == "" \
   echo "Some networks could not be located from NSX!!"
 fi
 
+export INFRA_OPS_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_FILE_OUTPUT" "Infra" "ops")
+export ERT_GOROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_FILE_OUTPUT" "Ert" "go-router")
+export ERT_TCPROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_FILE_OUTPUT" "Ert" "tcp-router")
+export SSH_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_FILE_OUTPUT" "Ert" "diego-brain")
+export ERT_MYSQL_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_FILE_OUTPUT" "Ert" "mysql")
+export MYSQL_TILE_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_FILE_OUTPUT" "PCF-Tiles" "mysql")
+export RABBITMQ_TILE_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_FILE_OUTPUT" "PCF-Tiles" "rabbitmq")
+
+echo ""
+echo "Found LBR ip for INFRA    Ops           : $INFRA_OPS_LBR_IP"
+echo "Found LBR ip for ERT      GoRouter      : $ERT_GOROUTER_LBR_IP"
+echo "Found LBR ip for ERT      TcpRouter     : $ERT_TCPROUTER_LBR_IP"
+echo "Found LBR ip for ERT      Diego Brain   : $SSH_LBR_IP"
+echo "Found LBR ip for ERT      MySQL         : $ERT_MYSQL_LBR_IP"
+echo "Found LBR ip for SERVICES MySQL Tile    : $MYSQL_TILE_LBR_IP"
+echo "Found LBR ip for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_LBR_IP"
+echo ""
+
 export INFRA_OPS_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "Infra" "ops")
 export ERT_GOROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "Ert" "go-router")
 export ERT_TCPROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "Ert" "tcp-router")
@@ -69,13 +97,14 @@ export ERT_MYSQL_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT"
 export MYSQL_TILE_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "PCF-Tiles" "mysql")
 export RABBITMQ_TILE_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "PCF-Tiles" "rabbitmq")
 
-echo "Found static ip  for INFRA Ops              : $INFRA_OPS_STATIC_IPS"
-echo "Found static ips for ERT GoRouter           : $ERT_GOROUTER_STATIC_IPS"
-echo "Found static ips for ERT TcpRouter          : $ERT_TCPROUTER_STATIC_IPS"
-echo "Found static ips for ERT Diego Brain        : $SSH_STATIC_IPS"
-echo "Found static ips for ERT MySQL              : $ERT_MYSQL_STATIC_IPS"
-echo "Found static ips for SERVICES MySQL Tile    : $MYSQL_TILE_STATIC_IPS"
-echo "Found static ips for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_STATIC_IPS"
+echo ""
+echo "Found Static ip  for INFRA    Ops           : $INFRA_OPS_STATIC_IPS"
+echo "Found Static ips for ERT      GoRouter      : $ERT_GOROUTER_STATIC_IPS"
+echo "Found Static ips for ERT      TcpRouter     : $ERT_TCPROUTER_STATIC_IPS"
+echo "Found Static ips for ERT      Diego Brain   : $SSH_STATIC_IPS"
+echo "Found Static ips for ERT      MySQL         : $ERT_MYSQL_STATIC_IPS"
+echo "Found Static ips for SERVICES MySQL Tile    : $MYSQL_TILE_STATIC_IPS"
+echo "Found Static ips for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_STATIC_IPS"
 echo ""
 
 if [[ ISOZONE_SWITCH_NAME_1 ]]; then
@@ -86,9 +115,14 @@ if [[ ISOZONE_SWITCH_NAME_1 ]]; then
   
   export ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "IsoZone-01" "go-router")
   export ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_FILE_OUTPUT" "IsoZone-01" "tcp-router")
+  export ISOZONE_SWITCH_1_GOROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_FILE_OUTPUT" "IsoZone-01" "go-router")
+  export ISOZONE_SWITCH_1_TCPROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_FILE_OUTPUT" "IsoZone-01" "tcp-router")
 
   echo "Found ISOZONE-01                          : $ISOZONE_SWITCH_1_VCENTER_NETWORK"
-  echo "Found static ips for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS"
-  echo "Found static ips for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS"
+  echo ""
+  echo "Found LBR    ip  for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_LBR_IP"
+  echo "Found Static ips for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS"
+  echo "Found LBR    ip  for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_1_TCPROUTER_LBR_IP"
+  echo "Found Static ips for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS"
   echo ""
 fi
