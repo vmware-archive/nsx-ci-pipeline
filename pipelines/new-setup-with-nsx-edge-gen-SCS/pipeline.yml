@@ -174,15 +174,6 @@ resources:
 
 jobs:
 
-- name: nsx-edge-gen
-  plan:
-  - aggregate:
-    - get: concourse-vsphere
-    - get: nsx-edge-gen
-  - task: nsx-edge-gen
-    file: concourse-vsphere/tasks/nsx-edge-gen/task.yml
-    params: *nsx-edge-params
-
 - name: install-opsmgr
   plan:
   - aggregate:
