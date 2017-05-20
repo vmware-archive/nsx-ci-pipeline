@@ -60,7 +60,7 @@ groups:
 
 - name: nsx-edge-destroy
   jobs:
-  - nsx-edge-gen
+  - nsx-edge-destroy
 
 resource_types:
 - name: pivnet
@@ -477,7 +477,7 @@ jobs:
         globs:
         - "*linux_amd64*"
     - get: nsx-edge-gen
-    
+
   - task: delete-opsman
     file: concourse-vsphere/tasks/delete-opsman/task.yml
     params:
