@@ -189,16 +189,6 @@ jobs:
       OM_RESOURCE_POOL: {{om_resource_pool}}
       OM_DISK_TYPE: {{disk_type}}
       OM_VM_POWER_STATE: {{om_vm_power_state}}
-      VCENTER_HOST: {{vcenter_host}}
-      VCENTER_USR: {{vcenter_usr}}
-      VCENTER_PWD: {{vcenter_pwd}}
-      VCENTER_DATA_CENTER: {{vcenter_data_center}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
-      NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
-      NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
-      NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
 
   - task: config-opsman
@@ -218,7 +208,7 @@ jobs:
     - get: om-cli
       globs: om-linux
       passed: [install-opsmgr]
-    - get: nsx-edge-gen    
+    - get: nsx-edge-gen
 
   - task: nsx-edge-list
     file: concourse-vsphere/tasks/nsx-edge-list/task.yml
@@ -276,17 +266,10 @@ jobs:
       AZ_SINGLETON: {{az_singleton}}
       NTP_SERVER_IPS: {{ntp_servers}}
       OPS_DIR_HOSTNAME: {{ops_dir_hostname}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
-      NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
-      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
-      NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
-      NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
       ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
-      ISOZONE_SWITCH_1_NETWORK_NAME: {{isozone_switch_1_network_name}}
       ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
+      ISOZONE_SWITCH_1_NETWORK_NAME: {{isozone_switch_1_network_name}}
       ISOZONE_SWITCH_1_VCENTER_NETWORK: {{isozone_switch_1_vsphere_network}}
       ISOZONE_SWITCH_1_EXCLUDED_RANGE: {{isozone_switch_1_excluded_range}}
       ISOZONE_SWITCH_1_NW_DNS: {{isozone_switch_1_nw_dns}}
@@ -404,7 +387,7 @@ jobs:
       ETCD_TLS_SERVER_INSTANCES: {{etcd_tls_server_instances}}
       NFS_SERVER_INSTANCES: {{nfs_server_instances}}
       MYSQL_PROXY_INSTANCES: {{mysql_proxy_instances}}
-      MYSQL_INSTANCES: {{mysql_instances}}      
+      MYSQL_INSTANCES: {{mysql_instances}}
       BACKUP_PREPARE_INSTANCES: {{backup_prepare_instances}}
       CCDB_INSTANCES: {{ccdb_instances}}
       UAADB_INSTANCES: {{uaadb_instances}}

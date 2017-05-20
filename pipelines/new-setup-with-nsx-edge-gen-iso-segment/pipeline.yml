@@ -10,10 +10,18 @@ groups:
   - config-elastic-runtime-tile
   - product-apply-changes
 
+- name: cleanup
+  jobs:
+  - uninstall-products
+  - uninstall-opsmgr-nsx-edge
+
 - name: nsx-edge-gen
   jobs:
   - nsx-edge-gen
 
+- name: nsx-edge-destroy
+  jobs:
+  - nsx-edge-destroy
 
 resource_types:
 - name: pivnet

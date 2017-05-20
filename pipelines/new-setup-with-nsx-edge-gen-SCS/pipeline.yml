@@ -1,4 +1,41 @@
 ---
+# Use reference instead of repeating the nsx-edge params
+nsx_edge_params: &nsx-edge-params
+  VCENTER_HOST: {{vcenter_host}}
+  VCENTER_USR: {{vcenter_usr}}
+  VCENTER_PWD: {{vcenter_pwd}}
+  VCENTER_DATA_CENTER: {{vcenter_data_center}}
+  NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
+  NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
+  NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
+  NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
+  NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
+  NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
+  NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
+  NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
+  ESG_GATEWAY_1: {{esg_gateway_1}}
+  ESG_SIZE: {{esg_size}}
+  ESG_OSPF_PASSWORD_1: {{esg_ospf_password_1}}
+  ESG_CLI_USERNAME_1: {{esg_cli_username_1}}
+  ESG_CLI_PASSWORD_1: {{esg_cli_password_1}}
+  ESG_CERTS_NAME_1: {{esg_certs_name_1}}
+  ESG_CERTS_CONFIG_SYSTEMDOMAIN_1: {{system_domain}}
+  ESG_CERTS_CONFIG_APPDOMAIN_1: {{apps_domain}}
+  ESG_OPSMGR_UPLINK_IP_1: {{esg_opsmgr_uplink_ip_1}}
+  ESG_GO_ROUTER_UPLINK_IP_1: {{esg_go_router_uplink_ip_1}}
+  ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}
+  ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
+  ESG_DEFAULT_UPLINK_IP_1: {{esg_default_uplink_ip_1}}
+  ESG_DEFAULT_UPLINK_PG_1: {{esg_default_uplink_pg_1}}
+  ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
+  ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
+  ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_go_router_isozone_1_uplink_ip_1}}
+  ESG_GO_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
+  ESG_GO_ROUTER_ISOZONE_1_INST_1: {{esg_go_router_isozone_1_inst_1}}
+  ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
+  ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
+  ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
+
 groups:
 - name: full
   jobs:
@@ -47,12 +84,10 @@ groups:
   - config-scs-tile
   - product-apply-changes-scs
 
-- name: dev
+- name: cleanup
   jobs:
-  - dev-nsx-edge-gen
-  - destroy-installation
-  - dev-nsx-edge-destroy
-
+  - uninstall-products
+  - uninstall-opsmgr-nsx-edge
 
 resource_types:
 - name: pivnet
@@ -87,7 +122,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-ci-pipeline.git
-    branch: master
+    branch: test
 
 - name: nsx-edge-gen
   type: git
@@ -146,42 +181,7 @@ jobs:
     - get: nsx-edge-gen
   - task: nsx-edge-gen
     file: concourse-vsphere/tasks/nsx-edge-gen/task.yml
-    params:
-      VCENTER_HOST: {{vcenter_host}}
-      VCENTER_USR: {{vcenter_usr}}
-      VCENTER_PWD: {{vcenter_pwd}}
-      VCENTER_DATA_CENTER: {{vcenter_data_center}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
-      NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
-      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
-      NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
-      NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
-      NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
-      ESG_GATEWAY_1: {{esg_gateway_1}}
-      ESG_SIZE: {{esg_size}}
-      ESG_OSPF_PASSWORD_1: {{esg_ospf_password_1}}
-      ESG_CLI_USERNAME_1: {{esg_cli_username_1}}
-      ESG_CLI_PASSWORD_1: {{esg_cli_password_1}}
-      ESG_CERTS_NAME_1: {{esg_certs_name_1}}
-      ESG_CERTS_CONFIG_SYSTEMDOMAIN_1: {{system_domain}}
-      ESG_CERTS_CONFIG_APPDOMAIN_1: {{apps_domain}}
-      ESG_OPSMGR_UPLINK_IP_1: {{esg_opsmgr_uplink_ip_1}}
-      ESG_GO_ROUTER_UPLINK_IP_1: {{esg_go_router_uplink_ip_1}}
-      ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}
-      ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
-      ESG_DEFAULT_UPLINK_IP_1: {{esg_default_uplink_ip_1}}
-      ESG_DEFAULT_UPLINK_PG_1: {{esg_default_uplink_pg_1}}
-      ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
-      ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
-      ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_go_router_isozone_1_uplink_ip_1}}
-      ESG_GO_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
-      ESG_GO_ROUTER_ISOZONE_1_INST_1: {{esg_go_router_isozone_1_inst_1}}
-      ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
-      ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
-      ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
-
+    params: *nsx-edge-params
 
 - name: install-opsmgr
   plan:
@@ -200,6 +200,10 @@ jobs:
         globs:
         - "*.ova"
     - get: nsx-edge-gen
+
+  - task: nsx-edge-list
+    file: concourse-vsphere/tasks/nsx-edge-list/task.yml
+    params: *nsx-edge-params
 
   - task: deploy-opsman
     file: concourse-vsphere/tasks/import-opsman/task.yml
@@ -227,26 +231,7 @@ jobs:
       OM_RESOURCE_POOL: {{om_resource_pool}}
       OM_DISK_TYPE: {{disk_type}}
       OM_VM_POWER_STATE: {{om_vm_power_state}}
-      VCENTER_HOST: {{vcenter_host}}
-      VCENTER_USR: {{vcenter_usr}}
-      VCENTER_PWD: {{vcenter_pwd}}
-      VCENTER_DATA_CENTER: {{vcenter_data_center}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
-      NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
-      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
-      NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
-      NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
-      ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
-      ISOZONE_SWITCH_1_NETWORK_NAME: {{isozone_switch_1_network_name}}
-      ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
-      ISOZONE_SWITCH_1_VSPHERE_NETWORK: {{isozone_switch_1_vsphere_network}}
-      ISOZONE_SWITCH_1_EXCLUDED_RANGE: {{isozone_switch_1_excluded_range}}
-      ISOZONE_SWITCH_1_NW_DNS: {{isozone_switch_1_nw_dns}}
-      ISOZONE_SWITCH_1_NW_GATEWAY: {{isozone_switch_1_nw_gateway}}
-      ISOZONE_SWITCH_1_NW_AZ: {{isozone_switch_1_nw_az}}
 
   - task: config-opsman
     file: concourse-vsphere/tasks/config-opsman/task.yml
@@ -266,6 +251,10 @@ jobs:
       globs: om-linux
       passed: [install-opsmgr]
     - get: nsx-edge-gen
+
+  - task: nsx-edge-list
+    file: concourse-vsphere/tasks/nsx-edge-list/task.yml
+    params: *nsx-edge-params
 
   - task: config-opsdir
     file: concourse-vsphere/tasks/config-opsdir/task.yml
@@ -319,15 +308,10 @@ jobs:
       AZ_SINGLETON: {{az_singleton}}
       NTP_SERVER_IPS: {{ntp_servers}}
       OPS_DIR_HOSTNAME: {{ops_dir_hostname}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
-      NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
-      NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
-      NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
       ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
       ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
+      ISOZONE_SWITCH_1_NETWORK_NAME: {{isozone_switch_1_network_name}}
       ISOZONE_SWITCH_1_VCENTER_NETWORK: {{isozone_switch_1_vsphere_network}}
       ISOZONE_SWITCH_1_EXCLUDED_RANGE: {{isozone_switch_1_excluded_range}}
       ISOZONE_SWITCH_1_NW_DNS: {{isozone_switch_1_nw_dns}}
@@ -386,6 +370,11 @@ jobs:
     - get: om-cli
       globs: om-linux
       passed: [upload-elastic-runtime-tile]
+    - get: nsx-edge-gen
+
+  - task: nsx-edge-list
+    file: concourse-vsphere/tasks/nsx-edge-list/task.yml
+    params: *nsx-edge-params
 
   - task: config-er-tile
     file: concourse-vsphere/tasks/config-ert/task.yml
@@ -456,6 +445,7 @@ jobs:
       DOPPLER_INSTANCES: {{doppler_instances}}
       LOGGREGATOR_TC_INSTANCES: {{loggregator_traffic_controller_instances}}
       TCP_ROUTER_INSTANCES: {{tcp_router_instances}}
+      DEPLOYMENT_NW_CIDR: {{deployment_nw_cidr}}
 
 - name: product-apply-changes
   plan:
@@ -525,6 +515,11 @@ jobs:
     - get: om-cli
       globs: om-linux
       passed: [upload-mysql-tile]
+    - get: nsx-edge-gen
+
+  - task: nsx-edge-list
+    file: concourse-vsphere/tasks/nsx-edge-list/task.yml
+    params: *nsx-edge-params
 
   - task: config-mysql-tile
     file: concourse-vsphere/tasks/config-mysql/task.yml
@@ -607,6 +602,11 @@ jobs:
     - get: om-cli
       globs: om-linux
       passed: [upload-rabbit-tile]
+    - get: nsx-edge-gen
+
+  - task: nsx-edge-list
+    file: concourse-vsphere/tasks/nsx-edge-list/task.yml
+    params: *nsx-edge-params
 
   - task: config-rabbit-tile
     file: concourse-vsphere/tasks/config-rabbit/task.yml
@@ -723,47 +723,23 @@ jobs:
 ## Dev ##
 #########
 
-- name: dev-nsx-edge-gen
+- name: nsx-edge-gen
   plan:
   - aggregate:
     - get: concourse-vsphere
     - get: nsx-edge-gen
-  - task: dev-nsx-edge-gen
+  - task: nsx-edge-gen
     file: concourse-vsphere/tasks/nsx-edge-gen/task.yml
-    params:
-      VCENTER_HOST: {{vcenter_host}}
-      VCENTER_USR: {{vcenter_usr}}
-      VCENTER_PWD: {{vcenter_pwd}}
-      VCENTER_DATA_CENTER: {{vcenter_data_center}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
-      NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
-      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
-      NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
-      NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
-      NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
-      ESG_GATEWAY_1: {{esg_gateway_1}}
-      ESG_SIZE: {{esg_size}}
-      ESG_CLI_USERNAME_1: {{esg_cli_username_1}}
-      ESG_CLI_PASSWORD_1: {{esg_cli_password_1}}
-      ESG_CERTS_NAME_1: {{esg_certs_name_1}}
-      ESG_CERTS_CONFIG_SYSTEMDOMAIN_1: {{system_domain}}
-      ESG_CERTS_CONFIG_APPDOMAIN_1: {{apps_domain}}
-      ESG_OPSMGR_UPLINK_IP_1: {{esg_opsmgr_uplink_ip_1}}
-      ESG_GO_ROUTER_UPLINK_IP_1: {{esg_go_router_uplink_ip_1}}
-      ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}
-      ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
-      ESG_DEFAULT_UPLINK_IP_1: {{esg_default_uplink_ip_1}}
-      ESG_DEFAULT_UPLINK_PG_1: {{esg_default_uplink_pg_1}}
-      ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
-      ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
-      ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_go_router_isozone_1_uplink_ip_1}}
-      ESG_GO_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
-      ESG_GO_ROUTER_ISOZONE_1_INST_1: {{esg_go_router_isozone_1_inst_1}}
-      ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
-      ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
-      ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
+    params: *nsx-edge-params
+
+- name: nsx-edge-destroy
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+    - get: nsx-edge-gen
+  - task: nsx-edge-destroy
+    file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
+    params: *nsx-edge-params
 
 - name: destroy-installation
   plan:
@@ -798,36 +774,52 @@ jobs:
       GOVC_DATACENTER: {{vcenter_data_center}}
       OM_VM_NAME: {{om_vm_name}}
 
-- name: dev-nsx-edge-destroy
+- name: uninstall-products
   plan:
   - aggregate:
     - get: concourse-vsphere
-    - get: nsx-edge-gen
-  - task: dev-nsx-edge-destroy
-    file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
+    - get: om-cli
+      globs: om-linux
+#      passed: [config-elastic-runtime-tile]
+#    - get: govc
+#      params:
+#        globs:
+#        - "*linux_amd64*"
+  - task: delete-products
+    file: concourse-vsphere/tasks/delete-products/task.yml
     params:
-      VCENTER_HOST: {{vcenter_host}}
-      VCENTER_USR: {{vcenter_usr}}
-      VCENTER_PWD: {{vcenter_pwd}}
-      VCENTER_DATA_CENTER: {{vcenter_data_center}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
-      NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
-      NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
-      NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
-      NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
-      NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
-      NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
-      ESG_GATEWAY_1: {{esg_gateway_1}}
-      ESG_SIZE: {{esg_size}}
-      ESG_CLI_USERNAME_1: {{esg_cli_username_1}}
-      ESG_CLI_PASSWORD_1: {{esg_cli_password_1}}
-      ESG_CERTS_NAME_1: {{esg_certs_name_1}}
-      ESG_CERTS_CONFIG_SYSTEMDOMAIN_1: {{system_domain}}
-      ESG_CERTS_CONFIG_APPDOMAIN_1: {{apps_domain}}
-      ESG_OPSMGR_UPLINK_IP_1: {{esg_opsmgr_uplink_ip_1}}
-      ESG_GO_ROUTER_UPLINK_IP_1: {{esg_go_router_uplink_ip_1}}
-      ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}
-      ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
-      ESG_DEFAULT_UPLINK_IP_1: {{esg_default_uplink_ip_1}}
-      ESG_DEFAULT_UPLINK_PG_1: {{esg_default_uplink_pg_1}}
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+
+  - task: apply-changes
+    file: concourse-vsphere/tasks/apply-changes/task.yml
+    params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+
+- name: uninstall-opsmgr-nsx-edge
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+    - get: om-cli
+      globs: om-linux
+      passed: [uninstall-products]
+    - get: govc
+      params:
+        globs:
+        - "*linux_amd64*"
+    - get: nsx-edge-gen
+
+  - task: delete-opsman
+    file: concourse-vsphere/tasks/delete-opsman/task.yml
+    params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+
+  - task: nsx-edge-destroy
+    file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
+    params: *nsx-edge-params
+

@@ -17,11 +17,11 @@ params:
   TILE_RABBIT_PROXY_VIP:
   TILE_RABBIT_ADMIN_USER:
   TILE_RABBIT_ADMIN_PASSWD:
-
+  
 inputs:
   - name: concourse-vsphere
   - name: om-cli
   - name: nsx-gen-output
-  
+
 run:
   path: concourse-vsphere/tasks/config-rabbit/task.sh

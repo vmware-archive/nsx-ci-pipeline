@@ -224,12 +224,13 @@ apps_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR DEFAULT APPS URL> #REQUIRE
 
 skip_cert_verify: true
 
-## ERT Static IP's for the following jobs
+## Leave the ips blank for ERT Static IP's - will be filled using nsx-gen generated config
+## leave it empty
 ha_proxy_ips:
-router_static_ips: 192.168.20.10,192.168.20.11,192.168.20.12,192.168.20.13
-tcp_router_static_ips: 192.168.20.30,192.168.20.31,192.168.20.32,192.168.20.33
-ssh_static_ips: 192.168.20.20,192.168.20.21,192.168.20.22
-ert_mysql_static_ips: 192.168.20.41,192.168.20.42,192.168.20.43
+router_static_ips:
+tcp_router_static_ips:
+ssh_static_ips:
+ert_mysql_static_ips:
 
 ## ERT Target email address to receive mysql monitor notifications
 mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED example: mglynn@pivotal.io
@@ -263,19 +264,22 @@ tcp_router_instances: 1
 ##################
 tile_az_mysql_singleton: az1
 tile_azs_mysql: az1,az2,az3
-tile_mysql_proxy_ips: 192.168.24.10,192.168.24.11,192.168.24.12
-tile_mysql_proxy_vip: 172.16.100.20 #Default 
-tile_mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED example: mglynn@pivotal.io
+## Leave the ips and vip blank for MySQL Tile - will be filled using nsx-gen generated config
+tile_mysql_proxy_ips:
+tile_mysql_proxy_vip:
+tile_mysql_monitor_email: mglynn@pivotal.io
 
 ###################
 ## Rabbit config ##
 ###################
 tile_az_rabbit_singleton: az1
 tile_azs_rabbit: az1,az2,az3
-tile_rabbit_proxy_ips: 192.168.24.30,192.168.24.31,192.168.24.32
-tile_rabbit_proxy_vip: 172.16.100.30 #Default 
+## Leave the ips and vip blank for Rabbit Tile - will be filled using nsx-gen generated config
+tile_rabbit_proxy_ips:
+tile_rabbit_proxy_vip:
 tile_rabbit_admin_user: rabbitadmin
 tile_rabbit_admin_passwd: rabbitadmin
+
 
 ###################
 ## SCS config ##

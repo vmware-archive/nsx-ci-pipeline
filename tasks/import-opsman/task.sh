@@ -28,30 +28,6 @@ export GOVC_DATASTORE=$GOVC_DATASTORE
 export GOVC_NETWORK=$GOVC_NETWORK
 export GOVC_RESOURCE_POOL=$GOVC_RESOURCE_POOL
 
-# function fn_get_pg {
-#   local search_string_net=$1
-#   local search_string="lswitch-${NSX_EDGE_GEN_NAME}-${search_string_net}"
-#   vwire_pg=$(
-#   ./nsx-gen/bin/nsxgen \
-#   -c $NSX_EDGE_GEN_NAME \
-#   -vcenter_addr $VCENTER_HOST   \
-#   -vcenter_user $VCENTER_USR   \
-#   -vcenter_pass $VCENTER_PWD   \
-#   -vcenter_dc $VCENTER_DATA_CENTER   \
-#   -vcenter_ds $NSX_EDGE_GEN_EDGE_DATASTORE   \
-#   -vcenter_cluster $NSX_EDGE_GEN_EDGE_CLUSTER  \
-#   -nsxmanager_addr $NSX_EDGE_GEN_NSX_MANAGER_ADDRESS   \
-#   -nsxmanager_user $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER   \
-#   -nsxmanager_pass $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD   \
-#   -nsxmanager_tz $NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE   \
-#   -nsxmanager_uplink_ip 172.16.0.0 \
-#   list 2>/dev/null | \
-#   grep ${search_string} | \
-#   grep -v "Effective" | awk '{print$5}' |  grep "virtualwire" | sort -u
-#   )
-#   echo $vwire_pg
-# }
-
 function fn_get_pg {
   local search_string_net=$1
   local search_string="lswitch-${NSX_EDGE_GEN_NAME}-${search_string_net}"

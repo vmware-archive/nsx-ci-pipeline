@@ -12,8 +12,6 @@ export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
 export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
 
 if [ -e "${NSX_GEN_OUTPUT}" ]; then
-  #echo "Saved nsx gen output:"
-  #cat ${NSX_GEN_OUTPUT}
   source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
@@ -27,31 +25,6 @@ function fn_get_azs {
      local azs_csv=$1
      echo $azs_csv | awk -F "," -v quote='"' -v OFS='", "' '$1=$1 {print quote $0 quote}'
 }
-
-# function fn_get_pg {
-#   local search_string_net=$1
-#   local search_string="lswitch-${NSX_EDGE_GEN_NAME}-${search_string_net}"
-#   vwire_pg=$(
-#   ./nsx-gen/bin/nsxgen \
-#   -c $NSX_EDGE_GEN_NAME \
-#   -vcenter_addr $VCENTER_HOST   \
-#   -vcenter_user $VCENTER_USR   \
-#   -vcenter_pass $VCENTER_PWD   \
-#   -vcenter_dc $VCENTER_DATA_CENTER   \
-#   -vcenter_ds $NSX_EDGE_GEN_EDGE_DATASTORE   \
-#   -vcenter_cluster $NSX_EDGE_GEN_EDGE_CLUSTER  \
-#   -nsxmanager_addr $NSX_EDGE_GEN_NSX_MANAGER_ADDRESS   \
-#   -nsxmanager_user $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER   \
-#   -nsxmanager_pass $NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD   \
-#   -nsxmanager_tz $NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE   \
-#   -nsxmanager_dportgroup $NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP \
-#   -nsxmanager_uplink_ip 172.16.0.0 \
-#   list 2>/dev/null | \
-#   grep ${search_string} | \
-#   grep -v "Effective" | awk '{print$5}' |  grep "virtualwire" | sort -u
-#   )
-#   echo $vwire_pg
-# }
 
 function fn_get_pg {
   local search_string_net=$1
@@ -123,33 +96,6 @@ MY_SERVICES_AZS=$(fn_get_azs $SERVICES_NW_AZ)
 MY_DYNAMIC_SERVICES_AZS=$(fn_get_azs $DYNAMIC_SERVICES_NW_AZ)
 MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
 
-# echo "Detecting NSX Logical Switch Backing Port Groups..."
-#   pushd nsx-edge-gen >/dev/null 2>&1
-#   if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
-#   ./nsx-gen/bin/nsxgen -i $NSX_EDGE_GEN_NAME init
-#   if [[ $INFRA_VCENTER_NETWORK = "nsxgen" ]]; then export INFRA_VCENTER_NETWORK=$(fn_get_pg "Infra"); echo "Found $INFRA_VCENTER_NETWORK"; fi
-#   if [[ $DEPLOYMENT_VCENTER_NETWORK = "nsxgen" ]]; then export DEPLOYMENT_VCENTER_NETWORK=$(fn_get_pg "Ert"); echo "Found $DEPLOYMENT_VCENTER_NETWORK"; fi
-#   if [[ $SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export SERVICES_VCENTER_NETWORK=$(fn_get_pg "PCF-Tiles"); echo "Found $SERVICES_VCENTER_NETWORK"; fi
-#   if [[ $DYNAMIC_SERVICES_VCENTER_NETWORK = "nsxgen" ]]; then export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "Dynamic-Services"); echo "Found $DYNAMIC_SERVICES_VCENTER_NETWORK"; fi
-#   if [[ $ISOZONE_SWITCH_1_VCENTER_NETWORK = "nsxgen" ]]; then export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "IsoZone-01"); echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"; fi
-#   popd >/dev/null 2>&1
-
-
-# echo "Detecting NSX Logical Switch Backing Port Groups..."
-
-# echo "Found $INFRA_VCENTER_NETWORK"
-# echo "Found $DEPLOYMENT_VCENTER_NETWORK"
-# echo "Found $SERVICES_VCENTER_NETWORK"
-# echo "Found $DYNAMIC_SERVICES_VCENTER_NETWORK"
-# echo ""
-# echo "Found Ops Infra static ip: $OPS_INFRA_STATIC_IPS"
-# echo "Found GoRouter Ert static ips: $GOROUTER_ERT_STATIC_IPS"
-# echo "Found TcpRouter Ert static ips: $TCP_ROUTER_ERT_STATIC_IPS"
-# echo "Found Diego Brain Ert static ips: $SSH_ERT_STATIC_IPS"
-# echo "Found MySQL Ert static ips: $MYSQL_ERT_STATIC_IPS"
-# echo "Found MySQL Tile static ips: $MYSQL_TILE_STATIC_IPS"
-# echo "Found RabbitMQ Tile static ips: $RABBITMQ_TILE_STATIC_IPS"
-
 # Check for Errors with obtaining the networks
 if [ "$INFRA_VCENTER_NETWORK" == "" \
   -o "$DEPLOYMENT_VCENTER_NETWORK" == "" \
@@ -180,28 +126,6 @@ if [ "$INFRA_OPS_STATIC_IPS" == "" \
   echo "  Found static ips for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_STATIC_IPS"
   exit 1
 fi
-# echo "Found Ops Infra static ip: $OPS_INFRA_STATIC_IPS"
-# echo "Found GoRouter Ert static ips: $GOROUTER_ERT_STATIC_IPS"
-# echo "Found TcpRouter Ert static ips: $TCP_ROUTER_ERT_STATIC_IPS"
-# echo "Found Diego Brain Ert static ips: $SSH_ERT_STATIC_IPS"
-# echo "Found MySQL Ert static ips: $MYSQL_ERT_STATIC_IPS"
-# echo "Found MySQL Tile static ips: $MYSQL_TILE_STATIC_IPS"
-# echo "Found RabbitMQ Tile static ips: $RABBITMQ_TILE_STATIC_IPS"
-
-
-# if [[ ISOZONE_SWITCH_NAME_1 ]]; then
-# #  export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "$NSX_FILE_OUTPUT" "IsoZone-1")
-# #  export GOROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "go-router")
-# #  export TCPROUTER_ISOZONE_SWITCH_1_STATIC_IPS=$(fn_get_static_ips "$NSX_FILE_OUTPUT" "IsoZone-1" "tcp-router")
-
-#   echo "Found $ISOZONE_SWITCH_1_VCENTER_NETWORK"
-#   echo "Found GoRouter IsoZone static ip: $GOROUTER_ISOZONE_SWITCH_1_STATIC_IPS"
-#   echo "Found TcpRouter IsoZone static ip: $TCPROUTER_ISOZONE_SWITCH_1_STATIC_IPS"
-  
-#   if [ "$ISOZONE_SWITCH_1_VCENTER_NETWORK" == "" ]; then
-#     echo "ISOZONE-01 network could not be located from NSX!!"
-#   fi
-# fi
 
 NETWORK_CONFIGURATION=$(cat <<-EOF
 {
