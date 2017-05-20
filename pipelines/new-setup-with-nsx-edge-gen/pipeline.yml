@@ -49,7 +49,7 @@ groups:
   - config-elastic-runtime-tile
   - product-apply-changes
 
-- name: destroy-all
+- name: cleanup
   jobs:
   - uninstall-products
   - uninstall-opsmgr-nsx-edge
@@ -458,6 +458,13 @@ jobs:
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
 
+  - task: apply-changes
+    file: concourse-vsphere/tasks/apply-changes/task.yml
+    params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+
 - name: uninstall-opsmgr-nsx-edge
   plan:
   - aggregate:
@@ -465,13 +472,19 @@ jobs:
     - get: om-cli
       globs: om-linux
       passed: [uninstall-products]
+    - get: govc
+      params:
+        globs:
+        - "*linux_amd64*"
     - get: nsx-edge-gen
+    
   - task: delete-opsman
     file: concourse-vsphere/tasks/delete-opsman/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
+
   - task: nsx-edge-destroy
     file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
     params: *nsx-edge-params
