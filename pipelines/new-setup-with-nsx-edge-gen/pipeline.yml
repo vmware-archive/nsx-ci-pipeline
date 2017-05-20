@@ -49,10 +49,19 @@ groups:
   - config-elastic-runtime-tile
   - product-apply-changes
 
+- name: destroy-all
+  jobs:
+  - uninstall-products
+  - uninstall-opsmgr
+  - nsx-edge-destroy
+
 - name: nsx-edge-gen
   jobs:
   - nsx-edge-gen
 
+- name: nsx-edge-destroy
+  jobs:
+  - nsx-edge-gen
 
 resource_types:
 - name: pivnet
@@ -122,6 +131,15 @@ jobs:
     - get: nsx-edge-gen
   - task: nsx-edge-gen
     file: concourse-vsphere/tasks/nsx-edge-gen/task.yml
+    params: *nsx-edge-params
+
+- name: nsx-edge-destroy
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+    - get: nsx-edge-gen
+  - task: nsx-edge-destroy
+    file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
     params: *nsx-edge-params
 
 - name: install-opsmgr
@@ -422,3 +440,36 @@ jobs:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
+
+- name: uninstall-products
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+    - get: om-cli
+      globs: om-linux
+#      passed: [config-elastic-runtime-tile]
+#    - get: govc
+#      params:
+#        globs:
+#        - "*linux_amd64*"
+  - task: delete-products
+    file: concourse-vsphere/tasks/delete-products/task.yml
+    params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+
+- name: uninstall-opsmgr
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+    - get: om-cli
+      globs: om-linux
+      passed: [uninstall-products]
+  - task: delete-opsman
+    file: concourse-vsphere/tasks/delete-opsman/task.yml
+    params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+

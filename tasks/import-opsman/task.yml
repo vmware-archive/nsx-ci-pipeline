@@ -47,7 +47,6 @@ inputs:
   - name: pivnet-opsman-product
   - name: concourse-vsphere
   - name: govc
-  #- name: nsx-edge-gen
   - name: nsx-gen-output
 
 run:
