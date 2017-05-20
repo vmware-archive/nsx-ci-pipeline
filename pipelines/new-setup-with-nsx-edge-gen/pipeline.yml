@@ -52,8 +52,7 @@ groups:
 - name: destroy-all
   jobs:
   - uninstall-products
-  - uninstall-opsmgr
-  - nsx-edge-destroy
+  - uninstall-opsmgr-nsx-edge
 
 - name: nsx-edge-gen
   jobs:
@@ -459,17 +458,20 @@ jobs:
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
 
-- name: uninstall-opsmgr
+- name: uninstall-opsmgr-nsx-edge
   plan:
   - aggregate:
     - get: concourse-vsphere
     - get: om-cli
       globs: om-linux
       passed: [uninstall-products]
+    - get: nsx-edge-gen
   - task: delete-opsman
     file: concourse-vsphere/tasks/delete-opsman/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
-
+  - task: nsx-edge-destroy
+    file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
+    params: *nsx-edge-params
