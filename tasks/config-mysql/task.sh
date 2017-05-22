@@ -47,6 +47,7 @@ NETWORK=$(cat <<-EOF
 EOF
 )
 
+# Use MYSQL_TILE_LBR_IP & MYSQL_TILE_STATIC_IPS from nsx-edge-list
 # PROPERTIES=$(cat <<-EOF
 # {
 #   ".proxy.static_ips": {
