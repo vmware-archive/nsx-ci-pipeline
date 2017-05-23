@@ -145,7 +145,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: elastic-runtime
-    product_version: '1\.10\.\7.*'
+    product_version: '1\.10\.7\.*'
     sort_by: semver
 
 - name: pivnet-mysql-product
@@ -524,6 +524,7 @@ jobs:
       TILE_MYSQL_PROXY_IPS: {{tile_mysql_proxy_ips}}
       TILE_MYSQL_PROXY_VIP: {{tile_mysql_proxy_vip}}
       TILE_MYSQL_MONITOR_EMAIL: {{tile_mysql_monitor_email}}
+      TEST_PARAM: IGNORE
 
 - name: product-apply-changes-mysql
   plan:
@@ -612,6 +613,7 @@ jobs:
       TILE_RABBIT_PROXY_VIP: {{tile_rabbit_proxy_vip}}
       TILE_RABBIT_ADMIN_USER: {{tile_rabbit_admin_user}}
       TILE_RABBIT_ADMIN_PASSWD: {{tile_rabbit_admin_passwd}}
+      TEST_PARAM: IGNORE
 
 - name: product-apply-changes-rabbit
   plan:
