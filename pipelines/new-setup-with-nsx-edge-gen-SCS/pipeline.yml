@@ -25,6 +25,12 @@ nsx_edge_params: &nsx-edge-params
   ESG_GO_ROUTER_UPLINK_IP_1: {{esg_go_router_uplink_ip_1}}
   ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}
   ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
+  ESG_GO_ROUTER_INSTANCES_1: {{router_instances}}
+  ESG_DIEGO_BRAIN_INSTANCES_1: {{diego_brain_instances}}
+  ESG_TCP_ROUTER_INSTANCES_1: {{tcp_router_instances}}
+  ESG_MYSQL_ERT_PROXY_INSTANCES_1: {{mysql_proxy_instances}}
+  ESG_MYSQL_TILE_PROXY_INSTANCES_1: {{tile_mysql_proxy_instances}}
+  ESG_RABBITMQ_TILE_PROXY_INSTANCES_1: {{tile_rabbit_proxy_instances}}
   ESG_DEFAULT_UPLINK_IP_1: {{esg_default_uplink_ip_1}}
   ESG_DEFAULT_UPLINK_PG_1: {{esg_default_uplink_pg_1}}
   ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
@@ -35,6 +41,7 @@ nsx_edge_params: &nsx-edge-params
   ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
   ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
   ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
+
 
 groups:
 - name: full
@@ -524,7 +531,10 @@ jobs:
       TILE_MYSQL_PROXY_IPS: {{tile_mysql_proxy_ips}}
       TILE_MYSQL_PROXY_VIP: {{tile_mysql_proxy_vip}}
       TILE_MYSQL_MONITOR_EMAIL: {{tile_mysql_monitor_email}}
-      TEST_PARAM: IGNORE
+      TILE_MYSQL_PROXY_INSTANCES: {{tile_mysql_proxy_instances}}
+      TILE_MYSQL_BACKUP_PREPARE_INSTANCES: {{tile_mysql_backup_prepare_instances}}
+      TILE_MYSQL_MONITORING_INSTANCES: {{tile_mysql_monitoring_instances}}
+      TILE_MYSQL_BROKER_INSTANCES: {{tile_mysql_broker_instances}} 
 
 - name: product-apply-changes-mysql
   plan:
@@ -613,7 +623,7 @@ jobs:
       TILE_RABBIT_PROXY_VIP: {{tile_rabbit_proxy_vip}}
       TILE_RABBIT_ADMIN_USER: {{tile_rabbit_admin_user}}
       TILE_RABBIT_ADMIN_PASSWD: {{tile_rabbit_admin_passwd}}
-      TEST_PARAM: IGNORE
+      TILE_RABBIT_PROXY_INSTANCES: {{tile_rabbit_proxy_instances}}
 
 - name: product-apply-changes-rabbit
   plan:

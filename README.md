@@ -240,7 +240,7 @@ consul_server_instances: 1
 nats_instances: 1
 etcd_tls_server_instances: 1
 nfs_server_instances: 1
-mysql_proxy_instances: 1
+mysql_proxy_instances: 2             # Override number of proxies
 mysql_instances: 1
 backup_prepare_instances: 0
 ccdb_instances: 0
@@ -248,22 +248,29 @@ uaadb_instances: 0
 uaa_instances: 1
 cloud_controller_instances: 1
 ha_proxy_instances: 0
-router_instances: 1
+router_instances: 1                  # Override number of Routers
 mysql_monitor_instances: 1
 clock_global_instances: 1
 cloud_controller_worker_instances: 1
 diego_database_instances: 1
-diego_brain_instances: 1
-diego_cell_instances: 3
+diego_brain_instances: 1             # Override number of Diego Brains
+diego_cell_instances: 3              # Override number of Diego Cells
 doppler_instances: 1
 loggregator_traffic_controller_instances: 1
-tcp_router_instances: 1
+tcp_router_instances: 1              # Override number of TCP Routers
 
 ##################
 ## MYSQL config ##
 ##################
 tile_az_mysql_singleton: az1
 tile_azs_mysql: az1,az2,az3
+
+# Override the instances count as needed
+tile_mysql_proxy_instances: 2
+tile_mysql_backup_prepare_instances: 0
+tile_mysql_monitoring_instances: 1
+tile_mysql_broker_instances: 2
+
 ## Leave the ips and vip blank for MySQL Tile - will be filled using nsx-gen generated config
 tile_mysql_proxy_ips:
 tile_mysql_proxy_vip:
@@ -274,6 +281,10 @@ tile_mysql_monitor_email: mglynn@pivotal.io
 ###################
 tile_az_rabbit_singleton: az1
 tile_azs_rabbit: az1,az2,az3
+
+# Override the instances count as needed
+tile_rabbit_proxy_instances: 2
+
 ## Leave the ips and vip blank for Rabbit Tile - will be filled using nsx-gen generated config
 tile_rabbit_proxy_ips:
 tile_rabbit_proxy_vip:
@@ -295,7 +306,9 @@ tile_azs_scs: az1,az2,az3
  -	`fly -t lite login`
  -  `fly -t lite set-pipeline -p pcf -c pipelines/new-setup-with-nsx-edge-gen/pipeline.yml -l params/env1-params.yml`
  -	`fly -t lite unpause-pipeline -p pcf`
+
 Note: The pipeline in `pipelines/new-setup-with-nsx-edge-gen/pipeline.yml` would install the NSX Edge components together with the Ops Mgr and ERT tile. 
+
 ![](./images/pipeline_nsx.png)
 
 Use the `pipelines/new-setup-with-nsx-edge-gen-SCS/pipeline.yml` for complete installation of NSX Edge with Ops Mgr, ERT, MySQL, RabbitMQ and Spring Cloud Services Tiles. Edit the set-pipeline to following:

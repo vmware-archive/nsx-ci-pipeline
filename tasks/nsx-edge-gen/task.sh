@@ -38,6 +38,12 @@ fi
 -esg_go_router_uplink_ip_1 $ESG_GO_ROUTER_UPLINK_IP_1   \
 -esg_diego_brain_uplink_ip_1 $ESG_DIEGO_BRAIN_UPLINK_IP_1   \
 -esg_tcp_router_uplink_ip_1 $ESG_TCP_ROUTER_UPLINK_IP_1   \
+-esg_go_router_inst_1 $ROUTER_INSTANCES \
+-esg_diego_brain_inst_1 $DIEGO_BRAIN_INSTANCES \
+-esg_tcp_router_inst_1 $TCP_ROUTER_INSTANCES \
+-esg_mysql_ert_inst_1 $ESG_MYSQL_ERT_PROXY_INSTANCES_1 \
+-esg_mysql_tile_inst_1 $ESG_MYSQL_TILE_PROXY_INSTANCES_1  \
+-esg_rabbitmq_tile_inst_1 $ESG_RABBITMQ_TILE_PROXY_INSTANCES_1 \
 -esg_gateway_1 $ESG_GATEWAY_1 \
 -vcenter_addr $VCENTER_HOST   \
 -vcenter_user $VCENTER_USR   \
