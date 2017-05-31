@@ -624,6 +624,7 @@ jobs:
       TILE_RABBIT_ADMIN_USER: {{tile_rabbit_admin_user}}
       TILE_RABBIT_ADMIN_PASSWD: {{tile_rabbit_admin_passwd}}
       TILE_RABBIT_PROXY_INSTANCES: {{tile_rabbit_proxy_instances}}
+      TILE_RABBIT_SERVER_INSTANCES: {{tile_rabbit_server_instances}}
 
 - name: product-apply-changes-rabbit
   plan:

@@ -109,9 +109,9 @@ echo ""
 
 if [[ ISOZONE_SWITCH_NAME_1 ]]; then
   export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_OUTPUT" "IsoZone-01")
-  if [ "$ISOZONE_SWITCH_1_VCENTER_NETWORK" == "" ]; then
-    echo "ISOZONE-01 network could not be located from NSX!!"
-  fi
+  # if [ "$ISOZONE_SWITCH_1_VCENTER_NETWORK" == "" ]; then
+  #   echo "ISOZONE-01 network could not be located from NSX!!"
+  # fi
   
   export ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "IsoZone-01" "go-router")
   export ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "IsoZone-01" "tcp-router")

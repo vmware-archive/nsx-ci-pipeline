@@ -271,7 +271,8 @@ tile_mysql_backup_prepare_instances: 0
 tile_mysql_monitoring_instances: 1
 tile_mysql_broker_instances: 2
 
-## Leave the ips and vip blank for MySQL Tile - will be filled using nsx-gen generated config
+## Leave the ips and vip blank for MySQL Tile 
+## - will be filled using nsx-gen generated config
 tile_mysql_proxy_ips:
 tile_mysql_proxy_vip:
 tile_mysql_monitor_email: mglynn@pivotal.io
@@ -284,8 +285,10 @@ tile_azs_rabbit: az1,az2,az3
 
 # Override the instances count as needed
 tile_rabbit_proxy_instances: 2
+tile_rabbit_server_instances: 2
 
-## Leave the ips and vip blank for Rabbit Tile - will be filled using nsx-gen generated config
+## Leave the ips and vip blank for Rabbit Tile 
+## - will be filled using nsx-gen generated config
 tile_rabbit_proxy_ips:
 tile_rabbit_proxy_vip:
 tile_rabbit_admin_user: rabbitadmin

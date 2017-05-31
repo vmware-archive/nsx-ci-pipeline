@@ -92,7 +92,7 @@ RESOURCES=$(cat <<-EOF
     "instance_type": {"id": "automatic"},
     "instances" : $TILE_MYSQL_MONITORING_INSTANCES
   },
-  "broker": {
+  "cf-mysql-broker": {
     "instance_type": {"id": "automatic"},
     "instances" : $TILE_MYSQL_BROKER_INSTANCES
   }
