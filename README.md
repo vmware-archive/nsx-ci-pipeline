@@ -181,7 +181,11 @@ syslog_host:
 syslog_port:
 syslog_protocol:
 
-network_point_of_entry: external_non_ssl
+# ssl_termination - valid values listed below
+# haproxy - haproxy handles ssl termination
+# external_ssl - gorouter handles ssl termination
+# external_non_ssl - for lbr handles ssl termination - default
+ssl_termination: external_non_ssl # Default
 
 ## ERT Wildcard domain certs go here
 ssl_cert:

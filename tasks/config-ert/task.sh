@@ -85,24 +85,58 @@ CF_PROPERTIES=$(cat <<-EOF
   ".properties.syslog_protocol": {
     "value": "$SYSLOG_PROTOCOL"
   },
-  ".properties.networking_point_of_entry": {
-    "value": "$NETWORK_POINT_OF_ENTRY"
-  },
 EOF
 )
 
-if [[ $NETWORK_POINT_OF_ENTRY = "external_ssl" ]]; then
+if [[ "$SSL_TERMINATION" == "haproxy" ]]; then
+
+echo "Terminating SSL on HAProxy"
 CF_PROPERTIES=$(cat <<-EOF
 $CF_PROPERTIES
+  ".properties.networking_point_of_entry": {
+    "value": "haproxy"
+  },
+  ".properties.networking_point_of_entry.haproxy.ssl_rsa_certificate": {
+    "value": {
+      "cert_pem": $SSL_CERT,
+      "private_key_pem": $SSL_PRIVATE_KEY
+    }
+  }
+}
+EOF
+)
+
+elif [[ "$SSL_TERMINATION" == "external_ssl" ]]; then
+echo "Terminating SSL on GoRouters"
+
+CF_PROPERTIES=$(cat <<-EOF
+$CF_PROPERTIES
+  ".properties.networking_point_of_entry": {
+    "value": "external_ssl"
+  },
   ".properties.networking_point_of_entry.external_ssl.ssl_rsa_certificate": {
     "value": {
       "cert_pem": $SSL_CERT,
       "private_key_pem": $SSL_PRIVATE_KEY
     }
-  },
+  }
+}
 EOF
 )
+
+elif [[ "$SSL_TERMINATION" == "external_non_ssl" ]]; then
+echo "Terminating SSL on Load Balancers"
+CF_PROPERTIES=$(cat <<-EOF
+$CF_PROPERTIES
+  ".properties.networking_point_of_entry": {
+    "value": "external_non_ssl"
+  }
+}
+EOF
+)
+
 fi
+
 
 CF_PROPERTIES=$(cat <<-EOF
 $CF_PROPERTIES

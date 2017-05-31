@@ -329,7 +329,7 @@ jobs:
       SYSLOG_PORT: {{syslog_port}}
       SYSLOG_PROTOCOL: {{syslog_protocol}}
       LOGGREGATOR_ENDPOINT_PORT: {{loggregator_endpoint_port}}
-      NETWORK_POINT_OF_ENTRY: {{network_point_of_entry}}
+      SSL_TERMINATION: {{ssl_termination}}
       SSL_CERT: {{ssl_cert}}
       SSL_PRIVATE_KEY: {{ssl_private_key}}
       DISABLE_HTTP_PROXY: {{disable_http_proxy}}
