@@ -386,9 +386,11 @@ jobs:
       SYSLOG_HOST: {{syslog_host}}
       SYSLOG_PORT: {{syslog_port}}
       SYSLOG_PROTOCOL: {{syslog_protocol}}
+      SYSLOG_DRAIN_BUFFER_SIZE: {{syslog_drain_buffer_size}}
       LOGGREGATOR_ENDPOINT_PORT: {{loggregator_endpoint_port}}
       SSL_TERMINATION: {{ssl_termination}}
       SSL_CERT: {{ssl_cert}}
+      OPS_MGR_GENERATE_SSL_ENDPOINT: {{om_generate_ssl_endpoint}}
       SSL_PRIVATE_KEY: {{ssl_private_key}}
       DISABLE_HTTP_PROXY: {{disable_http_proxy}}
       TCP_ROUTING: {{tcp_routing}}
@@ -401,7 +403,7 @@ jobs:
       SMTP_USER: {{smtp_user}}
       SMTP_PWD: {{smtp_pwd}}
       SMTP_AUTH_MECHANISM: {{smtp_auth_mechanism}}
-      UAA_METHOD: {{uaa_method}}
+      AUTHENTICATION_MODE: {{authentication_mode}}
       LDAP_URL: {{ldap_url}}
       LDAP_USER: {{ldap_user}}
       LDAP_PWD: {{ldap_pwd}}

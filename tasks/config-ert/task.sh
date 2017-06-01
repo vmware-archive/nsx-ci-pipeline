@@ -75,16 +75,7 @@ CF_PROPERTIES=$(cat <<-EOF
 {
   ".properties.logger_endpoint_port": {
     "value": "$LOGGREGATOR_ENDPOINT_PORT"
-  },
-  ".properties.syslog_host": {
-    "value": "$SYSLOG_HOST"
-  },
-  ".properties.syslog_port": {
-    "value": "$SYSLOG_PORT"
-  },
-  ".properties.syslog_protocol": {
-    "value": "$SYSLOG_PROTOCOL"
-  },
+  },  
 EOF
 )
 
@@ -101,8 +92,7 @@ $CF_PROPERTIES
       "cert_pem": $SSL_CERT,
       "private_key_pem": $SSL_PRIVATE_KEY
     }
-  }
-}
+  },
 EOF
 )
 
@@ -119,8 +109,7 @@ $CF_PROPERTIES
       "cert_pem": $SSL_CERT,
       "private_key_pem": $SSL_PRIVATE_KEY
     }
-  }
-}
+  },
 EOF
 )
 
@@ -130,8 +119,8 @@ CF_PROPERTIES=$(cat <<-EOF
 $CF_PROPERTIES
   ".properties.networking_point_of_entry": {
     "value": "external_non_ssl"
-  }
-}
+  },
+
 EOF
 )
 
@@ -155,27 +144,6 @@ $CF_PROPERTIES
   ".properties.security_acknowledgement": {
     "value": "X"
   },
-  ".properties.smtp_from": {
-    "value": "$SMTP_FROM"
-  },
-  ".properties.smtp_address": {
-    "value": "$SMTP_ADDRESS"
-  },
-  ".properties.smtp_port": {
-    "value": "$SMTP_PORT"
-  },
-  ".properties.smtp_credentials": {
-    "value": {
-      "identity": "$SMTP_USER",
-      "password": "$SMTP_PWD"
-    }
-  },
-  ".properties.smtp_enable_starttls_auto": {
-    "value": true
-  },
-  ".properties.smtp_auth_mechanism": {
-    "value": "$SMTP_AUTH_MECHANISM"
-  },
   ".properties.system_blobstore": {
     "value": "internal"
   },
@@ -193,43 +161,6 @@ $CF_PROPERTIES
   },
 EOF
 )
-
-if [[ $UAA_METHOD = "ldap" ]]; then
-CF_PROPERTIES=$(cat <<-EOF
-$CF_PROPERTIES
-  ".properties.uaa.ldap.url": {
-    "value": "$LDAP_URL"
-  },
-  ".properties.uaa.ldap.credentials": {
-    "value": {
-      "identity": "$LDAP_USER",
-      "password": "$LDAP_PWD"
-    }
-  },
-  ".properties.uaa.ldap.search_base": {
-    "value": "$SEARCH_BASE"
-  },
-  ".properties.uaa.ldap.search_filter": {
-    "value": "$SEARCH_FILTER"
-  },
-  ".properties.uaa.ldap.group_search_base": {
-    "value": "$GROUP_SEARCH_BASE"
-  },
-  ".properties.uaa.ldap.group_search_filter": {
-    "value": "$GROUP_SEARCH_FILTER"
-  },
-  ".properties.uaa.ldap.mail_attribute_name": {
-    "value": "$MAIL_ATTR_NAME"
-  },
-  ".properties.uaa.ldap.first_name_attribute": {
-    "value": "$FIRST_NAME_ATTR"
-  },
-  ".properties.uaa.ldap.last_name_attribute": {
-    "value": "$LAST_NAME_ATTR"
-  },
-EOF
-)
-fi
 
 CF_PROPERTIES=$(cat <<-EOF
 $CF_PROPERTIES
@@ -386,6 +317,162 @@ EOF
 )
 
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_PROPERTIES" -pn "$CF_NETWORK" -pr "$CF_RESOURCES"
+
+if [[ "$AUTHENTICATION_MODE" == "internal" ]]; then
+echo "Configuring Internal Authentication in ERT..."
+CF_AUTH_PROPERTIES=$(cat <<-EOF
+{
+  ".properties.uaa": {
+    "value": "$AUTHENTICATION_MODE"
+  },
+  ".uaa.service_provider_key_credentials": {
+        "value": {
+          "cert_pem": "",
+          "private_key_pem": ""
+        }
+  }
+}
+EOF
+)
+
+elif [[ "$AUTHENTICATION_MODE" == "ldap" ]]; then
+echo "Configuring LDAP Authentication in ERT..."
+CF_AUTH_PROPERTIES=$(cat <<-EOF
+{
+  ".properties.uaa": {
+    "value": "ldap"
+  },
+  ".properties.uaa.ldap.url": {
+    "value": "$LDAP_URL"
+  },
+  ".properties.uaa.ldap.credentials": {
+    "value": {
+      "identity": "$LDAP_USER",
+      "password": "$LDAP_PWD"
+    }
+  },
+  ".properties.uaa.ldap.search_base": {
+    "value": "$SEARCH_BASE"
+  },
+  ".properties.uaa.ldap.search_filter": {
+    "value": "$SEARCH_FILTER"
+  },
+  ".properties.uaa.ldap.group_search_base": {
+    "value": "$GROUP_SEARCH_BASE"
+  },
+  ".properties.uaa.ldap.group_search_filter": {
+    "value": "$GROUP_SEARCH_FILTER"
+  },
+  ".properties.uaa.ldap.mail_attribute_name": {
+    "value": "$MAIL_ATTR_NAME"
+  },
+  ".properties.uaa.ldap.first_name_attribute": {
+    "value": "$FIRST_NAME_ATTR"
+  },
+  ".properties.uaa.ldap.last_name_attribute": {
+    "value": "$LAST_NAME_ATTR"
+  },
+  ".uaa.service_provider_key_credentials": {
+        "value": {
+          "cert_pem": "",
+          "private_key_pem": ""
+        }
+  }  
+}
+EOF
+)
+
+fi
+
+saml_cert_domains=$(cat <<-EOF
+  {"domains": ["*.$SYSTEM_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
+EOF
+)
+
+saml_cert_response=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$saml_cert_domains"`
+
+saml_cert_pem=$(echo $saml_cert_response | jq --raw-output '.certificate')
+saml_key_pem=$(echo $saml_cert_response | jq --raw-output '.key')
+
+cat > saml_auth_filters <<'EOF'
+.".uaa.service_provider_key_credentials".value = {
+  "cert_pem": $saml_cert_pem,
+  "private_key_pem": $saml_key_pem
+}
+EOF
+
+CF_AUTH_WITH_SAML_CERTS=$(echo $CF_AUTH_PROPERTIES | jq \
+  --arg saml_cert_pem "$saml_cert_pem" \
+  --arg saml_key_pem "$saml_key_pem" \
+  --from-file saml_auth_filters \
+  --raw-output)
+
+
+./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_AUTH_WITH_SAML_CERTS"
+
+if [[ ! -z "$SYSLOG_HOST" ]]; then
+
+echo "Configuring Syslog in ERT..."
+
+CF_SYSLOG_PROPERTIES=$(cat <<-EOF
+{
+  ".doppler.message_drain_buffer_size": {
+    "value": $SYSLOG_DRAIN_BUFFER_SIZE
+  },
+  ".cloud_controller.security_event_logging_enabled": {
+    "value": $ENABLE_SECURITY_EVENT_LOGGING
+  },
+  ".properties.syslog_host": {
+    "value": "$SYSLOG_HOST"
+  },
+  ".properties.syslog_port": {
+    "value": "$SYSLOG_PORT"
+  },
+  ".properties.syslog_protocol": {
+    "value": "$SYSLOG_PROTOCOL"
+  }
+}
+EOF
+)
+
+./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_SYSLOG_PROPERTIES"
+
+fi
+
+if [[ ! -z "$SMTP_ADDRESS" ]]; then
+
+echo "Configuring SMTP in ERT..."
+
+CF_SMTP_PROPERTIES=$(cat <<-EOF
+{
+  ".properties.smtp_from": {
+    "value": "$SMTP_FROM"
+  },
+  ".properties.smtp_address": {
+    "value": "$SMTP_ADDRESS"
+  },
+  ".properties.smtp_port": {
+    "value": "$SMTP_PORT"
+  },
+  ".properties.smtp_credentials": {
+    "value": {
+      "identity": "$SMTP_USER",
+      "password": "$SMTP_PWD"
+    }
+  },
+  ".properties.smtp_enable_starttls_auto": {
+    "value": true
+  },
+  ".properties.smtp_auth_mechanism": {
+    "value": "$SMTP_AUTH_MECHANISM"
+  }
+}
+EOF
+)
+
+./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_SMTP_PROPERTIES"
+
+fi
 
 # Set Errands to on Demand
 echo "applying errand configuration"

@@ -180,11 +180,13 @@ loggregator_endpoint_port: 443
 syslog_host:
 syslog_port:
 syslog_protocol:
+enable_security_event_logging: false
+syslog_drain_buffer_size: 10000
 
-# ssl_termination - valid values listed below
+# ssl_termination - valid values: (external_ssl|external_non_ssl|haproxy)
 # haproxy - haproxy handles ssl termination
 # external_ssl - gorouter handles ssl termination
-# external_non_ssl - for lbr handles ssl termination - default
+# external_non_ssl - for lbr handles ssl termination - default for NSX-V
 ssl_termination: external_non_ssl # Default
 
 ## ERT Wildcard domain certs go here
@@ -192,6 +194,11 @@ ssl_cert:
 ssl_private_key:
 
 disable_http_proxy: true
+
+## Get this from the OPS Manager API docs for your release. Possible values are
+## - /api/v0/certificates/generate (for 1.10)
+## - /api/v0/rsa_certificates (for 1.9)
+om_generate_ssl_endpoint: /api/v0/certificates/generate
 
 ## ERT TCP routing and routing services
 tcp_routing: enable
@@ -208,7 +215,8 @@ smtp_pwd:
 smtp_auth_mechanism:
 
 ## ERT Auth Config method
-uaa_method: internal
+## Authentication type needed. SAML is not presently supported.
+authentication_mode: internal # (internal|ldap) If ldap, specify ldap configuration below.
 
 ## ERT LDAP Configuration goes here
 ldap_url:
