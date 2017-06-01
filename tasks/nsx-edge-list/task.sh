@@ -19,7 +19,7 @@ if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
 
 # Init new config file template
 ./nsx-gen/bin/nsxgen -i $NSX_EDGE_GEN_NAME init
-ARGS=""
+ARGS=" "
 
 if [[ ISOZONE_SWITCH_NAME_1 ]]; then
   ARGS="$ARGS 
@@ -34,7 +34,7 @@ if [[ ISOZONE_SWITCH_NAME_1 ]]; then
   "
 fi
 
-if [[ ISOZONE_SWITCH_NAME_2 ]]; then
+if [ "$ISOZONE_SWITCH_NAME_2" != "" ]; then
   ARGS="$ARGS 
   -isozone_switch_name_2 $ISOZONE_SWITCH_NAME_2
   -isozone_switch_cidr_2 $ISOZONE_SWITCH_CIDR_2
@@ -47,7 +47,7 @@ if [[ ISOZONE_SWITCH_NAME_2 ]]; then
   "
 fi
 
-if [[ ISOZONE_SWITCH_NAME_3 ]]; then
+if [ "$ISOZONE_SWITCH_NAME_3" != "" ]; then
   ARGS="$ARGS 
   -isozone_switch_name_3 $ISOZONE_SWITCH_NAME_3
   -isozone_switch_cidr_3 $ISOZONE_SWITCH_CIDR_3

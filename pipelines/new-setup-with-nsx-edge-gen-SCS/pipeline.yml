@@ -65,7 +65,7 @@ groups:
   - upload-iso-tile
   - config-iso-tile
   - product-apply-changes-iso
-  
+
 - name: ert
   jobs:
   - nsx-edge-gen
@@ -192,8 +192,8 @@ resources:
   type: pivnet
   source:
     api_token: {{pivnet_token}}
-    product_slug: p-isolation-segment
-    product_version: '1\.10\..*'
+    product_slug: isolation-segment
+    product_version: '1\.10\.*'
     sort_by: semver
 
 jobs:

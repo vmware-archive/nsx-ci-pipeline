@@ -136,8 +136,8 @@ resources:
   type: pivnet
   source:
     api_token: {{pivnet_token}}
-    product_slug: p-isolation-segment
-    product_version: '1\.10\..*'
+    product_slug: isolation-segment
+    product_version: '1\.10\.*'
     sort_by: semver
 
 jobs:
@@ -486,7 +486,7 @@ jobs:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
-      OPS_MGR_GENERATE_SSL_ENDPOINT: {{ops_mgr_generate_ssl_endpoint}}
+      OPS_MGR_GENERATE_SSL_ENDPOINT: {{om_generate_ssl_endpoint}}
       NETWORK_NAME: {{tile_iso_network_name_1}}
       PRODUCT_NAME: {{tile_iso_product_name_1}}
       TILE_AZS_ISO: {{tile_azs_iso_1}}
@@ -498,7 +498,7 @@ jobs:
       SSL_CERT: {{tile_iso_ssl_cert_1}}
       SSL_PRIVATE_KEY: {{tile_iso_ssl_private_key_1}}
       ROUTER_SSL_CIPHERS: {{tile_iso_router_ssl_ciphers_1}}
-      ROUTER_STATIC_IPS: {{tile_iso_router_static_ips}}
+      ROUTER_STATIC_IPS: {{tile_iso_router_static_ips_1}}
       CELL_DISK_CAPACITY: {{tile_iso_cell_disk_capacity_1}}
       CELL_MEMORY_CAPACITY: {{tile_iso_cell_memory_capacity_1}}
       APPLICATION_NETWORK_CIDR: {{tile_iso_application_network_cidr_1}}
@@ -508,7 +508,7 @@ jobs:
       IS_ROUTER_INSTANCES: {{tile_iso_router_instances_1}}
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
 
-- name: product-apply-changes-mysql
+- name: product-apply-changes-iso
   plan:
   - aggregate:
     - get: concourse-vsphere
