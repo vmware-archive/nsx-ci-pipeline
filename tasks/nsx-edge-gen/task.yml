@@ -4,7 +4,12 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source: {repository: virtmerlin/nsx-edge-gen-worker}
+  source: 
+    repository: 192.168.10.15/pcf/virtmerlin/nsx-edge-gen-worker
+    insecure_registries: ["192.168.10.15"]
+    username: gmerlin
+    password: P1v0t4l!
+    email: gmerlin@vmware.com
 
 params:
   VCENTER_HOST:
