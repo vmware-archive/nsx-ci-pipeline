@@ -156,9 +156,6 @@ $CF_PROPERTIES
   ".mysql_proxy.service_hostname": {
     "value": "$ERT_MYSQL_LBR_IP"
   },
-  ".properties.uaa": {
-    "value": "$UAA_METHOD"
-  },
 EOF
 )
 
