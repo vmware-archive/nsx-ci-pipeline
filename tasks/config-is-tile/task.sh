@@ -16,6 +16,43 @@ else
   exit 1
 fi
 
+# Can only support one version of the default isolation segment tile
+# Search for the tile using the specified product name if available
+# or search using p-iso as default iso product name
+if [[ -z "$PRODUCT_NAME" ]]; then
+  TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-iso`
+else
+  TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep $PRODUCT_NAME`
+fi
+
+PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
+PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
+
+./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
+
+function fn_get_azs {
+     local azs_csv=$1
+     echo $azs_csv | awk -F "," -v braceopen='{' -v braceclose='}' -v name='"name":' -v quote='"' -v OFS='"},{"name":"' '$1=$1 {print braceopen name quote $0 quote braceclose}'
+}
+
+TILE_AVAILABILITY_ZONES=$(fn_get_azs $TILE_AZS_ISO)
+
+
+NETWORK=$(cat <<-EOF
+{
+  "singleton_availability_zone": {
+    "name": "$TILE_AZ_ISO_SINGLETON"
+  },
+  "other_availability_zones": [
+    $TILE_AVAILABILITY_ZONES
+  ],
+  "network": {
+    "name": "$NETWORK_NAME"
+  }
+}
+EOF
+)
+
 if [[ -z "$SSL_CERT" ]]; then
 DOMAINS=$(cat <<-EOF
   {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
@@ -31,7 +68,23 @@ EOF
 
 fi
 
-PRODUCT_PROPERTIES=$(cat <<-EOF
+# Supporting atmost 3 isolation segments
+case "$NETWORK_NAME" in
+  *01$) 
+  ROUTER_STATIC_IPS=$ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS
+  TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS
+  ;;
+  *02$)
+  ROUTER_STATIC_IPS=$ISOZONE_SWITCH_2_GOROUTER_STATIC_IPS
+  TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_2_TCPROUTER_STATIC_IPS
+  ;;
+  *03$)
+  ROUTER_STATIC_IPS=$ISOZONE_SWITCH_3_GOROUTER_STATIC_IPS
+  TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_3_TCPROUTER_STATIC_IPS
+  ;;
+esac
+
+PROPERTIES=$(cat <<-EOF
 {
   ".isolated_router.static_ips": {
     "value": "$ROUTER_STATIC_IPS"
@@ -58,29 +111,7 @@ PRODUCT_PROPERTIES=$(cat <<-EOF
 EOF
 )
 
-function fn_other_azs {
-  local azs_csv=$1
-  echo $azs_csv | awk -F "," -v braceopen='{' -v braceclose='}' -v name='"name":' -v quote='"' -v OFS='"},{"name":"' '$1=$1 {print braceopen name quote $0 quote braceclose}'
-}
-
-OTHER_AZS=$(fn_other_azs $DEPLOYMENT_NW_AZS)
-
-PRODUCT_NETWORK_CONFIG=$(cat <<-EOF
-{
-  "singleton_availability_zone": {
-    "name": "$SINGLETON_JOB_AZ"
-  },
-  "other_availability_zones": [
-    $OTHER_AZS
-  ],
-  "network": {
-    "name": "$NETWORK_NAME"
-  }
-}
-EOF
-)
-
-PRODUCT_RESOURCE_CONFIG=$(cat <<-EOF
+RESOURCES=$(cat <<-EOF
 {
   "isolated_router": {
     "instance_type": {"id": "automatic"},
@@ -94,10 +125,10 @@ PRODUCT_RESOURCE_CONFIG=$(cat <<-EOF
 EOF
 )
 
-$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PRODUCT_PROPERTIES" -pn "$PRODUCT_NETWORK_CONFIG" -pr "$PRODUCT_RESOURCE_CONFIG"
+$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
 
 if [[ "$SSL_TERMINATION_POINT" == "terminate_at_router" ]]; then
-echo "Terminating SSL at the gorouters and using self signed/provided certs..."
+echo "Terminating SSL at the goRouters and using self signed/provided certs..."
 SSL_PROPERTIES=$(cat <<-EOF
 {
   ".properties.networking_point_of_entry": {
@@ -117,7 +148,7 @@ EOF
 )
 
 elif [[ "$SSL_TERMINATION_POINT" == "terminate_at_router_ert_cert" ]]; then
-echo "Terminating SSL at the gorouters and reusing self signed/provided certs from ERT tile..."
+echo "Terminating SSL at the goRouters and reusing self signed/provided certs from ERT tile..."
 SSL_PROPERTIES=$(cat <<-EOF
 {
   ".properties.networking_point_of_entry": {

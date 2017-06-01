@@ -126,3 +126,37 @@ if [[ ISOZONE_SWITCH_NAME_1 ]]; then
   echo "Found Static IPs for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS"
   echo ""
 fi
+
+if [[ ISOZONE_SWITCH_NAME_2 ]]; then
+  export ISOZONE_SWITCH_2_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_OUTPUT" "IsoZone-02")
+ 
+  export ISOZONE_SWITCH_2_GOROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "IsoZone-02" "go-router")
+  export ISOZONE_SWITCH_2_TCPROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "IsoZone-02" "tcp-router")
+  export ISOZONE_SWITCH_2_GOROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_OUTPUT" "IsoZone-02" "go-router")
+  export ISOZONE_SWITCH_2_TCPROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_OUTPUT" "IsoZone-02" "tcp-router")
+
+  echo "Found ISOZONE-02                          : $ISOZONE_SWITCH_2_VCENTER_NETWORK"
+  echo ""
+  echo "Found LBR    IP  for ISOZONE-02 GoRouter  : $ISOZONE_SWITCH_2_GOROUTER_LBR_IP"
+  echo "Found Static IPs for ISOZONE-02 GoRouter  : $ISOZONE_SWITCH_2_GOROUTER_STATIC_IPS"
+  echo "Found LBR    IP  for ISOZONE-02 TcpRouter : $ISOZONE_SWITCH_2_TCPROUTER_LBR_IP"
+  echo "Found Static IPs for ISOZONE-02 TcpRouter : $ISOZONE_SWITCH_2_TCPROUTER_STATIC_IPS"
+  echo ""
+fi
+
+if [[ ISOZONE_SWITCH_NAME_3 ]]; then
+  export ISOZONE_SWITCH_3_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_OUTPUT" "IsoZone-03")
+  
+  export ISOZONE_SWITCH_3_GOROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "IsoZone-03" "go-router")
+  export ISOZONE_SWITCH_3_TCPROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "IsoZone-03" "tcp-router")
+  export ISOZONE_SWITCH_3_GOROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_OUTPUT" "IsoZone-03" "go-router")
+  export ISOZONE_SWITCH_3_TCPROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_OUTPUT" "IsoZone-03" "tcp-router")
+
+  echo "Found ISOZONE-03                          : $ISOZONE_SWITCH_3_VCENTER_NETWORK"
+  echo ""
+  echo "Found LBR    IP  for ISOZONE-03 GoRouter  : $ISOZONE_SWITCH_3_GOROUTER_LBR_IP"
+  echo "Found Static IPs for ISOZONE-03 GoRouter  : $ISOZONE_SWITCH_3_GOROUTER_STATIC_IPS"
+  echo "Found LBR    IP  for ISOZONE-03 TcpRouter : $ISOZONE_SWITCH_3_TCPROUTER_LBR_IP"
+  echo "Found Static IPs for ISOZONE-03 TcpRouter : $ISOZONE_SWITCH_3_TCPROUTER_STATIC_IPS"
+  echo ""
+fi

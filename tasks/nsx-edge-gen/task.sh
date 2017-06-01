@@ -10,9 +10,10 @@ if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
 
 # Init new config file template
 ./nsx-gen/bin/nsxgen -i $NSX_EDGE_GEN_NAME init
+ARGS=""
 
 if [[ ISOZONE_SWITCH_NAME_1 ]]; then
-  ARGS="
+  ARGS="$ARGS 
   -isozone_switch_name_1 $ISOZONE_SWITCH_NAME_1
   -isozone_switch_cidr_1 $ISOZONE_SWITCH_CIDR_1
   -esg_go_router_isozone_1_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1
@@ -21,6 +22,32 @@ if [[ ISOZONE_SWITCH_NAME_1 ]]; then
   -esg_tcp_router_isozone_1_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1 
   -esg_tcp_router_isozone_1_switch_1 $ISOZONE_SWITCH_NAME_1
   -esg_tcp_router_isozone_1_inst_1 $ESG_TCP_ROUTER_ISOZONE_1_INST_1
+  "
+fi
+
+if [[ ISOZONE_SWITCH_NAME_2 ]]; then
+  ARGS="$ARGS 
+  -isozone_switch_name_2 $ISOZONE_SWITCH_NAME_2
+  -isozone_switch_cidr_2 $ISOZONE_SWITCH_CIDR_2
+  -esg_go_router_isozone_2_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_2_UPLINK_IP_1
+  -esg_go_router_isozone_2_switch_1 $ISOZONE_SWITCH_NAME_2
+  -esg_go_router_isozone_2_inst_1 $ESG_GO_ROUTER_ISOZONE_2_INST_1
+  -esg_tcp_router_isozone_2_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_2_UPLINK_IP_1 
+  -esg_tcp_router_isozone_2_switch_1 $ISOZONE_SWITCH_NAME_2
+  -esg_tcp_router_isozone_2_inst_1 $ESG_TCP_ROUTER_ISOZONE_2_INST_1
+  "
+fi
+
+if [[ ISOZONE_SWITCH_NAME_3 ]]; then
+  ARGS="$ARGS 
+  -isozone_switch_name_3 $ISOZONE_SWITCH_NAME_3
+  -isozone_switch_cidr_3 $ISOZONE_SWITCH_CIDR_3
+  -esg_go_router_isozone_3_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_3_UPLINK_IP_1
+  -esg_go_router_isozone_3_switch_1 $ISOZONE_SWITCH_NAME_3
+  -esg_go_router_isozone_3_inst_1 $ESG_GO_ROUTER_ISOZONE_3_INST_1
+  -esg_tcp_router_isozone_3_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_3_UPLINK_IP_1 
+  -esg_tcp_router_isozone_3_switch_1 $ISOZONE_SWITCH_NAME_3
+  -esg_tcp_router_isozone_3_inst_1 $ESG_TCP_ROUTER_ISOZONE_3_INST_1
   "
 fi
 
