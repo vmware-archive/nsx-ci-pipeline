@@ -107,7 +107,7 @@ echo "Found Static IPs for SERVICES MySQL Tile    : $MYSQL_TILE_STATIC_IPS"
 echo "Found Static IPs for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_STATIC_IPS"
 echo ""
 
-if [[ ISOZONE_SWITCH_NAME_1 ]]; then
+if [ "$ISOZONE_SWITCH_NAME_1" != "" ]; then
   export ISOZONE_SWITCH_1_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_OUTPUT" "IsoZone-01")
   # if [ "$ISOZONE_SWITCH_1_VCENTER_NETWORK" == "" ]; then
   #   echo "ISOZONE-01 network could not be located from NSX!!"
@@ -127,7 +127,7 @@ if [[ ISOZONE_SWITCH_NAME_1 ]]; then
   echo ""
 fi
 
-if [[ ISOZONE_SWITCH_NAME_2 ]]; then
+if [ "$ISOZONE_SWITCH_NAME_2" != "" ]; then
   export ISOZONE_SWITCH_2_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_OUTPUT" "IsoZone-02")
  
   export ISOZONE_SWITCH_2_GOROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "IsoZone-02" "go-router")
@@ -144,7 +144,7 @@ if [[ ISOZONE_SWITCH_NAME_2 ]]; then
   echo ""
 fi
 
-if [[ ISOZONE_SWITCH_NAME_3 ]]; then
+if [ "$ISOZONE_SWITCH_NAME_3" != "" ]; then
   export ISOZONE_SWITCH_3_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_OUTPUT" "IsoZone-03")
   
   export ISOZONE_SWITCH_3_GOROUTER_STATIC_IPS=$(fn_get_component_static_ips "$NSX_GEN_OUTPUT" "IsoZone-03" "go-router")

@@ -52,7 +52,7 @@ groups:
   - opsman-apply-changes
   - upload-elastic-runtime-tile
   - config-elastic-runtime-tile
-  - product-apply-changes
+  - product-apply-changes-ert
   - upload-mysql-tile
   - config-mysql-tile
   - product-apply-changes-mysql
@@ -464,7 +464,8 @@ jobs:
       TCP_ROUTER_INSTANCES: {{tcp_router_instances}}
       DEPLOYMENT_NW_CIDR: {{deployment_nw_cidr}}
 
-- name: product-apply-changes
+
+- name: product-apply-changes-ert
   plan:
   - aggregate:
     - get: concourse-vsphere
@@ -751,14 +752,14 @@ jobs:
   - aggregate:
     - get: concourse-vsphere
       trigger: true
-      passed: [product-apply-changes]
+      passed: [product-apply-changes-ert]
     - get: pivnet-iso-product
       params:
         globs:
         - "*.pivotal"
     - get: om-cli
       globs: om-linux
-      passed: [product-apply-changes]
+      passed: [product-apply-changes-ert]
     - get: pivnet-cli
       params:
         globs:
@@ -805,7 +806,7 @@ jobs:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
-      OPS_MGR_GENERATE_SSL_ENDPOINT: {{ops_mgr_generate_ssl_endpoint}}
+      OPS_MGR_GENERATE_SSL_ENDPOINT: {{om_generate_ssl_endpoint}}
       NETWORK_NAME: {{tile_iso_network_name_1}}
       PRODUCT_NAME: {{tile_iso_product_name_1}}
       TILE_AZS_ISO: {{tile_azs_iso_1}}
@@ -817,17 +818,17 @@ jobs:
       SSL_CERT: {{tile_iso_ssl_cert_1}}
       SSL_PRIVATE_KEY: {{tile_iso_ssl_private_key_1}}
       ROUTER_SSL_CIPHERS: {{tile_iso_router_ssl_ciphers_1}}
-      ROUTER_STATIC_IPS: {{tile_iso_router_static_ips}}
+      ROUTER_STATIC_IPS: {{tile_iso_router_static_ips_1}}
       CELL_DISK_CAPACITY: {{tile_iso_cell_disk_capacity_1}}
       CELL_MEMORY_CAPACITY: {{tile_iso_cell_memory_capacity_1}}
       APPLICATION_NETWORK_CIDR: {{tile_iso_application_network_cidr_1}}
       APPLICATION_NETWORK_MTU: {{tile_iso_application_network_mtu_1}}
       INSECURE_DOCKER_REGISTRY_LIST: {{tile_iso_insecure_docker_registry_list_1}}
       SEGMENT_NAME: {{tile_iso_segment_name_1}}
-      IS_ROUTER_INSTANCES: {{tile_iso_router_instances_1}}
+      IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst_1}} # Use the instance count provided for nsx
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
-
-- name: product-apply-changes-mysql
+      
+- name: product-apply-changes-iso
   plan:
   - aggregate:
     - get: concourse-vsphere

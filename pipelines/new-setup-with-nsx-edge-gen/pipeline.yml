@@ -52,7 +52,10 @@ groups:
   - opsman-apply-changes
   - upload-elastic-runtime-tile
   - config-elastic-runtime-tile
-  - product-apply-changes
+  - product-apply-changes-ert
+  - upload-iso-tile
+  - config-iso-tile
+  - product-apply-changes-iso
 
 - name: cleanup
   jobs:
@@ -318,7 +321,7 @@ jobs:
   - aggregate:
     - get: concourse-vsphere
       trigger: true
-      #passed: [opsman-apply-changes]
+      passed: [opsman-apply-changes]
     - get: pivnet-er-product
       params:
         globs:
@@ -427,19 +430,36 @@ jobs:
       TCP_ROUTER_INSTANCES: {{tcp_router_instances}}
       DEPLOYMENT_NW_CIDR: {{deployment_nw_cidr}}
 
+- name: product-apply-changes-ert
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+      #passed: [config-elastic-runtime-tile]
+      trigger: true
+    - get: om-cli
+      globs: om-linux
+      passed: [config-elastic-runtime-tile]
+
+  - task: apply-changes
+    file: concourse-vsphere/tasks/apply-changes/task.yml
+    params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+
 - name: upload-iso-tile
   plan:
   - aggregate:
     - get: concourse-vsphere
       trigger: true
-      passed: [product-apply-changes]
+      passed: [product-apply-changes-ert]
     - get: pivnet-iso-product
       params:
         globs:
         - "*.pivotal"
     - get: om-cli
       globs: om-linux
-      passed: [product-apply-changes]
+      passed: [product-apply-changes-ert]
     - get: pivnet-cli
       params:
         globs:
@@ -505,9 +525,9 @@ jobs:
       APPLICATION_NETWORK_MTU: {{tile_iso_application_network_mtu_1}}
       INSECURE_DOCKER_REGISTRY_LIST: {{tile_iso_insecure_docker_registry_list_1}}
       SEGMENT_NAME: {{tile_iso_segment_name_1}}
-      IS_ROUTER_INSTANCES: {{tile_iso_router_instances_1}}
+      IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst_1}} # Use the instance count provided for nsx
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
-
+      
 - name: product-apply-changes-iso
   plan:
   - aggregate:
@@ -517,23 +537,6 @@ jobs:
     - get: om-cli
       globs: om-linux
       passed: [config-iso-tile]
-
-  - task: apply-changes
-    file: concourse-vsphere/tasks/apply-changes/task.yml
-    params:
-      OPS_MGR_HOST: {{om_host}}
-      OPS_MGR_USR: {{om_usr}}
-      OPS_MGR_PWD: {{om_pwd}}
-      
-- name: product-apply-changes
-  plan:
-  - aggregate:
-    - get: concourse-vsphere
-      #passed: [config-elastic-runtime-tile]
-      trigger: true
-    - get: om-cli
-      globs: om-linux
-      passed: [config-elastic-runtime-tile]
 
   - task: apply-changes
     file: concourse-vsphere/tasks/apply-changes/task.yml
@@ -571,6 +574,7 @@ jobs:
   plan:
   - aggregate:
     - get: concourse-vsphere
+      passed: [uninstall-products]
     - get: om-cli
       globs: om-linux
       passed: [uninstall-products]

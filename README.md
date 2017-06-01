@@ -84,10 +84,11 @@ esg_tcp_router_uplink_ip_1: <YOUR TCP-ROUTER-VIP> #REQUIRED example: 10.172.16.1
 esg_gateway_1: <YOUR ROUTED-UPLINK-NETWORK GATEWAY> #REQUIRED example: 10.172.16.1
 
 ## NSX Integration Isolation Segment Params
+## Extend as needed
 isozone_switch_name_1: IsoZone-01
 isozone_switch_cidr_1: 192.168.32.0/22
 esg_go_router_isozone_1_uplink_ip_1: <YOUR ISO1-VIP> #REQUIRED example: 10.172.16.105
-esg_go_router_isozone_1_inst_1: 2 # Number of go-routers for IsoZone1
+esg_go_router_isozone_1_inst_1: 2                    # Number of go-routers for IsoZone1
 esg_tcp_router_isozone_1_uplink_ip_1: <YOUR TCP-ROUTER_ISO1-VIP> #REQUIRED example: 10.172.16.105
 esg_tcp_router_isozone_1_inst_1: 2 # Number of tcp-routers for IsoZone1
 
@@ -172,6 +173,15 @@ isozone_switch_1_excluded_range: 192.168.32.1-192.168.32.9,192.168.32.250-192.16
 isozone_switch_1_nw_dns: <YOUR PCF ISOZONE-01 NET DNS> #REQUIRED
 isozone_switch_1_nw_gateway: 192.168.32.1
 isozone_switch_1_nw_az: az1,az2,az3
+
+## Extend as needed
+#isozone_switch_2_network_name: "ISOZONE-02"
+#isozone_switch_2_vsphere_network: nsxgen
+#isozone_switch_2_excluded_range: 192.168.36.1-192.168.36.9,192.168.36.250-192.168.36.253
+#isozone_switch_2_nw_dns: <YOUR PCF ISOZONE-02 NET DNS> #REQUIRED
+#isozone_switch_2_nw_gateway: 192.168.36.1
+#isozone_switch_2_nw_az: az1,az2,az3
+
 
 loggregator_endpoint_port: 443
 
@@ -348,8 +358,10 @@ tile_iso_insecure_docker_registry_list_1:
 ## Segment Name
 tile_iso_segment_name_1: ISOZONE-01    # REQUIRED
 
+# Router instances for Iso already configured via esg_go_router_isozone_1_inst_1
+#tile_iso_router_instances_1: 1 # IGNORE
+
 ## Edit as necessary
-tile_iso_router_instances_1: 1
 tile_iso_diego_cell_instances_1: 2
 
 ```
