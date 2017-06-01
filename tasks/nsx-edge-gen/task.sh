@@ -88,5 +88,7 @@ fi
 $ARGS \
 build 
 
-
+STATUS=$?
 popd  >/dev/null 2>&1
+
+exit $STATUS
