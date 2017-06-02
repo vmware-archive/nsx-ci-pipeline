@@ -67,6 +67,16 @@ IAAS_CONFIGURATION=$(cat <<-EOF
 EOF
 )
 
+SECURITY_CONFIGURATION=$(cat <<-EOF
+{
+  "security_configuration": {
+    "generate_vm_passwords": true,
+    "trusted_certificates": "-----BEGIN CERTIFICATE-----\nMIIDRTCCAi2gAwIBAgIJANs4R2E1xj1nMA0GCSqGSIb3DQEBCwUAMCAxHjAcBgNV\nBAMTFTE5Mi4xNjguMTAuMTUtUk9PVC1DQTAeFw0xNzA2MDIyMDA5MDFaFw0yNzA1\nMzEyMDA5MDFaMCAxHjAcBgNVBAMTFTE5Mi4xNjguMTAuMTUtUk9PVC1DQTCCASIw\nDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMK0oHaBIw62Kx/bisAiD00r5/Q0\n46Vz7UssHzmkl1dROMCpCtKC3Tnk8GNwj8U9wLk7eSlVIZRBvX9XT4+VIms1laOj\nMEThBvB9oRb97LD4m6DdS6bKDG/NAFgmLPYSfWPhR4et+FgDQN5tzbPPqBjG+JY6\nHt+C7DK/KIZuOXkRLNKSkkJ0VElZeKZjQihybvAmHiNeL2Smc8wrvrxgZlVOyUpH\nV/XIjpx0Gka4u2b+N3/+b8DFTziFLFyz6dYjtbENpHrDz33QdPpBV9YdVuoA8bhw\nCgsSBMSEhfhbx0N2AwMRUKHqWg6ClKXoqxZnsk8l/zKNTR4CWNcJELgIoNUCAwEA\nAaOBgTB/MB0GA1UdDgQWBBQUZawBghOS8/WlH1RfFaa/MwSDFjBQBgNVHSMESTBH\ngBQUZawBghOS8/WlH1RfFaa/MwSDFqEkpCIwIDEeMBwGA1UEAxMVMTkyLjE2OC4x\nMC4xNS1ST09ULUNBggkA2zhHYTXGPWcwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0B\nAQsFAAOCAQEALXn3VzNIcjaQfGzwR2fgzBTQfmVy/JCTSTMPb1fr0zjb8zNKu64o\n6y9PSidNtTPCxQwOnOojReaeIv9o8n3a2rwOCmtP9PSup2Th2sBeq6djqK5qrouJ\n4SAvtf9GpQiIFx8m9cvFFAosNnlU+8g2O6qRrt+rAu5+qs5EMdjgVgDDxO5pnZXt\no2+1zYlh+YNH/SaPdruzPd3JVYw2f0ScDwmb5xBO+RaT36pSh7DeUbbtb/K4fMbl\noVRSjP0cKZwVL5QSwQ42s3KQBDV4RlOkUmFljESJXX5a+7+mJe2riVwfNrRFL5bR\n6r9377Ahp7FSjJBrq0Ht/IqXIaZPYVgvjA==\n-----END CERTIFICATE-----\n"
+  }
+}
+EOF
+)
+
 AZ_CONFIGURATION=$(cat <<-EOF
 {
   "availability_zones": [
@@ -246,6 +256,18 @@ EOF
 $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
             -i "$IAAS_CONFIGURATION" \
             -d "$DIRECTOR_CONFIG"
+
+# Check for errors
+if [ $? != 0 ]; then
+  echo "Bosh Director configuration failed!!"
+  exit 1
+fi
+
+echo "Configuring Harbor Registry security..."
+om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+  curl -p "/api/v0/staged/director/properties" \
+  -x PUT -d "$SECURITY_CONFIG"
+
 # Check for errors
 if [ $? != 0 ]; then
   echo "Bosh Director configuration failed!!"
