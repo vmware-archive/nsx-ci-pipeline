@@ -57,10 +57,10 @@ export SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_OUTPUT" "PCF-Tiles")
 export DYNAMIC_SERVICES_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_OUTPUT" "Dynamic-Services")
 
 echo ""
-echo "Found INFRASTRUCTURE   : $INFRA_VCENTER_NETWORK"
-echo "Found ERT DEPLOYMENT   : $DEPLOYMENT_VCENTER_NETWORK"
-echo "Found SERVICES         : $SERVICES_VCENTER_NETWORK"
-echo "Found DYNAMIC SERVICES : $DYNAMIC_SERVICES_VCENTER_NETWORK"
+echo "Found INFRASTRUCTURE   Virtual Switch : $INFRA_VCENTER_NETWORK"
+echo "Found ERT DEPLOYMENT   Virtual Switch : $DEPLOYMENT_VCENTER_NETWORK"
+echo "Found SERVICES         Virtual Switch : $SERVICES_VCENTER_NETWORK"
+echo "Found DYNAMIC SERVICES Virtual Switch : $DYNAMIC_SERVICES_VCENTER_NETWORK"
 echo ""
 
 # Check for Errors with obtaining the networks
