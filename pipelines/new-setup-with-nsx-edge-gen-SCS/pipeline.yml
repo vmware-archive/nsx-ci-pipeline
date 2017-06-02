@@ -75,7 +75,7 @@ groups:
   - opsman-apply-changes
   - upload-elastic-runtime-tile
   - config-elastic-runtime-tile
-  - product-apply-changes
+  - product-apply-changes-ert
 
 - name: mysql
   jobs:
