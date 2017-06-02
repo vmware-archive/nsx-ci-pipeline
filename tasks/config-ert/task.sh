@@ -314,16 +314,8 @@ EOF
 
 if [[ "$AUTHENTICATION_MODE" == "internal" ]]; then
 
-  SAML_CERTIFICATES=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "*.login.$SYSTEM_DOMAIN"`
-
-  export SAML_SSL_CERT=`echo $SAML_CERTIFICATES | jq '.certificate'`
-  export SAML_SSL_PRIVATE_KEY=`echo $SAML_CERTIFICATES | jq '.key'`
-
-  echo "SSL_CERT is" $SSL_CERT
-  echo "SSL_PRIVATE_KEY is" $SSL_PRIVATE_KEY
-
-
 echo "Configuring Internal Authentication in ERT..."
+
 CF_AUTH_PROPERTIES=$(cat <<-EOF
 {
   ".properties.uaa": {
@@ -331,8 +323,8 @@ CF_AUTH_PROPERTIES=$(cat <<-EOF
   },
   ".uaa.service_provider_key_credentials": {
         "value": {
-		"private_key_pem": "$SAML_SSL_PRIVATE_KEY",
-		"cert_pem": "$SAML_SSL_CERT"
+		"private_key_pem": "",
+		"cert_pem": ""
         }
   }
 }
@@ -393,7 +385,7 @@ saml_cert_domains=$(cat <<-EOF
 EOF
 )
 
-saml_cert_response=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$saml_cert_domains"`
+saml_cert_response=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$saml_cert_domains"`
 
 saml_cert_pem=$(echo $saml_cert_response | jq --raw-output '.certificate')
 saml_key_pem=$(echo $saml_cert_response | jq --raw-output '.key')
