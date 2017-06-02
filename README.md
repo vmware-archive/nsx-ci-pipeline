@@ -328,9 +328,9 @@ tile_azs_scs: az1,az2,az3
 ##########################################
 tile_az_iso_singleton_1: az1
 tile_azs_iso_1: az1,az2,az3
-tile_iso_product_name_1: p-isolation-segment # Default unless generated via replicator
+tile_iso_product_name_1: p-isolation-segment # Default unless overriden via replicator
 tile_iso_network_name_1: "ISOZONE-01" # Modify according to ISOZONE defined earlier
-tile_iso_apps_domain_1: iso01         # REQUIRED
+tile_iso_apps_domain_1: zone1         # REQUIRED
 
 # SSL Termination valid values: (terminate_at_router|terminate_at_router_ert_cert|terminate_before_router)
 # Default is terminate_before_router
@@ -356,7 +356,7 @@ tile_iso_application_network_mtu_1: 1454
 tile_iso_insecure_docker_registry_list_1:          
 
 ## Segment Name
-tile_iso_segment_name_1: ISOZONE-01    # REQUIRED
+tile_iso_segment_name_1: zone1    # REQUIRED
 
 # Router instances for Iso already configured via esg_go_router_isozone_1_inst_1
 #tile_iso_router_instances_1: 1 # IGNORE

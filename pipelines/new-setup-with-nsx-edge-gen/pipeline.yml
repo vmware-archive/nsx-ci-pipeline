@@ -1,5 +1,4 @@
 ---
-
 # Use reference instead of repeating the nsx-edge params
 nsx_edge_params: &nsx-edge-params
   VCENTER_HOST: {{vcenter_host}}
@@ -109,7 +108,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-ci-pipeline.git
-    branch: test
+    branch: master
 
 - name: nsx-edge-gen
   type: git
@@ -225,7 +224,7 @@ jobs:
   plan:
   - aggregate:
     - get: concourse-vsphere
-      #passed: [install-opsmgr]
+      passed: [install-opsmgr]
       trigger: true
     - get: om-cli
       globs: om-linux
@@ -298,13 +297,12 @@ jobs:
       ISOZONE_SWITCH_1_NW_GATEWAY: {{isozone_switch_1_nw_gateway}}
       ISOZONE_SWITCH_1_NW_AZ: {{isozone_switch_1_nw_az}}
 
-
 - name: opsman-apply-changes
   plan:
   - aggregate:
     - get: concourse-vsphere
       trigger: true
-      #passed: [configure-ops-director]
+      passed: [configure-ops-director]
     - get: om-cli
       globs: om-linux
       passed: [configure-ops-director]
@@ -347,7 +345,7 @@ jobs:
   - aggregate:
     - get: concourse-vsphere
       trigger: true
-      #passed: [upload-elastic-runtime-tile]
+      passed: [upload-elastic-runtime-tile]
     - get: om-cli
       globs: om-linux
       passed: [upload-elastic-runtime-tile]
@@ -434,7 +432,7 @@ jobs:
   plan:
   - aggregate:
     - get: concourse-vsphere
-      #passed: [config-elastic-runtime-tile]
+      passed: [config-elastic-runtime-tile]
       trigger: true
     - get: om-cli
       globs: om-linux
@@ -446,6 +444,10 @@ jobs:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
+
+#######################
+## Isolation Segment ##
+#######################
 
 - name: upload-iso-tile
   plan:
@@ -501,7 +503,7 @@ jobs:
     params: *nsx-edge-params
 
   - task: config-iso-tile
-    file: concourse-vsphere/tasks/config-mysql/task.yml
+    file: concourse-vsphere/tasks/config-is-tile/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
@@ -545,17 +547,50 @@ jobs:
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
 
+#############
+## Cleanup ##
+#############
+# Just to delete products and opsman while leaving the nsx edge as-is
+- name: destroy-installation
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+    - get: om-cli
+    - get: govc
+      params:
+        globs:
+        - "*linux_amd64*"
+  - task: delete-products
+    file: concourse-vsphere/tasks/destroy-installation/task.yml
+    params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+
+  - task: apply-changes
+    file: concourse-vsphere/tasks/apply-changes/task.yml
+    params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+
+  - task: delete-opsman
+    file: concourse-vsphere/tasks/delete-opsman/task.yml
+    params:
+      GOVC_INSECURE: 1
+      GOVC_URL: {{vcenter_host}}
+      GOVC_USERNAME: {{vcenter_usr}}
+      GOVC_PASSWORD: {{vcenter_pwd}}
+      GOVC_DATACENTER: {{vcenter_data_center}}
+      OM_VM_NAME: {{om_vm_name}}
+
 - name: uninstall-products
   plan:
   - aggregate:
     - get: concourse-vsphere
     - get: om-cli
       globs: om-linux
-#      passed: [config-elastic-runtime-tile]
-#    - get: govc
-#      params:
-#        globs:
-#        - "*linux_amd64*"
+      passed: [configure-ops-director]
   - task: delete-products
     file: concourse-vsphere/tasks/delete-products/task.yml
     params:
@@ -574,7 +609,6 @@ jobs:
   plan:
   - aggregate:
     - get: concourse-vsphere
-      passed: [uninstall-products]
     - get: om-cli
       globs: om-linux
       passed: [uninstall-products]
