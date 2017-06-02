@@ -8,7 +8,7 @@
 	- A NSX Transport Zone must exist
 - vSphere environment must have at least **1** of the following ***[Standard PortGroup|Distributed PortGroup|Logical Switch]*** for an `uplink` port group.  
    - This port group must have a network that is routable in the environment.  This is the `uplink` network
-- vSphere environment must have at least **1** of the following ***[Distributed PortGroup]*** for an `uplink` port group, required for DLR uplink (as transit network between the deployed esg and the dlr).  
+- vSphere environment must have at least **1** of the following ***[Distributed PortGroup]*** for an `uplink` port group, required for DLR uplink (as transit network between the deployed esg and the dlr) if DLR option is enabled. 
    - This port group must have a network that is routable in the environment.  This is the `uplink` network
 - vSphere Environment must have **5** routable ip addresses on the `uplink` network for NSX Edge Load Balancer VIPs & NAT configuration.
     - NSX Edge Primary Uplink Interface IP (Default SNAT)
@@ -16,7 +16,7 @@
     - Load Balancer _VIP-ERT_ (Go Routers)
     - Load Balancer _VIP-SSH-Proxy_ (Diego Brains)
     - Load Balancer _VIP-TCP-ROUTER(s)_
-    - any additional ips for exposed isolation segements
+    - any additional IPs for exposed isolation segements
 - DNS must resolve mapped to the following VIPs
     - **opsman.[your-system.cf.domain]** -> _VIP-Opsman_
     - ***.[your-system.cf.domain]** -> _VIP-ERT_
@@ -24,8 +24,9 @@
     - ***.[login.your-system.cf.domain]** -> _VIP-ERT_    
     - ***.[your-default-apps.cf.domain]** -> _VIP-ERT_
     - **ssh.[your-system.cf.domain]** -> _VIP-SSH-PROXY_
+    Additional entries for each isolation segment added.
     Note: system.cf.domain, default-apps.cf.domain would be subdomain under cf.domain
-- All desired vSphere Datacenter,Cluster,& Resource Pool objects must exist.  The pipeline will not create them
+- All desired vSphere Datacenter,Cluster,& Resource Pool objects must exist.  The pipeline will not create them.
 - vCenter Account must have proper permissions.
 
 
@@ -70,7 +71,12 @@ nsx_edge_gen_nsx_manager_distributed_portgroup: <YOUR NSX DISTRIBUTED PORTGROUP>
 nsx_edge_gen_egde_datastore: <YOUR DATASTORE FOR NSX EDGES> #REQUIRED example: vsanDatastore
 nsx_edge_gen_egde_cluster: <YOUR CLUSTER FOR NSX EDGES> #REQUIRED example: Cluster1
 nsx_edge_gen_name: nsx-pipeline-sample #string name for NSX objects
-esg_size: compact # valid values are compact, large, xlarge, quadlarge
+
+## To enable or disable DLR in the NSX Edge config
+## valid values: (true|false) 
+nsx_edge_gen_enable_dlr: false # REQUIRED
+
+esg_size: compact # valid values (compact|large|xlarge|quadlarge)
 esg_ospf_password_1: P1v0t4l
 esg_cli_username_1: admin 
 esg_cli_password_1: P1v0t4l!P1v0t4l!

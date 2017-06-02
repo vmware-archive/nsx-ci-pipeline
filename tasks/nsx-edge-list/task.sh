@@ -93,6 +93,7 @@ fi
 -nsxmanager_dportgroup $NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP \
 -nsxmanager_uplink_ip $ESG_DEFAULT_UPLINK_IP_1  \
 -nsxmanager_uplink_port "$ESG_DEFAULT_UPLINK_PG_1" \
+-nsxmanager_en_dlr $NSX_EDGE_GEN_ENABLE_DLR \
 $ARGS \
 list | tee $NSX_GEN_OUTPUT 2>&1 
 
