@@ -154,7 +154,7 @@ $CF_PROPERTIES
     "value": "$ERT_MYSQL_STATIC_IPS"
   },
   ".mysql_proxy.service_hostname": {
-    "value": "$ERT_MYSQL_LBR_IP"
+    "value": ""
   },
 EOF
 )
@@ -470,19 +470,34 @@ EOF
 
 fi
 
+echo "Configuring C2C in ERT..."
+CF_C2C_PROPERTIES=$(cat <<-EOF
+{
+  ".properties.container_networking": {
+    "value": "disable"
+ },
+  ".diego_cell.insecure_docker_registry_list": {
+    "value": "192.168.10.15"
+ }
+}
+EOF
+)
+
+./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_C2C_PROPERTIES"
+
 # Set Errands to on Demand
 echo "applying errand configuration"
 sleep 6
 ERT_ERRANDS=$(cat <<-EOF
 {"errands":[
-  {"name":"smoke-tests","post_deploy":"when-changed"},
-  {"name":"push-apps-manager","post_deploy":"when-changed"},
-  {"name":"notifications","post_deploy":"when-changed"},
-  {"name":"notifications-ui","post_deploy":"when-changed"},
-  {"name":"push-pivotal-account","post_deploy":"when-changed"},
-  {"name":"autoscaling","post_deploy":"when-changed"},
-  {"name":"autoscaling-register-broker","post_deploy":"when-changed"},
-  {"name":"nfsbrokerpush","post_deploy":"when-changed"}
+  {"name":"smoke-tests","post_deploy":"false"},
+  {"name":"push-apps-manager","post_deploy":"false"},
+  {"name":"notifications","post_deploy":"false"},
+  {"name":"notifications-ui","post_deploy":"false"},
+  {"name":"push-pivotal-account","post_deploy":"false"},
+  {"name":"autoscaling","post_deploy":"false"},
+  {"name":"autoscaling-register-broker","post_deploy":"false"},
+  {"name":"nfsbrokerpush","post_deploy":"false"}
 ]}
 EOF
 )
