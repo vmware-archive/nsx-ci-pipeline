@@ -197,9 +197,6 @@ $CF_PROPERTIES
   ".mysql_monitor.recipient_email": {
     "value": "$MYSQL_MONITOR_EMAIL"
   },
-  ".diego_cell.garden_network_pool": {
-    "value": "10.254.0.0/22"
-  },
   ".diego_cell.garden_network_mtu": {
     "value": 1454
   },
