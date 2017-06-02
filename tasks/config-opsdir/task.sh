@@ -264,7 +264,7 @@ if [ $? != 0 ]; then
 fi
 
 echo "Configuring Harbor Registry security..."
-om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
   curl -p "/api/v0/staged/director/properties" \
   -x PUT -d "$SECURITY_CONFIG"
 
