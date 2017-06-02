@@ -313,6 +313,16 @@ EOF
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_PROPERTIES" -pn "$CF_NETWORK" -pr "$CF_RESOURCES"
 
 if [[ "$AUTHENTICATION_MODE" == "internal" ]]; then
+
+  SAML_CERTIFICATES=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "*.login.$SYSTEM_DOMAIN"`
+
+  export SAML_SSL_CERT=`echo $SAML_CERTIFICATES | jq '.certificate'`
+  export SAML_SSL_PRIVATE_KEY=`echo $SAML_CERTIFICATES | jq '.key'`
+
+  echo "SSL_CERT is" $SSL_CERT
+  echo "SSL_PRIVATE_KEY is" $SSL_PRIVATE_KEY
+
+
 echo "Configuring Internal Authentication in ERT..."
 CF_AUTH_PROPERTIES=$(cat <<-EOF
 {
@@ -321,8 +331,8 @@ CF_AUTH_PROPERTIES=$(cat <<-EOF
   },
   ".uaa.service_provider_key_credentials": {
         "value": {
-          "cert_pem": "-----BEGIN CERTIFICATE-----\r\nMIIDlzCCAn+gAwIBAgIUB56Kg/x8WhMNBUpBc24vabRu8nIwDQYJKoZIhvcNAQEL\r\nBQAwHzELMAkGA1UEBhMCVVMxEDAOBgNVBAoMB1Bpdm90YWwwHhcNMTcwNjAxMDEx\r\nNzU3WhcNMTkwNjAxMDExNzU3WjBKMQswCQYDVQQGEwJVUzEQMA4GA1UECgwHUGl2\r\nb3RhbDEpMCcGA1UEAwwgKi5sb2dpbi5zeXMucGNmLTAxLnZpcnRtZXJsaW4uaW8w\r\nggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDmVryTQUv3n4B+G7DWfnLs\r\nPRVz6b/DaN4TwueXDvfh7GBLDFD36GG95J2XZv//pFdiDVHb/egrbldZgFUYH/yX\r\n8GpjSAjePkEpTWDaxOH0QspZq4HcXHRhdi9FLAfLEokYXxgyCALpQzFYFahSDvuu\r\nCWGc5yzJqMhAxyoO/xEDpOoUOUHp7KS+C5ShCpxEoAK87vWi2FvqUWqBy+gN1G9m\r\nWzKl0FtH3pJRXb7kpScpNt8M1Rf00YFcTAiHtqziiGR+KKtVCt1u6wPPIs+jlK0Y\r\nOmtJ8O4E80ZqxNnYg5UfbPQxqRPH4lmtaoG680KV8XOQUE/yq5T+Of1LHCsB0PXz\r\nAgMBAAGjgZ8wgZwwDgYDVR0PAQH/BAQDAgeAMB0GA1UdDgQWBBRa4QK6zIfXIGLY\r\nVBZ8pv4lRJ+hdDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwHwYDVR0j\r\nBBgwFoAUDsGHUKkDqCyS1+x6MVqjRWNncCswKwYDVR0RBCQwIoIgKi5sb2dpbi5z\r\neXMucGNmLTAxLnZpcnRtZXJsaW4uaW8wDQYJKoZIhvcNAQELBQADggEBAHetRvIF\r\newku7AwIUdkH1zmV8VfBjML6U1j5HRxV1DScTfUKxzU9/5BjYrNjOHokRwX84y4w\r\n/1QMP75tUgA8n+Ot+XHQE9XjWNugFjWHOzSrD35LzYYT/QHG9MQrTd8XFNlCO0qL\r\n03cHBj0Lhwen9UHrhh50/81q0DqD9Jog8ql8ry/cT/2mb+e6ZDixnQUJ60wt7cHX\r\nwFiHdqOY+nasSVHu5EzGP5MOjakr1mbFlwRvX7v9Mwo0sPPX7pDIoRV7CIkS5TZa\r\n+XX9jbR18BwV1rxPLX+IzNvbYOTUew3+TW37yOK8z6R787sTXrtyrlCfY7t8jcNM\r\nphaMQ2Pisr2uB7g=\r\n-----END CERTIFICATE-----\r\n",
-          "private_key_pem": "-----BEGIN RSA PRIVATE KEY-----\r\nMIIEpAIBAAKCAQEA5la8k0FL95+Afhuw1n5y7D0Vc+m/w2jeE8Lnlw734exgSwxQ\r\n9+hhveSdl2b//6RXYg1R2/3oK25XWYBVGB/8l/BqY0gI3j5BKU1g2sTh9ELKWauB\r\n3Fx0YXYvRSwHyxKJGF8YMggC6UMxWBWoUg77rglhnOcsyajIQMcqDv8RA6TqFDlB\r\n6eykvguUoQqcRKACvO71othb6lFqgcvoDdRvZlsypdBbR96SUV2+5KUnKTbfDNUX\r\n9NGBXEwIh7as4ohkfiirVQrdbusDzyLPo5StGDprSfDuBPNGasTZ2IOVH2z0MakT\r\nx+JZrWqBuvNClfFzkFBP8quU/jn9SxwrAdD18wIDAQABAoIBABlkrItrYm2dJvRA\r\nJ0GuVQsYPNo3hc2MLRduoEt1+fvtLDx50h9SfhwKLRl44HYVbxC/OSwQlNzc4EJc\r\ntIThWd6CQahKU7f0kwhzoF7d368nAdna34kkpCvudI2iqgVIONb3/NnfKjr/DlyQ\r\nnqrVPgfUvu8mSTi+I72Id2mJ0x1chmq8R/79uhBxhTgKOSOf4AzGSIiOi2KQe3bR\r\nHjU/QKUehIEOiX+aAq1t5m413WSKP8N/7Lmtw1emY8qezkAJfyLg6+/UgV5m1w6H\r\nXmfbXiOXZKTB188e2BlJh++kXyTTTrXbQCXXCxjSMIO2toMYkJlcaG36O9t7u0BG\r\np3y81CECgYEA9Lua27lzVxSoMeBgWc6ogowV4AJO+QmrLj0z2rxsIbVpVvDavYrq\r\nXcxBCMgMN46RaRnDeEMU0EFB5fr7UhpOJay9B5EIRzloIhLZ/0QPRjgxtHWbPCxE\r\nHIJ1SVAuMbEl6zXoRwBdk/mITWBz7t59LwTaa69+IbROmVO7uICruEMCgYEA8PF8\r\nQHGt9EJmjRwr77IhduJsizKoWzhijuvivi8pzeiIWn/hSyznFdHfvKmt5ADYr3cj\r\nDHNk2pUdN6rK/CW+MKG56qzJP/g0oWmR4M5KjG9gDAoRksX89zv66Ipy1yV7qzkf\r\npxNxmwLjU5Kvb7cPyrr5rDHKxtAwGoOxYjEOiJECgYEA1KIPiWrWkMls3XDypfTN\r\nKifmdavry6qf5VvdquXdGWiSLqyzkM2alYZ61tNg8gBXzLZKxDmcYtjgFZ58L7iV\r\nP1yXHHTheWiiVkCE0anjj4IRhZZNGvnm79JVby5QBHLC3FsJBm+F3qSGzZvI/rim\r\nkWypDbj7YPNU+xjqWALLsBsCgYAG7SpBQANcLjx8ef7ZWSmVHVU5ey9Tz/8lVKqk\r\nBP8SqEijMWHso1HRUsM3zTjugQe5o5ciWH7hub+pRgOn0/3vr/aERItUh3Ib4ckL\r\nyWJjPyBnuDJhIcfv442G+dPrU2yGs5GxX+G4LxER6fmZII4XqeBbjuLhbEK1wGtt\r\nAzQDwQKBgQCh3TEsa5wG4dL9QYgO/UHxMybdgELmXJoDXhBEDGaoLEJZdWkJ/V9V\r\nS9p+N/q7MZjIR/j4UHEUkvvxVZp11I97Rc9DBq71sTaC9De2IsXqoLO7+W6ymE2L\r\n3H6rzdu+Ujvr6VXXXG0a3enPq6eIaEZ21zSq7M3ttEAouY0nXcx+dw==\r\n-----END RSA PRIVATE KEY-----\r\n"
+		"private_key_pem": "$SAML_SSL_PRIVATE_KEY",
+		"cert_pem": "$SAML_SSL_CERT"
         }
   }
 }
