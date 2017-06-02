@@ -265,8 +265,8 @@ fi
 
 echo "Configuring Harbor Registry security..."
 $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-  curl -p "/api/v0/staged/director/properties" \
-  -x PUT -d "$SECURITY_CONFIG"
+            curl -p "/api/v0/staged/director/properties" \
+            -x PUT -d "$SECURITY_CONFIGURATION"
 
 # Check for errors
 if [ $? != 0 ]; then
