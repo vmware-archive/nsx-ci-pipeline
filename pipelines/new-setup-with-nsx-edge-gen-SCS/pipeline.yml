@@ -611,14 +611,14 @@ jobs:
   - aggregate:
     - get: concourse-vsphere
       trigger: true
-      passed: [product-apply-changes]
+      passed: [product-apply-changes-ert]
     - get: pivnet-mysql-product
       params:
         globs:
         - "*.pivotal"
     - get: om-cli
       globs: om-linux
-      passed: [product-apply-changes]
+      passed: [product-apply-changes-ert]
     - get: pivnet-cli
       params:
         globs:
