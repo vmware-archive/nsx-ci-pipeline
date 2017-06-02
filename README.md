@@ -382,9 +382,14 @@ Note: The pipeline in `pipelines/new-setup-with-nsx-edge-gen/pipeline.yml` would
 
 ![](./images/pipeline_nsx.png)
 
-Use the `pipelines/new-setup-with-nsx-edge-gen-SCS/pipeline.yml` for complete installation of NSX Edge with Ops Mgr, ERT, MySQL, RabbitMQ and Spring Cloud Services Tiles. Edit the set-pipeline to following:
+Use the `pipelines/new-setup-with-nsx-edge-gen-iso-segment/pipeline.yml` for  installation of NSX Edge with Ops Mgr, ERT and Isolation Segment Tile. 
+
+-  `fly -t lite set-pipeline -p pcf -c pipelines/new-setup-with-nsx-edge-gen-iso-segment/pipeline.yml -l params/env1-params.yml`
+
+Use the `pipelines/new-setup-with-nsx-edge-gen-SCS/pipeline.yml` for complete installation of NSX Edge with Ops Mgr, ERT, Isolation Segment, MySQL, RabbitMQ and Spring Cloud Services Tiles. Edit the set-pipeline to following:
 
  -  `fly -t lite set-pipeline -p pcf -c pipelines/new-setup-with-nsx-edge-gen-SCS/pipeline.yml -l params/env1-params.yml`
 
-![](./images/pipeline_nsx_full.png)
+![](./images/pipeline_nsx_full1.png)
+![](./images/pipeline_nsx_full2.png)
 
