@@ -250,6 +250,10 @@ last_name_attribute:
 system_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR SYSTEM URL> #REQUIRED example: sys.domain.local
 apps_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR DEFAULT APPS URL> #REQUIRED example: apps.domain.local
 
+## Isolation Segment domains (comma separated)
+## can be blank if there are no isolation segment
+iso_apps_domains:          # Example: zone1.domain.local,zone2.domain.local,zone3.domain.local
+
 skip_cert_verify: true
 
 ## Leave the ips blank for ERT Static IP's - will be filled using nsx-gen generated config
@@ -336,7 +340,6 @@ tile_az_iso_singleton_1: az1
 tile_azs_iso_1: az1,az2,az3
 tile_iso_product_name_1: p-isolation-segment # Default unless overriden via replicator
 tile_iso_network_name_1: "ISOZONE-01" # Modify according to ISOZONE defined earlier
-tile_iso_apps_domain_1: zone1         # REQUIRED
 
 # SSL Termination valid values: (terminate_at_router|terminate_at_router_ert_cert|terminate_before_router)
 # Default is terminate_before_router
@@ -362,7 +365,7 @@ tile_iso_application_network_mtu_1: 1454
 tile_iso_insecure_docker_registry_list_1:          
 
 ## Segment Name
-tile_iso_segment_name_1: zone1    # REQUIRED
+tile_iso_segment_name_1:     # REQUIRED, sample: zone1
 
 # Router instances for Iso already configured via esg_go_router_isozone_1_inst_1
 #tile_iso_router_instances_1: 1 # IGNORE

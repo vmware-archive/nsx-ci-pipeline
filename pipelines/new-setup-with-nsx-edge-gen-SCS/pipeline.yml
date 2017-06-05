@@ -571,7 +571,7 @@ jobs:
       TILE_AZ_ISO_SINGLETON: {{tile_az_iso_singleton_1}}
       NETWORK_NAME: {{tile_iso_network_name_1}}
       SYSTEM_DOMAIN: {{system_domain}}
-      APPS_DOMAIN: {{tile_iso_apps_domain_1}}
+      APPS_DOMAIN: {{apps_domain}}
       SSL_TERMINATION_POINT: {{tile_iso_ssl_termination_point_1}}
       SSL_CERT: {{tile_iso_ssl_cert_1}}
       SSL_PRIVATE_KEY: {{tile_iso_ssl_private_key_1}}
