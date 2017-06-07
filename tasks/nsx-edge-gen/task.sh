@@ -22,7 +22,17 @@ if [ "$ISOZONE_SWITCH_NAME_1" != "" ]; then
   -esg_tcp_router_isozone_1_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1 
   -esg_tcp_router_isozone_1_switch_1 $ISOZONE_SWITCH_NAME_1
   -esg_tcp_router_isozone_1_inst_1 $ESG_TCP_ROUTER_ISOZONE_1_INST_1
-  "
+   "
+
+  if [ "$ESG_ISO_CERTS_CONFIG_DOMAINS_1_1" != "" ]; then
+    ARGS="$ARGS 
+    -esg_iso_certs_1_1 $ESG_ISO_CERTS_NAME_1_1 \
+    -esg_iso_certs_config_switch_1_1 $ESG_ISO_CERTS_SWITCH_1_1 \
+    -esg_iso_certs_config_ou_1_1 $ESG_ISO_CERTS_CONFIG_OU_1_1 \
+    -esg_iso_certs_config_cc_1_1 $ESG_ISO_CERTS_CONFIG_COUNTRY_1_1 \
+    -esg_iso_certs_config_domains_1_1 $ESG_ISO_CERTS_CONFIG_DOMAINS_1_1 \
+     "
+  fi
 fi
 
 if [ "$ISOZONE_SWITCH_NAME_2" != "" ]; then
@@ -36,6 +46,16 @@ if [ "$ISOZONE_SWITCH_NAME_2" != "" ]; then
   -esg_tcp_router_isozone_2_switch_1 $ISOZONE_SWITCH_NAME_2
   -esg_tcp_router_isozone_2_inst_1 $ESG_TCP_ROUTER_ISOZONE_2_INST_1
   "
+
+  if [ "$ESG_ISO_CERTS_CONFIG_DOMAINS_2_1" != "" ]; then
+    ARGS="$ARGS 
+    -esg_iso_certs_2_1 $ESG_ISO_CERTS_NAME_2_1 \
+    -esg_iso_certs_config_switch_2_1 $ESG_ISO_CERTS_SWITCH_2_1 \
+    -esg_iso_certs_config_ou_2_1 $ESG_ISO_CERTS_CONFIG_OU_2_1 \
+    -esg_iso_certs_config_cc_2_1 $ESG_ISO_CERTS_CONFIG_COUNTRY_2_1 \
+    -esg_iso_certs_config_domains_2_1 $ESG_ISO_CERTS_CONFIG_DOMAINS_2_1 \
+     "
+  fi
 fi
 
 if [ "$ISOZONE_SWITCH_NAME_3" != "" ]; then
@@ -49,7 +69,18 @@ if [ "$ISOZONE_SWITCH_NAME_3" != "" ]; then
   -esg_tcp_router_isozone_3_switch_1 $ISOZONE_SWITCH_NAME_3
   -esg_tcp_router_isozone_3_inst_1 $ESG_TCP_ROUTER_ISOZONE_3_INST_1
   "
+
+  if [ "$ESG_ISO_CERTS_CONFIG_DOMAINS_3_1" != "" ]; then
+    ARGS="$ARGS 
+    -esg_iso_certs_3_1 $ESG_ISO_CERTS_NAME_3_1 \
+    -esg_iso_certs_config_switch_3_1 $ESG_ISO_CERTS_SWITCH_3_1 \
+    -esg_iso_certs_config_ou_3_1 $ESG_ISO_CERTS_CONFIG_OU_3_1 \
+    -esg_iso_certs_config_cc_3_1 $ESG_ISO_CERTS_CONFIG_COUNTRY_3_1 \
+    -esg_iso_certs_config_domains_3_1 $ESG_ISO_CERTS_CONFIG_DOMAINS_3_1 \
+     "
+  fi
 fi
+
 
 ./nsx-gen/bin/nsxgen \
 -c $NSX_EDGE_GEN_NAME \
@@ -58,9 +89,9 @@ fi
 -esg_ospf_password_1 $ESG_OSPF_PASSWORD_1  \
 -esg_cli_user_1 $ESG_CLI_USERNAME_1   \
 -esg_cli_pass_1 $ESG_CLI_PASSWORD_1   \
--esg_certs_1 $ESG_CERTS_NAME_1   \
--esg_certs_config_sysd_1 $ESG_CERTS_CONFIG_SYSTEMDOMAIN_1   \
--esg_certs_config_appd_1 $ESG_CERTS_CONFIG_APPDOMAIN_1   \
+-esg_ert_certs_1 $ESG_ERT_CERTS_NAME_1   \
+-esg_ert_certs_config_sysd_1 $ESG_ERT_CERTS_CONFIG_SYSTEMDOMAIN_1   \
+-esg_ert_certs_config_appd_1 $ESG_ERT_CERTS_CONFIG_APPDOMAIN_1   \
 -esg_opsmgr_uplink_ip_1 $ESG_OPSMGR_UPLINK_IP_1   \
 -esg_go_router_uplink_ip_1 $ESG_GO_ROUTER_UPLINK_IP_1   \
 -esg_diego_brain_uplink_ip_1 $ESG_DIEGO_BRAIN_UPLINK_IP_1   \

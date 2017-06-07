@@ -19,9 +19,16 @@ nsx_edge_params: &nsx-edge-params
   ESG_OSPF_PASSWORD_1: {{esg_ospf_password_1}}
   ESG_CLI_USERNAME_1: {{esg_cli_username_1}}
   ESG_CLI_PASSWORD_1: {{esg_cli_password_1}}
-  ESG_CERTS_NAME_1: {{esg_certs_name_1}}
-  ESG_CERTS_CONFIG_SYSTEMDOMAIN_1: {{system_domain}}
-  ESG_CERTS_CONFIG_APPDOMAIN_1: {{apps_domain}}
+  ESG_ERT_CERTS_NAME_1: {{ert_certs_name_1}}
+  ESG_ERT_CERTS_CONFIG_SYSTEMDOMAIN_1: {{system_domain}}
+  ESG_ERT_CERTS_CONFIG_APPDOMAIN_1: {{apps_domain}}
+  ESG_ERT_CERTS_CONFIG_OU: {{ert_certs_ou}}
+  ESG_ERT_CERTS_CONFIG_COUNTRY: {{ert_certs_country}}
+  ESG_ISO_CERTS_NAME_1_1: {{iso_certs_name_1}}
+  ESG_ISO_CERTS_SWITCH_1_1: {{isozone_switch_name_1}}
+  ESG_ISO_CERTS_CONFIG_DOMAINS_1_1: {{iso_certs_domains_1}}
+  ESG_ISO_CERTS_CONFIG_OU_1_1: {{iso_certs_ou_1}}
+  ESG_ISO_CERTS_CONFIG_COUNTRY_1_1: {{iso_certs_country_1}}
   ESG_OPSMGR_UPLINK_IP_1: {{esg_opsmgr_uplink_ip_1}}
   ESG_GO_ROUTER_UPLINK_IP_1: {{esg_go_router_uplink_ip_1}}
   ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}

@@ -80,7 +80,12 @@ esg_size: compact # valid values (compact|large|xlarge|quadlarge)
 esg_ospf_password_1: P1v0t4l
 esg_cli_username_1: admin 
 esg_cli_password_1: P1v0t4l!P1v0t4l!
-esg_certs_name_1: nsx-gen-created
+
+## Certs for generation
+ert_certs_name_1: nsx-gen-created # EDIT
+ert_certs_ou: Pivotal             # EDIT
+ert_certs_country: US             # EDIT
+
 esg_default_uplink_pg_1: "<YOUR NSX-EDGE-UPLINK PORT GROUP>" #REQUIRED "VM Network" - used for NSX Edge uplink
 esg_default_uplink_ip_1: <YOUR NSX-EDGE-PRIMARY-VIP> #REQUIRED example: 10.172.16.100
 esg_opsmgr_uplink_ip_1: <YOUR OPSMAN-VIP> #REQUIRED example: 10.172.16.101
@@ -97,6 +102,14 @@ esg_go_router_isozone_1_uplink_ip_1: <YOUR ISO1-VIP> #REQUIRED example: 10.172.1
 esg_go_router_isozone_1_inst_1: 2                    # Number of go-routers for IsoZone1
 esg_tcp_router_isozone_1_uplink_ip_1: <YOUR TCP-ROUTER_ISO1-VIP> #REQUIRED example: 10.172.16.105
 esg_tcp_router_isozone_1_inst_1: 2 # Number of tcp-routers for IsoZone1
+
+## Certs for Isozone-1
+# Specify comma separated list of domains for isozone1 to generate self-signed cert
+# Example: zone1.app.local.domain,zone2.app.local.domain
+iso_certs_domains_1: <COMMA SEPARATED LIST OF DOMAINS for ISOZONE-1> #EDIT
+iso_certs_name_1: iso-nsx-gen-created # EDIT
+iso_certs_ou_1: Pivotal             # EDIT
+iso_certs_country_1: US             # EDIT
 
 #### Opsman configuration
 ## Ops Manager installation meta data
@@ -248,7 +261,7 @@ last_name_attribute:
 
 ## ERT Deployment domain names
 system_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR SYSTEM URL> #REQUIRED example: sys.domain.local
-apps_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR DEFAULT APPS URL> #REQUIRED example: apps.domain.local
+apps_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR DEFAULT APPS URL> #REQUIRED example: apps1.domain.local,apps2.domain.local
 
 ## Isolation Segment domains (comma separated)
 ## can be blank if there are no isolation segment
