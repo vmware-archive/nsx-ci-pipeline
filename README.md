@@ -106,7 +106,7 @@ esg_tcp_router_isozone_1_inst_1: 2 # Number of tcp-routers for IsoZone1
 ## Certs for Isozone-1
 # Specify comma separated list of domains for isozone1 to generate self-signed cert
 # Example: zone1.app.local.domain,zone2.app.local.domain
-iso_certs_domains_1: <COMMA SEPARATED LIST OF DOMAINS for ISOZONE-1> #EDIT
+iso_certs_domains_1: <COMMA SEPARATED LIST OF DOMAINS for ISOZONE-1> #REQUIRED
 iso_certs_name_1: iso-nsx-gen-created # EDIT
 iso_certs_ou_1: Pivotal             # EDIT
 iso_certs_country_1: US             # EDIT
