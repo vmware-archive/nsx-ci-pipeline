@@ -4,7 +4,7 @@ platform: linux
 
 image_resource:
   type: docker-image
-  source: {repository: virtmerlin/nsx-edge-gen-worker}
+  source: {repository: nsxedgegen/nsx-edge-gen-worker}
 
 params:
   VCENTER_HOST:
