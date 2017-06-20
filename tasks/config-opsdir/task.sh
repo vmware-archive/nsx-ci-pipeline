@@ -22,6 +22,15 @@ openssl s_client  -servername $NSX_MANAGER_ADDRESS \
                   -connect ${NSX_MANAGER_ADDRESS}:443 \
                   </dev/null 2>/dev/null \
                   | openssl x509 -text \
+                  >  /tmp/complete_nsx_manager.log
+
+# Get the host name instead of ip
+NSX_MANAGER_HOST_ADDRESS=`cat /tmp/complete_nsx_manager.log \
+                          | grep Issuer \
+                          | awk '{print $NF}' \
+                          | sed -e 's/CN=//g' `
+
+cat /tmp/complete_nsx_manager.log 0 \
                   |  awk '/BEGIN /,/END / {print }' \
                   >  /tmp/nsx_manager.cert
 
@@ -72,26 +81,26 @@ if [ "$INFRA_VCENTER_NETWORK" == "" \
   exit 1
 fi
 
-IAAS_CONFIGURATION=$(cat <<-EOF
-{
-  "vcenter_host": "$VCENTER_HOST",
-  "vcenter_username": "$VCENTER_USR",
-  "vcenter_password": "$VCENTER_PWD",
-  "datacenter": "$VCENTER_DATA_CENTER",
-  "disk_type": "$VCENTER_DISK_TYPE",
-  "ephemeral_datastores_string": "$STORAGE_NAMES",
-  "persistent_datastores_string": "$STORAGE_NAMES",
-  "bosh_vm_folder": "pcf_vms",
-  "bosh_template_folder": "pcf_templates",
-  "bosh_disk_path": "pcf_disk",
-  "ssl_verification_enabled": false,
-  "nsx_networking_enabled": true,
-  "nsx_address": "${NSX_MANAGER_ADDRESS}",
-  "nsx_username": "${NSX_MANAGER_ADMIN_USER}",
-  "nsx_ca_certificate": "${NSX_MANAGER_CA_CERT}"
-}
-EOF
-)
+# IAAS_CONFIGURATION=$(cat <<-EOF
+# {
+#   "vcenter_host": "$VCENTER_HOST",
+#   "vcenter_username": "$VCENTER_USR",
+#   "vcenter_password": "$VCENTER_PWD",
+#   "datacenter": "$VCENTER_DATA_CENTER",
+#   "disk_type": "$VCENTER_DISK_TYPE",
+#   "ephemeral_datastores_string": "$STORAGE_NAMES",
+#   "persistent_datastores_string": "$STORAGE_NAMES",
+#   "bosh_vm_folder": "pcf_vms",
+#   "bosh_template_folder": "pcf_templates",
+#   "bosh_disk_path": "pcf_disk",
+#   "ssl_verification_enabled": false,
+#   "nsx_networking_enabled": true,
+#   "nsx_address": "${NSX_MANAGER_ADDRESS}",
+#   "nsx_username": "${NSX_MANAGER_ADMIN_USER}",
+#   "nsx_ca_certificate": "${NSX_MANAGER_CA_CERT}"
+# }
+# EOF
+# )
 
 cat > /tmp/iaas_conf.txt <<-EOF
 {
@@ -107,8 +116,9 @@ cat > /tmp/iaas_conf.txt <<-EOF
   "bosh_disk_path": "pcf_disk",
   "ssl_verification_enabled": false,
   "nsx_networking_enabled": true,
-  "nsx_address": "${NSX_MANAGER_ADDRESS}",
+  "nsx_address": "${NSX_MANAGER_HOST_ADDRESS}",
   "nsx_username": "${NSX_MANAGER_ADMIN_USER}",
+  "nsx_password": "${NSX_MANAGER_ADMIN_PASSWD}",
   "nsx_ca_certificate": "$(cat /tmp/nsx_manager.edited_cert)"
 }
 EOF
@@ -263,8 +273,22 @@ NETWORK_ASSIGNMENT=$(cat <<-EOF
 EOF
 )
 
+# OM Cli v0.23.0 does not support nsx related configs
+# $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
+#.            -i "$IAAS_CONFIGURATION" \
+#             -d "$DIRECTOR_CONFIG"
+
+# So post it directly to the ops mgr endpoint
+$CMD  -t https://$OPS_MGR_HOST -skip-ssl-validation -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+        curl  -p "/api/v0/staged/director/properties" \
+        -x PUT -d "{ \"iaas_configuration\": $IAAS_CONFIGURATION }"
+# Check for errors
+if [ $? != 0 ]; then
+  echo "IaaS configuration failed!!"
+  exit 1
+fi
+
 $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
-            -i "$IAAS_CONFIGURATION" \
             -d "$DIRECTOR_CONFIG"
 # Check for errors
 if [ $? != 0 ]; then
