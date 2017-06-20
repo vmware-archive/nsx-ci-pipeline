@@ -18,6 +18,14 @@ else
   exit 1
 fi
 
+openssl s_client  -servername $NSX_MANAGER_ADDRESS \
+                  -connect ${NSX_MANAGER_ADDRESS}:443 \
+                  </dev/null 2>/dev/null \
+                  | openssl x509 -text \
+                  |  awk '/BEGIN /,/END / {print }' \
+                  >  /tmp/nsx_manager.cert
+
+NSX_MANAGER_CA_CERT=`cat /tmp/nsx_manager.cert`
 
 #CSV parsing Function for mutiple AZs
 
@@ -62,7 +70,11 @@ IAAS_CONFIGURATION=$(cat <<-EOF
   "bosh_vm_folder": "pcf_vms",
   "bosh_template_folder": "pcf_templates",
   "bosh_disk_path": "pcf_disk",
-  "ssl_verification_enabled": false
+  "ssl_verification_enabled": false,
+  "nsx_networking_enabled": true,
+  "nsx_address": "${NSX_MANAGER_ADDRESS}",
+  "nsx_username": "${NSX_MANAGER_ADMIN_USER}",
+  "nsx_ca_certificate": "${NSX_MANAGER_CA_CERT}"
 }
 EOF
 )
@@ -95,37 +107,6 @@ MY_DEPLOYMENT_AZS=$(fn_get_azs $DEPLOYMENT_NW_AZ)
 MY_SERVICES_AZS=$(fn_get_azs $SERVICES_NW_AZ)
 MY_DYNAMIC_SERVICES_AZS=$(fn_get_azs $DYNAMIC_SERVICES_NW_AZ)
 MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
-
-# Check for Errors with obtaining the networks
-if [ "$INFRA_VCENTER_NETWORK" == "" \
-  -o "$DEPLOYMENT_VCENTER_NETWORK" == "" \
-  -o "$SERVICES_VCENTER_NETWORK" == "" \
-  -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" ]; then 
-  echo "Some networks could not be located from NSX!!"
-  echo "      INFRASTRUCTURE: $INFRA_VCENTER_NETWORK"
-  echo "      ERT DEPLOYMENT: $DEPLOYMENT_VCENTER_NETWORK"
-  echo "      SERVICES: $SERVICES_VCENTER_NETWORK"
-  echo "      DYNAMIC SERVICES: $DYNAMIC_SERVICES_VCENTER_NETWORK"
-  exit 1
-fi
-
-if [ "$INFRA_OPS_STATIC_IPS" == "" \
-  -o "$ERT_GOROUTER_STATIC_IPS" == "" \
-  -o "$ERT_TCPROUTER_STATIC_IPS" == "" \
-  -o "$SSH_STATIC_IPS" ==  "" \
-  -o "$ERT_MYSQL_STATIC_IPS" == "" \
-  -o "$MYSQL_TILE_STATIC_IPS" == ""  \
-  -o "$RABBITMQ_TILE_STATIC_IPS" == "" ]; then 
-  echo "Some of the static ips could not be located from NSX!!"
-  echo "  Found static ip  for INFRA Ops              : $INFRA_OPS_STATIC_IPS"
-  echo "  Found static ips for ERT GoRouter           : $ERT_GOROUTER_STATIC_IPS"
-  echo "  Found static ips for ERT TcpRouter          : $ERT_TCPROUTER_STATIC_IPS"
-  echo "  Found static ips for ERT Diego Brain        : $SSH_STATIC_IPS"
-  echo "  Found static ips for ERT MySQL              : $ERT_MYSQL_STATIC_IPS"
-  echo "  Found static ips for SERVICES MySQL Tile    : $MYSQL_TILE_STATIC_IPS"
-  echo "  Found static ips for SERVICES RabbitMQ Tile : $RABBITMQ_TILE_STATIC_IPS"
-  exit 1
-fi
 
 NETWORK_CONFIGURATION=$(cat <<-EOF
 {
