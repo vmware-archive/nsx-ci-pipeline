@@ -25,7 +25,8 @@ openssl s_client  -servername $NSX_MANAGER_ADDRESS \
                   |  awk '/BEGIN /,/END / {print }' \
                   >  /tmp/nsx_manager.cert
 
-NSX_MANAGER_CA_CERT=`cat /tmp/nsx_manager.cert`
+# Strip newlines and replace them with \r\n
+NSX_MANAGER_CA_CERT=`cat /tmp/nsx_manager.cert  | tr '\n' ' '| sed -e 's/ /\\r\\n/g' `
 
 #CSV parsing Function for mutiple AZs
 
@@ -57,6 +58,19 @@ function fn_get_component_static_ips {
   )
   echo $component_static_ips
 }
+
+# Check for Errors with obtaining the networks
+if [ "$INFRA_VCENTER_NETWORK" == "" \
+  -o "$DEPLOYMENT_VCENTER_NETWORK" == "" \
+  -o "$SERVICES_VCENTER_NETWORK" == "" \
+  -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" ]; then 
+  echo "Some networks could not be located from NSX!!"
+  echo "      INFRASTRUCTURE: $INFRA_VCENTER_NETWORK"
+  echo "      ERT DEPLOYMENT: $DEPLOYMENT_VCENTER_NETWORK"
+  echo "      SERVICES: $SERVICES_VCENTER_NETWORK"
+  echo "      DYNAMIC SERVICES: $DYNAMIC_SERVICES_VCENTER_NETWORK"
+  exit 1
+fi
 
 IAAS_CONFIGURATION=$(cat <<-EOF
 {
