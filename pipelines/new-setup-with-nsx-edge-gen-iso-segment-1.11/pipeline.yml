@@ -116,7 +116,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-ci-pipeline.git
-    branch: pcf-1.11
+    branch: pcf1.11
 
 - name: nsx-edge-gen
   type: git
