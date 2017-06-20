@@ -26,7 +26,7 @@ openssl s_client  -servername $NSX_MANAGER_ADDRESS \
                   >  /tmp/nsx_manager.cert
 
 # Strip newlines and replace them with \r\n
-NSX_MANAGER_CA_CERT=`cat /tmp/nsx_manager.cert  | tr '\n' ' '| sed -e 's/ /\\r\\n/g' `
+cat /tmp/nsx_manager.cert | tr '\n' '#'| sed -e 's/#/\\r\\n/g'   > /tmp/nsx_manager.edited_cert
 
 #CSV parsing Function for mutiple AZs
 
@@ -92,6 +92,31 @@ IAAS_CONFIGURATION=$(cat <<-EOF
 }
 EOF
 )
+
+cat > /tmp/iaas_conf.txt <<-EOF
+{
+  "vcenter_host": "$VCENTER_HOST",
+  "vcenter_username": "$VCENTER_USR",
+  "vcenter_password": "$VCENTER_PWD",
+  "datacenter": "$VCENTER_DATA_CENTER",
+  "disk_type": "$VCENTER_DISK_TYPE",
+  "ephemeral_datastores_string": "$STORAGE_NAMES",
+  "persistent_datastores_string": "$STORAGE_NAMES",
+  "bosh_vm_folder": "pcf_vms",
+  "bosh_template_folder": "pcf_templates",
+  "bosh_disk_path": "pcf_disk",
+  "ssl_verification_enabled": false,
+  "nsx_networking_enabled": true,
+  "nsx_address": "${NSX_MANAGER_ADDRESS}",
+  "nsx_username": "${NSX_MANAGER_ADMIN_USER}",
+  "nsx_ca_certificate": "$(cat /tmp/nsx_manager.edited_cert)"
+}
+EOF
+
+#cat /tmp/nsx_manager.edited_cert >> /tmp/iaas_conf.txt
+IAAS_CONFIGURATION=$(cat /tmp/iaas_conf.txt)
+echo "IAAS conf : " $IAAS_CONFIGURATION
+
 
 AZ_CONFIGURATION=$(cat <<-EOF
 {
