@@ -26,7 +26,7 @@ openssl s_client  -servername $NSX_MANAGER_ADDRESS \
 
 # Get the host name instead of ip
 NSX_MANAGER_HOST_ADDRESS=`cat /tmp/complete_nsx_manager.log \
-                          | grep Subject \
+                          | grep Subject | grep "CN=" \
                           | awk '{print $NF}' \
                           | sed -e 's/CN=//g' `
 
