@@ -113,8 +113,7 @@ EOF
 
 RABBITMQ_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                      curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name \
-                     | contains("mysql-")) | .guid' | tr -d '"')
+                     | jq '.[] | select(.installation_name | contains("p-rabbitmq-")) | .guid' | tr -d '"')
 
 # $RABBITMQ_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
 # Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'

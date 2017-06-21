@@ -523,8 +523,7 @@ EOF
 
 CF_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                      curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name \
-                     | contains("cf-")) | .guid' | tr -d '"')
+                     | jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"')
 
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                             curl -p "/api/v0/staged/products/$CF_GUID/errands" \
