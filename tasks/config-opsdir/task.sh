@@ -26,7 +26,7 @@ openssl s_client  -servername $NSX_MANAGER_ADDRESS \
 
 # Get the host name instead of ip
 NSX_MANAGER_HOST_ADDRESS=`cat /tmp/complete_nsx_manager.log \
-                          | grep Issuer \
+                          | grep Subject \
                           | awk '{print $NF}' \
                           | sed -e 's/CN=//g' `
 
@@ -125,7 +125,7 @@ EOF
 
 #cat /tmp/nsx_manager.edited_cert >> /tmp/iaas_conf.txt
 IAAS_CONFIGURATION=$(cat /tmp/iaas_conf.txt)
-echo "IAAS conf : " $IAAS_CONFIGURATION
+#echo "IAAS conf : " $IAAS_CONFIGURATION
 
 
 AZ_CONFIGURATION=$(cat <<-EOF

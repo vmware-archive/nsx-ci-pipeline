@@ -78,7 +78,6 @@ params:
   TCP_ROUTER_INSTANCES:
   DEPLOYMENT_NW_CIDR:
 
-
 inputs:
   - name: concourse-vsphere
   - name: om-cli

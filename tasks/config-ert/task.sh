@@ -14,6 +14,10 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   #echo "Saved nsx gen output:"
   #cat ${NSX_GEN_OUTPUT}
   source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+
+  # Read back associate array of jobs to lbr details
+  # created by hte NSX_GEN_UTIL script
+  source /tmp/jobs_lbr_map.out
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
@@ -127,6 +131,24 @@ EOF
 fi
 
 
+# API calls using OM Cli
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  available-products -n cf
+# output:
+# +------+---------+
+# | NAME | VERSION |
+# +------+---------+
+# | cf   | 1.11.0  |
+# +------+---------+
+
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/installation_settings"
+# output:
+# full dump of all properties for all products
+
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/v0/staged/products/{app-guid}/properties"
+# output: dump of properties for a specific staged product
+
+
+
 CF_PROPERTIES=$(cat <<-EOF
 $CF_PROPERTIES
   ".properties.tcp_routing": {
@@ -197,9 +219,6 @@ $CF_PROPERTIES
   ".mysql_monitor.recipient_email": {
     "value": "$MYSQL_MONITOR_EMAIL"
   },
-  ".diego_cell.garden_network_pool": {
-    "value": "10.254.0.0/22"
-  },
   ".diego_cell.garden_network_mtu": {
     "value": 1454
   },
@@ -218,6 +237,20 @@ $CF_PROPERTIES
 }
 EOF
 )
+
+# Ignore the garden_network_pool setting - it got moved out in PCF 1.11 and breaks if used.
+# if [ "DIEGO_GARDEN_NETWORK_POOL" ]; then
+
+# CF_PROPERTIES=$(cat <<-EOF
+# $CF_PROPERTIES,
+#   ".diego_cell.garden_network_pool": {
+#     "value": "10.254.0.0/22"
+#   }
+# }
+# EOF
+# )
+
+# fi
 
 CF_RESOURCES=$(cat <<-EOF
 {
@@ -488,5 +521,72 @@ ERT_ERRANDS=$(cat <<-EOF
 EOF
 )
 
-CF_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD curl -p "/api/v0/staged/products" -x GET | jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"')
+CF_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                     curl -p "/api/v0/staged/products" -x GET \
+                     | jq '.[] | select(.installation_name \
+                     | contains("cf-")) | .guid' | tr -d '"')
+
+./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                            curl -p "/api/v0/staged/products/$CF_GUID/errands" \
+                            -x PUT -d "$ERT_ERRANDS"
+
+# $ERT_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
+# Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'
+JOBS_REQUIRING_LBR=$ERT_TILE_JOBS_REQUIRING_LBR
+
+# Change to pattern for grep
+JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
+
+# Get job guids for cf (from staged product)
+for job_guid in $(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                              curl -p "/api/v0/staged/products/${CF_GUID}/jobs" 2>/dev/null \
+                              | jq '.[] | .[] | .guid' | tr -d '"')
+do
+  echo $job_guid | grep -e $JOBS_REQUIRING_LBR_PATTERN
+  if [ "$?" == "0" ]; then
+    echo "$job requires Loadbalancer..."
+    for job_requiring_lbr in $(echo $JOBS_REQUIRING_LBR | sed -e 's/,/ /g')
+    do
+      echo $job_guid | grep -i $job_requiring_lbr
+      # Got matching job...
+      if [ "$?" == "0" ]; then
+        # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
+        # filled earlier by nsx-edge-gen list command
+        # Sample associative array content:
+        # ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS" 
+        # .. ["diego_brain"]="$SSH_LBR_DETAILS"  ["router"]="$ERT_GOROUTER_LBR_DETAILS" )
+        # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
+        LBR_DETAILS=${ERT_TILE_JOBS_LBR_MAP[$job_requiring_lbr]}
+
+        for variable in $(echo $LBR_DETAILS)
+        do
+          edge_name=$(echo $variable | awk -F ':' '{print $1}')
+          lbr_name=$(echo $variable | awk -F ':' '{print $2}')
+          pool_name=$(echo $variable | awk -F ':' '{print $3}')
+          port=$(echo $variable | awk -F ':' '{print $4}')
+          echo "ESG: $edge_name, LBR: $lbr_name, Pool: $pool_name and Port: $port"
+          NSX_LBR_PAYLOAD=$(echo { \"nsx_lbs\": { \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\" }  })
+          echo Job: $job_requiring_lbr with GUID: $job_guid and NSX_LBR_PAYLOAD : "$NSX_LBR_PAYLOAD"
+
+          # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
+          ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+              curl -p "/api/v0/staged/products/${CF_GUID}/jobs/${job_guid}/resource_config" \ 
+                -X PUT \ 
+              -d "${NSX_LBR_PAYLOAD}"
+
+          # Similar call required for registering security groups
+          # ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+          #     curl -p "/api/v0/staged/products/${CF_GUID}/jobs/${job_guid}/resource_config" \ 
+          #       -X PUT \ 
+          #     -d '{"nsx_security_groups": ["SECURITY-GROUP1", "SECURITY-GROUP2"]}' 
+
+        done
+        continue
+      fi
+    done
+  fi
+done
+
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD curl -p "/api/v0/staged/products/$CF_GUID/errands" -x PUT -d "$ERT_ERRANDS"
+
+
