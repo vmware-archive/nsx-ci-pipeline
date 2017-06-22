@@ -192,7 +192,7 @@ do
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
       if [ "$index" == "1" ]; then          
-        NSX_LBR_PAYLOAD=$ENTRY
+        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD $ENTRY ")
       else
         NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD, $ENTRY ")
       fi

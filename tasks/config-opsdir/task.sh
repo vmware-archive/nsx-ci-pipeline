@@ -30,7 +30,7 @@ NSX_MANAGER_HOST_ADDRESS=`cat /tmp/complete_nsx_manager.log \
                           | awk '{print $NF}' \
                           | sed -e 's/CN=//g' `
 
-cat /tmp/complete_nsx_manager.log 0 \
+cat /tmp/complete_nsx_manager.log \
                   |  awk '/BEGIN /,/END / {print }' \
                   >  /tmp/nsx_manager.cert
 
@@ -102,8 +102,41 @@ fi
 # EOF
 # )
 
+# Fill default iaas conf
 cat > /tmp/iaas_conf.txt <<-EOF
 {
+  "vcenter_host": "$VCENTER_HOST",
+  "vcenter_username": "$VCENTER_USR",
+  "vcenter_password": "$VCENTER_PWD",
+  "datacenter": "$VCENTER_DATA_CENTER",
+  "disk_type": "$VCENTER_DISK_TYPE",
+  "ephemeral_datastores_string": "$STORAGE_NAMES",
+  "persistent_datastores_string": "$STORAGE_NAMES",
+  "bosh_vm_folder": "pcf_vms",
+  "bosh_template_folder": "pcf_templates",
+  "bosh_disk_path": "pcf_disk",
+  "ssl_verification_enabled": false
+}
+EOF
+
+# Check if Bosh Director is v1.11 or higher
+bosh_product_version=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+           curl -p "/api/v0/staged/products" 2>/dev/null | jq '.[].product_version' | tr -d '"')
+major_version=$(echo $bosh_product_version | awk -F '.' '{print $1}' )
+minor_version=$(echo $bosh_product_version | awk -F '.' '{print $2}' )
+
+IS_NSX_ENABLED=false
+if [ "$major_version" -le 1 ]; then
+  if [ "$minor_version" -ge 11 ]; then
+    IS_NSX_ENABLED=true
+  fi
+else
+  IS_NSX_ENABLED=true
+fi
+
+# Overwrite iaas conf
+if [ "$IS_NSX_ENABLED" == "true" ]; then
+  cat > /tmp/iaas_conf.txt <<-EOF
   "vcenter_host": "$VCENTER_HOST",
   "vcenter_username": "$VCENTER_USR",
   "vcenter_password": "$VCENTER_PWD",
@@ -122,11 +155,9 @@ cat > /tmp/iaas_conf.txt <<-EOF
   "nsx_ca_certificate": "$(cat /tmp/nsx_manager.edited_cert)"
 }
 EOF
+fi
 
-#cat /tmp/nsx_manager.edited_cert >> /tmp/iaas_conf.txt
 IAAS_CONFIGURATION=$(cat /tmp/iaas_conf.txt)
-#echo "IAAS conf : " $IAAS_CONFIGURATION
-
 
 AZ_CONFIGURATION=$(cat <<-EOF
 {

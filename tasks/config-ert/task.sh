@@ -73,9 +73,8 @@ EOF
 
   export SSL_CERT=`echo $CERTIFICATES | jq '.certificate'`
   export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key'`
-
-  echo "SSL_CERT is" $SSL_CERT
-  echo "SSL_PRIVATE_KEY is" $SSL_PRIVATE_KEY
+  # echo "SSL_CERT is" $SSL_CERT
+  # echo "SSL_PRIVATE_KEY is" $SSL_PRIVATE_KEY
 else
   echo "Using certs passed in YML"
 fi
@@ -629,7 +628,7 @@ do
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
       if [ "$index" == "1" ]; then          
-        NSX_LBR_PAYLOAD=$ENTRY
+        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD $ENTRY ")
       else
         NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD, $ENTRY ")
       fi

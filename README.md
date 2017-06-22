@@ -263,14 +263,10 @@ last_name_attribute:
 system_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR SYSTEM URL> #REQUIRED example: sys.domain.local
 apps_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR DEFAULT APPS URL> #REQUIRED example: apps1.domain.local,apps2.domain.local
 
+skip_cert_verify: true
+
 ## Apps manager name
 nsx_apps_mgr_name:          # Example: NSXAppsManager
-
-## Isolation Segment domains (comma separated)
-## can be blank if there are no isolation segment
-iso_apps_domains:          # Example: zone1.domain.local,zone2.domain.local,zone3.domain.local
-
-skip_cert_verify: true
 
 ## Leave the ips blank for ERT Static IP's - will be filled using nsx-gen generated config
 ## leave it empty
