@@ -438,6 +438,11 @@ jobs:
       LOGGREGATOR_TC_INSTANCES: {{loggregator_traffic_controller_instances}}
       TCP_ROUTER_INSTANCES: {{tcp_router_instances}}
       DEPLOYMENT_NW_CIDR: {{deployment_nw_cidr}}
+      NSX_APPS_MGR_NAME: {{nsx_apps_mgr_name}}
+      ROUTER_SECURITY_GROUP: {{ert_router_security_group}}              
+      TCP_ROUTER_SECURITY_GROUP: {{ert_tcp_router_security_group}} 
+      DIEGO_BRAIN_SECURITY_GROUP: {{ert_diego_brain_security_group}}
+      MYSQL_PROXY_SECURITY_GROUP: {{ert_mysql_proxy_security_group}}
 
 - name: product-apply-changes-ert
   plan:
@@ -540,6 +545,8 @@ jobs:
       SEGMENT_NAME: {{tile_iso_segment_name_1}}
       IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst_1}} # Use the instance count provided for nsx
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
+      ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group_1}}              
+      TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group_1}} 
       
 - name: product-apply-changes-iso
   plan:

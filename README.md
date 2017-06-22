@@ -263,6 +263,9 @@ last_name_attribute:
 system_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR SYSTEM URL> #REQUIRED example: sys.domain.local
 apps_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR DEFAULT APPS URL> #REQUIRED example: apps1.domain.local,apps2.domain.local
 
+## Apps manager name
+nsx_apps_mgr_name:          # Example: NSXAppsManager
+
 ## Isolation Segment domains (comma separated)
 ## can be blank if there are no isolation segment
 iso_apps_domains:          # Example: zone1.domain.local,zone2.domain.local,zone3.domain.local
@@ -276,6 +279,15 @@ router_static_ips:
 tcp_router_static_ips:
 ssh_static_ips:
 ert_mysql_static_ips:
+
+## NSX Security Group tie-up
+## Needs to be filled for automatic registration of job against NSX Security Group 
+## and LBR (GoRouter, TCPRouter, MYSQL, SSH)
+## If no security group provided, binding of lbr & security group would be ignored for the job
+ert_router_security_group:               
+ert_tcp_router_security_group:
+ert_diego_brain_security_group:
+ert_mysql_proxy_security_group:
 
 ## ERT Target email address to receive mysql monitor notifications
 mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED example: mglynn@pivotal.io
@@ -322,6 +334,12 @@ tile_mysql_proxy_ips:
 tile_mysql_proxy_vip:
 tile_mysql_monitor_email: mglynn@pivotal.io
 
+## NSX Security Group tie-up
+## Needs to be filled for automatic registration of job against NSX Security Group 
+## and LBR (GoRouter, TCPRouter, MYSQL, SSH)
+## If no security group provided, binding of lbr & security group would be ignored for the job
+tile_mysql_proxy_security_group:  
+
 ###################
 ## Rabbit config ##
 ###################
@@ -338,6 +356,12 @@ tile_rabbit_proxy_ips:
 tile_rabbit_proxy_vip:
 tile_rabbit_admin_user: rabbitadmin
 tile_rabbit_admin_passwd: rabbitadmin
+
+## NSX Security Group tie-up
+## Needs to be filled for automatic registration of job against NSX Security Group 
+## and LBR (GoRouter, TCPRouter, MYSQL, SSH)
+## If no security group provided, binding of lbr & security group would be ignored for the job
+tile_rabbit_proxy_security_group:
 
 
 ###################
@@ -385,6 +409,14 @@ tile_iso_segment_name_1:     # REQUIRED, sample: zone1
 
 ## Edit as necessary
 tile_iso_diego_cell_instances_1: 2
+
+## NSX Security Group tie-up
+## Needs to be filled for automatic registration of job against NSX Security Group 
+## and LBR (GoRouter, TCPRouter, MYSQL, SSH)
+## If no security group provided, binding of lbr & security group would be ignored for the job
+tile_iso_router_security_group_1:               
+tile_iso_tcp_router_security_group_1:
+
 
 ```
 
