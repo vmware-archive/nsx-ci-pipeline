@@ -357,7 +357,7 @@ tile_rabbit_admin_passwd: rabbitadmin
 ## Needs to be filled for automatic registration of job against NSX Security Group 
 ## and LBR (GoRouter, TCPRouter, MYSQL, SSH)
 ## If no security group provided, binding of lbr & security group would be ignored for the job
-tile_rabbit_proxy_security_group:
+tile_rabbit_haproxy_security_group:
 
 
 ###################

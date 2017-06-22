@@ -557,7 +557,7 @@ fi
 
 # $ISO_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
 # Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'
-JOBS_REQUIRING_LBR=$ISO_TILE_JOBS_REQUIRING_LBR
+JOBS_REQUIRING_LBR=$ERT_TILE_JOBS_REQUIRING_LBR
 
 # Change to pattern for grep
 JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
@@ -574,11 +574,11 @@ do
   if [ "$match" != "" ]; then
 
     echo "$job requires Loadbalancer..."
-    job_name_upper=$(echo ${job_name^^})
+    job_name_upper=$(echo ${job_name^^} | sed -e 's/-/_/g')
     
     # Check for security group defined for the given job from Env
     # Expecting only one security group env variable per job (can have a comma separated list)
-    SECURITY_GROUP=$(env | grep "^${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
+    SECURITY_GROUP=$(env | grep "TILE_ERT_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
 
     # If nothing has been defined, just the auto-created security group 
     # (that has the same value as the product guid - done by BOSH)
@@ -609,8 +609,8 @@ do
     #echo "Resource config : $RESOURCE_CONFIG"
     # Remove trailing brace to add additional elements
     # Remove also any empty nsx_security_groups
-    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG | sed -e 's/}$//1' | sed -e 's/"nsx_security_groups": null//')
-    NSX_LBR_PAYLOAD="{ \"nsx_lbs\": ["
+    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG | sed -e 's/}$//1' | sed -e 's/"nsx_security_groups": null,//')
+    NSX_LBR_PAYLOAD=" \"nsx_lbs\": ["
 
     index=1
     for variable in $(echo $LBR_DETAILS)
