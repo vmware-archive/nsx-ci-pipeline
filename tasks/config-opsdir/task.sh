@@ -137,6 +137,7 @@ fi
 # Overwrite iaas conf
 if [ "$IS_NSX_ENABLED" == "true" ]; then
   cat > /tmp/iaas_conf.txt <<-EOF
+{
   "vcenter_host": "$VCENTER_HOST",
   "vcenter_username": "$VCENTER_USR",
   "vcenter_password": "$VCENTER_PWD",
