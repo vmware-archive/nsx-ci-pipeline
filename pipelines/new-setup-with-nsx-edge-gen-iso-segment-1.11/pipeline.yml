@@ -14,6 +14,7 @@ nsx_edge_params: &nsx-edge-params
   NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
   NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
   NSX_EDGE_GEN_ENABLE_DLR: {{nsx_edge_gen_enable_dlr}}
+  NSX_EDGE_GEN_BOSH_NSX_ENABLED: {{nsx_edge_gen_bosh_nsx_enabled}}
   ESG_GATEWAY_1: {{esg_gateway_1}}
   ESG_SIZE: {{esg_size}}
   ESG_OSPF_PASSWORD_1: {{esg_ospf_password_1}}
