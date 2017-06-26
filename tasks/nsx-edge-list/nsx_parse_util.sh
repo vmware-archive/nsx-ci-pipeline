@@ -58,7 +58,7 @@ function fn_get_component_pool_details {
    grep -i "lbr assignment" |
    grep -i ${search_switch} | \
    grep -i ${search_component} | \
-   awk -F '|' '{print$3":"$5":"$6":"$7}' | sed -e 's/ //g'
+   awk -F '|' '{print$3":"$5":"$6":"$7":"$8}' | sed -e 's/ //g'
   )
   echo $component_lbr_ip
 }

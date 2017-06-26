@@ -15,8 +15,7 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   # created by hte NSX_GEN_UTIL script
   source /tmp/jobs_lbr_map.out
   IS_NSX_ENABLED=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-             curl -p "/api/v0/deployed/director/manifest" 2>/dev/null \
-             | jq '.cloud_provider.properties.vcenter.nsx' || true )
+             curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
 
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
@@ -278,12 +277,14 @@ do
       lbr_name=$(echo $variable  | awk -F ':' '{print $2}')
       pool_name=$(echo $variable | awk -F ':' '{print $3}')
       port=$(echo $variable | awk -F ':' '{print $4}')
-      echo "ESG: $edge_name, LBR: $lbr_name, Pool: $pool_name and Port: $port"
+      monitor_port=$(echo $variable | awk -F ':' '{print $5}')
+      echo "ESG: $edge_name, LBR: $lbr_name, Pool: $pool_name, Port: $port, Monitor port: $monitor_port"
       
       # Create a security group with Product Guid and job name for lbr security grp
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
       ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
+      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
       if [ "$index" == "1" ]; then          
