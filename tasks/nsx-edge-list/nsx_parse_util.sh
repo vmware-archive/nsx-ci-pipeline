@@ -254,13 +254,26 @@ echo ""
 ###
 ### Those that require LBR: rabbitmq-haproxy
 
+### All Isolation Segment Tile Jobs
+# "isolated_router"
+# "isolated_diego_cell"
+# "isolated_tcp_router"
+# "router".    # for Pre-1.11
+# "tcp_router" # for Pre-1.11
+###
+### Those that require LBR: rabbitmq-haproxy
+
+
 export ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'
 export MYSQL_TILE_JOBS_REQUIRING_LBR='proxy'
 export RABBITMQ_TILE_JOBS_REQUIRING_LBR='rabbitmq-haproxy'
-export ISO_TILE_JOBS_REQUIRING_LBR='tcp_router,router'
+export ISO_TILE_JOBS_REQUIRING_LBR='tcp_router,router,isolated_tcp_router,isolated_router'
 
 declare -A ERT_TILE_JOBS_LBR_MAP
-ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS" ["diego_brain"]="$SSH_LBR_DETAILS"  ["router"]="$ERT_GOROUTER_LBR_DETAILS" )
+ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" \
+  ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS" \
+  ["diego_brain"]="$SSH_LBR_DETAILS" \
+  ["router"]="$ERT_GOROUTER_LBR_DETAILS" )
 
 declare -A MYSQL_TILE_JOBS_LBR_MAP
 MYSQL_TILE_JOBS_LBR_MAP=( [proxy]="$MYSQL_TILE_LBR_DETAILS" )
@@ -269,13 +282,22 @@ declare -A RABBITMQ_TILE_JOBS_LBR_MAP
 RABBITMQ_TILE_JOBS_LBR_MAP=( [rabbitmq-haproxy]="$RABBITMQ_TILE_LBR_DETAILS" )
 
 declare -A ISO_TILE_1_JOBS_LBR_MAP
-ISO_TILE_1_JOBS_LBR_MAP=( [tcp_router]="$ISOZONE_SWITCH_1_TCPOROUTER_LBR_DETAILS"  [router]="$ISOZONE_SWITCH_1_GOROUTER_LBR_DETAILS")
+ISO_TILE_1_JOBS_LBR_MAP=( [tcp_router]="$ISOZONE_SWITCH_1_TCPOROUTER_LBR_DETAILS" \
+ [router]="$ISOZONE_SWITCH_1_GOROUTER_LBR_DETAILS" \
+ [isolated_tcp_router]="$ISOZONE_SWITCH_1_TCPOROUTER_LBR_DETAILS"  \
+ [isolated_router]="$ISOZONE_SWITCH_1_GOROUTER_LBR_DETAILS" )
 
 declare -A ISO_TILE_2_JOBS_LBR_MAP
-ISO_TILE_2_JOBS_LBR_MAP=( [tcp_router]="$ISOZONE_SWITCH_2_TCPOROUTER_LBR_DETAILS"  [router]="$ISOZONE_SWITCH_2_GOROUTER_LBR_DETAILS")
+ISO_TILE_2_JOBS_LBR_MAP=( [tcp_router]="$ISOZONE_SWITCH_2_TCPOROUTER_LBR_DETAILS" \
+ [router]="$ISOZONE_SWITCH_2_GOROUTER_LBR_DETAILS" \
+ [isolated_tcp_router]="$ISOZONE_SWITCH_2_TCPOROUTER_LBR_DETAILS"  \
+ [isolated_router]="$ISOZONE_SWITCH_2_GOROUTER_LBR_DETAILS" )
 
 declare -A ISO_TILE_3_JOBS_LBR_MAP
-ISO_TILE_3_JOBS_LBR_MAP=( [tcp_router]="$ISOZONE_SWITCH_3_TCPOROUTER_LBR_DETAILS"  [router]="$ISOZONE_SWITCH_3_GOROUTER_LBR_DETAILS")
+ISO_TILE_3_JOBS_LBR_MAP=( [tcp_router]="$ISOZONE_SWITCH_3_TCPOROUTER_LBR_DETAILS" \
+ [router]="$ISOZONE_SWITCH_3_GOROUTER_LBR_DETAILS")
+ [isolated_tcp_router]="$ISOZONE_SWITCH_3_TCPOROUTER_LBR_DETAILS"  \
+ [isolated_router]="$ISOZONE_SWITCH_3_GOROUTER_LBR_DETAILS" )
 
 declare -p ERT_TILE_JOBS_LBR_MAP > /tmp/jobs_lbr_map.out
 declare -p MYSQL_TILE_JOBS_LBR_MAP >> /tmp/jobs_lbr_map.out

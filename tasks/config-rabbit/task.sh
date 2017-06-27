@@ -25,10 +25,13 @@ fi
 
 TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-rabbitmq`
 
-PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
+export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
+export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
 
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
+
+export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
+export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
 
 function fn_get_azs {
      local azs_csv=$1
@@ -139,20 +142,16 @@ do
     # Expecting only one security group env variable per job (can have a comma separated list)
     SECURITY_GROUP=$(env | grep "TILE_RABBIT_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
 
-    # If nothing has been defined, just the auto-created security group 
-    # (that has the same value as the product guid - done by BOSH)
-    if [ "$SECURITY_GROUP" == "" ]; then
-      SECURITY_GROUP=\"${PRODUCT_GUID}\"
-    else
-      # Check if there are multiple security groups
-      # If so, wrap them with quotes
-      NEW_SECURITY_GROUP=''
-      for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
-      do
-        NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP \"$secgrp\",)
-      done
-      SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
-    fi
+    # Use an auto-security group based on product guid by Bosh 
+    # for grouping all vms with the same security group
+    NEW_SECURITY_GROUP=\"${PRODUCT_GUID}\"
+     # Check if there are multiple security groups
+    # If so, wrap them with quotes
+    for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
+    do
+      NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP \"$secgrp\",)
+    done
+    SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
@@ -184,8 +183,8 @@ do
       # Create a security group with Product Guid and job name for lbr security grp
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
-      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
-      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
+      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
+      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
       if [ "$index" == "1" ]; then          

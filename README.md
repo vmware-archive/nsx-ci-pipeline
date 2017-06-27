@@ -76,6 +76,15 @@ nsx_edge_gen_name: nsx-pipeline-sample #string name for NSX objects
 ## valid values: (true|false) 
 nsx_edge_gen_enable_dlr: false # REQUIRED
 
+
+## Indicate if BOSH & PCF has nsx integration
+## valid values: (true|false) 
+## For PCF versions 1.11 or newer, set to true
+## For PCF versions 1.10 or older, set to false
+## This flag allows nsx-edge-gen to populate the pool with static member ips (if false)
+## and avoid populating it (if true) as Bosh would use security groups to associate pool with job members
+nsx_edge_gen_bosh_nsx_enabled: true # REQUIRED -> true for PCF 1.11+, false for PCF 1.10 or older
+
 esg_size: compact # valid values (compact|large|xlarge|quadlarge)
 esg_ospf_password_1: P1v0t4l
 esg_cli_username_1: admin 
@@ -276,6 +285,12 @@ tcp_router_static_ips:
 ssh_static_ips:
 ert_mysql_static_ips:
 
+## C2C Container to Container networking - applicable only for PCF1.11+ 
+## valid values: [enable|disable]
+ert_enable_c2c: enable               # Default
+ert_c2c_network_cidr: 10.255.0.0/16
+ert_c2c_vtep_port: 4789
+
 ## NSX Security Group tie-up
 ## Needs to be filled for automatic registration of job against NSX Security Group 
 ## and LBR (GoRouter, TCPRouter, MYSQL, SSH)
@@ -383,14 +398,20 @@ tile_iso_ssl_cert_1:
 tile_iso_ssl_private_key_1:       
 tile_iso_router_ssl_ciphers_1: 
 
+## C2C Container to Container networking - applicable only for PCF1.11+ 
+## valid values: [enable|disable]
+tile_iso_enable_c2c_1: enable # Default
+tile_iso_c2c_network_cidr_1: 10.255.0.0/16
+tile_iso_c2c_vtep_port_1: 4789
+
 ## Leave static ips blank
 tile_iso_router_static_ips_1:
 
 ## Leave blank disk and memory - fill if necessary (in MB)
 tile_iso_cell_disk_capacity_1:
 tile_iso_cell_memory_capacity_1:
-
-## Edit if necessary
+  
+## Edit if necessary - used for pre-PCF 1.11 like 1.9, 1.10
 tile_iso_application_network_cidr_1: 10.254.0.0/22
 tile_iso_application_network_mtu_1: 1454
 
@@ -406,10 +427,11 @@ tile_iso_segment_name_1:     # REQUIRED, sample: zone1
 ## Edit as necessary
 tile_iso_diego_cell_instances_1: 2
 
+
 ## NSX Security Group tie-up
 ## Needs to be filled for automatic registration of job against NSX Security Group 
 ## and LBR (GoRouter, TCPRouter, MYSQL, SSH)
-## If no security group provided, binding of lbr & security group would be ignored for the job
+## If no security group provided, it would use defaults
 tile_iso_router_security_group_1:               
 tile_iso_tcp_router_security_group_1:
 

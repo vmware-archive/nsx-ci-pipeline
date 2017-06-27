@@ -120,18 +120,19 @@ cat > /tmp/iaas_conf.txt <<-EOF
 EOF
 
 # Check if Bosh Director is v1.11 or higher
-bosh_product_version=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+export BOSH_PRODUCT_VERSION=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
            curl -p "/api/v0/staged/products" 2>/dev/null | jq '.[].product_version' | tr -d '"')
-major_version=$(echo $bosh_product_version | awk -F '.' '{print $1}' )
-minor_version=$(echo $bosh_product_version | awk -F '.' '{print $2}' )
+export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
+export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
 
-IS_NSX_ENABLED=false
-if [ "$major_version" -le 1 ]; then
-  if [ "$minor_version" -ge 11 ]; then
-    IS_NSX_ENABLED=true
+
+export IS_NSX_ENABLED=false
+if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
+  if [ "$BOSH_MINOR_VERSION" -ge 11 ]; then
+    export IS_NSX_ENABLED=true
   fi
 else
-  IS_NSX_ENABLED=true
+  export IS_NSX_ENABLED=true
 fi
 
 # Overwrite iaas conf

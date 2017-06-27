@@ -27,6 +27,14 @@ else
   exit 1
 fi
 
+
+# Check if Bosh Director is v1.11 or higher
+export BOSH_PRODUCT_VERSION=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+           curl -p "/api/v0/staged/products" 2>/dev/null | jq '.[].product_version' | tr -d '"')
+export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
+export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
+
+
 # No need to associate a static ip for MySQL Proxy for ERT
 # export MYSQL_ERT_PROXY_IP=$(echo ${DEPLOYMENT_NW_CIDR} | \
 #                            sed -e 's/\/.*//g' | \
@@ -35,10 +43,13 @@ fi
 
 CF_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep cf`
 
-PRODUCT_NAME=`echo $CF_RELEASE | cut -d"|" -f2 | tr -d " "`
-PRODUCT_VERSION=`echo $CF_RELEASE | cut -d"|" -f3 | tr -d " "`
+export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
+export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
 
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
+
+export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
+export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
 
 function fn_get_azs {
      local azs_csv=$1
@@ -46,6 +57,7 @@ function fn_get_azs {
 }
 
 OTHER_AVAILABILITY_ZONES=$(fn_get_azs $AZS_ERT)
+
 
 CF_NETWORK=$(cat <<-EOF
 {
@@ -257,25 +269,60 @@ $CF_PROPERTIES
   ".push-apps-manager.company_name": {
     "value": "${NSX_APPS_MGR_NAME:-NSXAppsManager}"
   }
-}
 EOF
 )
 
 
+# Default for PCF 1.9, 1.10 and older is no support for C2C
+export SUPPORTS_C2C=false
+if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
+  if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
+    export SUPPORTS_C2C=true   
+  fi
+else
+  export SUPPORTS_C2C=true
+fi
 
-# Ignore the garden_network_pool setting - it got moved out in PCF 1.11 and breaks if used.
-# if [ "DIEGO_GARDEN_NETWORK_POOL" ]; then
+# PCF supports C2C
+if [ "$SUPPORTS_C2C" == "true" ]; then
 
-# CF_PROPERTIES=$(cat <<-EOF
-# $CF_PROPERTIES,
-#   ".diego_cell.garden_network_pool": {
-#     "value": "10.254.0.0/22"
-#   }
-# }
-# EOF
-# )
-
-# fi
+  # If user wants C2C enabled, then add additional properties
+  if [ "$TILE_ERT_ENABLE_C2C" == "enable" ]; then
+    CF_PROPERTIES=$(cat <<-EOF
+$CF_PROPERTIES,
+  ".properties.container_networking.enable.network_cidr": {
+      "value": "$ERT_C2C_NETWORK_CIDR"
+  },
+  ".properties.container_networking.enable.vtep_port": {
+    "value": "$ERT_C2C_VTEP_PORT"
+  }
+}
+EOF
+)
+  else
+    # User does not want c2c
+    CF_PROPERTIES=$(cat <<-EOF
+$CF_PROPERTIES,
+  ".properties.container_networking.disable.garden_network_pool": {
+    "value": "10.254.0.0/22"
+  }
+}
+EOF
+)
+  fi
+  # End of SUPPORTS_C2C
+else  
+  # Older version, no C2C support
+  CF_PROPERTIES=$(cat <<-EOF
+$CF_PROPERTIES,
+  ".diego_cell.garden_network_pool": {
+      "value": "10.254.0.0/22"
+    }
+}
+EOF
+)
+fi
+# End of PROPERTIES block
 
 CF_RESOURCES=$(cat <<-EOF
 {
@@ -587,20 +634,16 @@ do
     # Expecting only one security group env variable per job (can have a comma separated list)
     SECURITY_GROUP=$(env | grep "TILE_ERT_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
 
-    # If nothing has been defined, just the auto-created security group 
-    # (that has the same value as the product guid - done by BOSH)
-    if [ "$SECURITY_GROUP" == "" ]; then
-      SECURITY_GROUP=\"${PRODUCT_GUID}\"
-    else
-      # Check if there are multiple security groups
-      # If so, wrap them with quotes
-      NEW_SECURITY_GROUP=''
-      for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
-      do
-        NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP \"$secgrp\",)
-      done
-      SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
-    fi
+    # Use an auto-security group based on product guid by Bosh 
+    # for grouping all vms with the same security group
+    NEW_SECURITY_GROUP=\"${PRODUCT_GUID}\"
+     # Check if there are multiple security groups
+    # If so, wrap them with quotes
+    for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
+    do
+      NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP \"$secgrp\",)
+    done
+    SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
@@ -632,8 +675,8 @@ do
       # Create a security group with Product Guid and job name for lbr security grp
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
-      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
-      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
+      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
+      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
       if [ "$index" == "1" ]; then          

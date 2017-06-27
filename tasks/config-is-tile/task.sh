@@ -22,6 +22,20 @@ else
   exit 1
 fi
 
+# Check if Bosh Director is v1.11 or higher
+export bosh_product_version=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+           curl -p "/api/v0/staged/products" 2>/dev/null | jq '.[].product_version' | tr -d '"')
+export bosh_major_version=$(echo $bosh_product_version | awk -F '.' '{print $1}' )
+export bosh_minor_version=$(echo $bosh_product_version | awk -F '.' '{print $2}' )
+
+
+export cf_product_version=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+          curl -p "/api/v0/staged/products" -x GET | jq '.[] | select(.installation_name | contains("cf-")) | .product_version' | tr -d '"')
+
+export cf_major_version=$(echo $cf_product_version | awk -F '.' '{print $1}' )
+export cf_minor_version=$(echo $cf_product_version | awk -F '.' '{print $2}' )
+
+
 # Can only support one version of the default isolation segment tile
 # Search for the tile using the specified product name if available
 # or search using p-iso as default iso product name
@@ -31,10 +45,14 @@ else
   TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep $PRODUCT_NAME`
 fi
 
-PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
+export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
+export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
 
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
+
+export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
+export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
+
 
 function fn_get_azs {
      local azs_csv=$1
@@ -77,16 +95,16 @@ fi
 # Supporting atmost 3 isolation segments
 case "$NETWORK_NAME" in
   *01) 
-  ROUTER_STATIC_IPS=$ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS
-  TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS
+  export ROUTER_STATIC_IPS=$ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS
+  export TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS
   ;;
   *02)
-  ROUTER_STATIC_IPS=$ISOZONE_SWITCH_2_GOROUTER_STATIC_IPS
-  TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_2_TCPROUTER_STATIC_IPS
+  export ROUTER_STATIC_IPS=$ISOZONE_SWITCH_2_GOROUTER_STATIC_IPS
+  export TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_2_TCPROUTER_STATIC_IPS
   ;;
   *03)
-  ROUTER_STATIC_IPS=$ISOZONE_SWITCH_3_GOROUTER_STATIC_IPS
-  TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_3_TCPROUTER_STATIC_IPS
+  export ROUTER_STATIC_IPS=$ISOZONE_SWITCH_3_GOROUTER_STATIC_IPS
+  export TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_3_TCPROUTER_STATIC_IPS
   ;;
 esac
 
@@ -113,9 +131,6 @@ $PROPERTIES
   ".isolated_diego_cell.executor_memory_capacity": {
     "value": "$CELL_MEMORY_CAPACITY"
   },
-  ".isolated_diego_cell.garden_network_pool": {
-    "value": "$APPLICATION_NETWORK_CIDR"
-  },
   ".isolated_diego_cell.garden_network_mtu": {
     "value": $APPLICATION_NETWORK_MTU
   },
@@ -127,6 +142,58 @@ $PROPERTIES
   }
 EOF
 )
+
+# Default for PCF 1.9, 1.10 and older is no support for C2C
+export SUPPORTS_C2C=false
+if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
+  if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
+    export SUPPORTS_C2C=true   
+  fi
+else
+  export SUPPORTS_C2C=true
+fi
+
+# PCF supports C2C
+if [ "$SUPPORTS_C2C" == "true" ]; then
+
+  # If user wants C2C enabled, then add additional properties
+  if [ "$TILE_ISO_ENABLE_C2C" == "enable" ]; then
+    PROPERTIES=$(cat <<-EOF
+$PROPERTIES,
+  ".properties.container_networking.enable.network_cidr": {
+      "value": "$TILE_ISO_C2C_NETWORK_CIDR"
+  },
+  ".properties.container_networking.enable.vtep_port": {
+    "value": "$TILE_ISO_C2C_VTEP_PORT"
+  }
+}
+EOF
+)
+  else
+    # User does not want c2c
+    PROPERTIES=$(cat <<-EOF
+$PROPERTIES,
+  ".properties.container_networking.disable.garden_network_pool": {
+    "value": "$APPLICATION_NETWORK_CIDR"
+  }
+}
+EOF
+)
+  fi
+  # End of SUPPORTS_C2C
+else  
+  # Older version, no C2C support
+  PROPERTIES=$(cat <<-EOF
+$PROPERTIES,
+  ".isolated_diego_cell.garden_network_pool": {
+      "value": "$APPLICATION_NETWORK_CIDR"
+    }
+}
+EOF
+)
+fi
+# End of PROPERTIES block
+
 
 RESOURCES=$(cat <<-EOF
 {
@@ -226,20 +293,16 @@ do
     # Expecting only one security group env variable per job (can have a comma separated list)
     SECURITY_GROUP=$(env | grep "TILE_ISO_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
 
-    # If nothing has been defined, just the auto-created security group 
-    # (that has the same value as the product guid - done by BOSH)
-    if [ "$SECURITY_GROUP" == "" ]; then
-      SECURITY_GROUP=\"${PRODUCT_GUID}\"
-    else
-      # Check if there are multiple security groups
-      # If so, wrap them with quotes
-      NEW_SECURITY_GROUP=''
-      for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
-      do
-        NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP \"$secgrp\",)
-      done
-      SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
-    fi
+    # Use an auto-security group based on product guid by Bosh 
+    # for grouping all vms with the same security group
+    NEW_SECURITY_GROUP=\"${PRODUCT_GUID}\"
+     # Check if there are multiple security groups
+    # If so, wrap them with quotes
+    for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
+    do
+      NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP \"$secgrp\",)
+    done
+    SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
@@ -283,8 +346,8 @@ do
       # Create a security group with Product Guid and job name for lbr security grp
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
-      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
-      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
+      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
+      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
       if [ "$index" == "1" ]; then          
