@@ -108,23 +108,9 @@ case "$NETWORK_NAME" in
   ;;
 esac
 
-# Add the static ips to list above if nsx not enabled in Bosh director 
-# If nsx enabled, a security group would be dynamically created with vms 
-# and associated with the pool by Bosh
-if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
-  PROPERTIES=$(cat <<-EOF
-{
-  ".isolated_router.static_ips": {
-    "value": "$ROUTER_STATIC_IPS"
-  },
-EOF
-)
-else
-  PROPERTIES="{"
-fi
 
 PROPERTIES=$(cat <<-EOF
-$PROPERTIES
+{
   ".isolated_diego_cell.executor_disk_capacity": {
     "value": "$CELL_DISK_CAPACITY"
   },
@@ -139,11 +125,25 @@ $PROPERTIES
   },
   ".isolated_diego_cell.placement_tag": {
     "value": "$SEGMENT_NAME"
-  }
+  },
 EOF
 )
 
-# Default for PCF 1.9, 1.10 and older is no support for C2C
+# Add the static ips to list above if nsx not enabled in Bosh director 
+# If nsx enabled, a security group would be dynamically created with vms 
+# and associated with the pool by Bosh
+if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
+  PROPERTIES=$(cat <<-EOF
+$PROPERTIES
+  ".isolated_router.static_ips": {
+    "value": "$ROUTER_STATIC_IPS"
+  },
+EOF
+)
+fi
+
+
+# No C2C support in PCF 1.9, 1.10 and older versions
 export SUPPORTS_C2C=false
 if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
   if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
@@ -159,7 +159,7 @@ if [ "$SUPPORTS_C2C" == "true" ]; then
   # If user wants C2C enabled, then add additional properties
   if [ "$TILE_ISO_ENABLE_C2C" == "enable" ]; then
     PROPERTIES=$(cat <<-EOF
-$PROPERTIES,
+$PROPERTIES
   ".properties.container_networking.enable.network_cidr": {
       "value": "$TILE_ISO_C2C_NETWORK_CIDR"
   },
@@ -172,7 +172,7 @@ EOF
   else
     # User does not want c2c
     PROPERTIES=$(cat <<-EOF
-$PROPERTIES,
+$PROPERTIES
   ".properties.container_networking.disable.garden_network_pool": {
     "value": "$APPLICATION_NETWORK_CIDR"
   }
@@ -184,7 +184,7 @@ EOF
 else  
   # Older version, no C2C support
   PROPERTIES=$(cat <<-EOF
-$PROPERTIES,
+$PROPERTIES
   ".isolated_diego_cell.garden_network_pool": {
       "value": "$APPLICATION_NETWORK_CIDR"
     }

@@ -90,11 +90,64 @@ else
   echo "Using certs passed in YML"
 fi
 
+
+
+
+# API calls using OM Cli
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  available-products -n cf
+# output:
+# +------+---------+
+# | NAME | VERSION |
+# +------+---------+
+# | cf   | 1.11.0  |
+# +------+---------+
+
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/installation_settings"
+# output:
+# full dump of all properties for all products
+
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/v0/staged/products/{app-guid}/properties"
+# output: dump of properties for a specific staged product
+
+# To get the bosh cloud config contianing networks and azs:
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.networks```
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.azs```
+
+# Just bosh director manifest
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/director/manifest"
+
+# Get the installation details
+# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  curl -p "/api/installation_settings" | jq .infrastructure.networks
+
 CF_PROPERTIES=$(cat <<-EOF
 {
   ".properties.logger_endpoint_port": {
     "value": "$LOGGREGATOR_ENDPOINT_PORT"
   },  
+  ".properties.tcp_routing": {
+    "value": "$TCP_ROUTING"
+  },
+  ".properties.tcp_routing.enable.reservable_ports": {
+    "value": "$TCP_ROUTING_PORTS"
+  },
+  ".properties.route_services": {
+    "value": "$ROUTE_SERVICES"
+  },
+  ".properties.route_services.enable.ignore_ssl_cert_verification": {
+    "value": $IGNORE_SSL_CERT
+  },
+  ".properties.security_acknowledgement": {
+    "value": "X"
+  },
+  ".properties.system_blobstore": {
+    "value": "internal"
+  },
+  ".properties.mysql_backups": {
+    "value": "disable"
+  },
+  ".mysql_proxy.service_hostname": {
+    "value": "$ERT_MYSQL_LBR_IP"
+  },
 EOF
 )
 
@@ -144,62 +197,6 @@ EOF
 )
 
 fi
-
-
-# API calls using OM Cli
-# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  available-products -n cf
-# output:
-# +------+---------+
-# | NAME | VERSION |
-# +------+---------+
-# | cf   | 1.11.0  |
-# +------+---------+
-
-# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/installation_settings"
-# output:
-# full dump of all properties for all products
-
-# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/v0/staged/products/{app-guid}/properties"
-# output: dump of properties for a specific staged product
-
-# To get the bosh cloud config contianing networks and azs:
-# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.networks```
-# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.azs```
-
-# Just bosh director manifest
-# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/director/manifest"
-
-# Get the installation details
-# ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  curl -p "/api/installation_settings" | jq .infrastructure.networks
-
-CF_PROPERTIES=$(cat <<-EOF
-$CF_PROPERTIES
-  ".properties.tcp_routing": {
-    "value": "$TCP_ROUTING"
-  },
-  ".properties.tcp_routing.enable.reservable_ports": {
-    "value": "$TCP_ROUTING_PORTS"
-  },
-  ".properties.route_services": {
-    "value": "$ROUTE_SERVICES"
-  },
-  ".properties.route_services.enable.ignore_ssl_cert_verification": {
-    "value": $IGNORE_SSL_CERT
-  },
-  ".properties.security_acknowledgement": {
-    "value": "X"
-  },
-  ".properties.system_blobstore": {
-    "value": "internal"
-  },
-  ".properties.mysql_backups": {
-    "value": "disable"
-  },
-  ".mysql_proxy.service_hostname": {
-    "value": "$ERT_MYSQL_LBR_IP"
-  },
-EOF
-)
 
 # Add the static ips to list above if nsx not enabled in Bosh director 
 # If nsx enabled, a security group would be dynamically created with vms 
@@ -267,13 +264,13 @@ $CF_PROPERTIES
     "value": 10000
   },
   ".push-apps-manager.company_name": {
-    "value": "${NSX_APPS_MGR_NAME:-NSXAppsManager}"
-  }
+    "value": "${NSX_APPS_MGR_NAME}"
+  },
 EOF
 )
 
 
-# Default for PCF 1.9, 1.10 and older is no support for C2C
+# No C2C support in PCF 1.9, 1.10 and older versions
 export SUPPORTS_C2C=false
 if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
   if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
@@ -289,12 +286,12 @@ if [ "$SUPPORTS_C2C" == "true" ]; then
   # If user wants C2C enabled, then add additional properties
   if [ "$TILE_ERT_ENABLE_C2C" == "enable" ]; then
     CF_PROPERTIES=$(cat <<-EOF
-$CF_PROPERTIES,
+$CF_PROPERTIES
   ".properties.container_networking.enable.network_cidr": {
-      "value": "$ERT_C2C_NETWORK_CIDR"
+      "value": "$TILE_ERT_C2C_NETWORK_CIDR"
   },
   ".properties.container_networking.enable.vtep_port": {
-    "value": "$ERT_C2C_VTEP_PORT"
+    "value": "$TILE_ERT_C2C_VTEP_PORT"
   }
 }
 EOF
@@ -302,7 +299,7 @@ EOF
   else
     # User does not want c2c
     CF_PROPERTIES=$(cat <<-EOF
-$CF_PROPERTIES,
+$CF_PROPERTIES
   ".properties.container_networking.disable.garden_network_pool": {
     "value": "10.254.0.0/22"
   }
@@ -314,7 +311,7 @@ EOF
 else  
   # Older version, no C2C support
   CF_PROPERTIES=$(cat <<-EOF
-$CF_PROPERTIES,
+$CF_PROPERTIES
   ".diego_cell.garden_network_pool": {
       "value": "10.254.0.0/22"
     }
