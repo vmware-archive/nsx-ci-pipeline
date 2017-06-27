@@ -300,7 +300,7 @@ do
     # If so, wrap them with quotes
     for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
     do
-      NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP \"$secgrp\",)
+      NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP, \"$secgrp\",)
     done
     SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
 
