@@ -56,6 +56,14 @@ pivnet_token: <YOUR PIVNET TOKEN> #REQUIRED
 github_user: <YOUR GITHIB USERID> #REQUIRED
 github_token: <YOUR GITHIB TOKEN> #REQUIRED
 
+# Pivnet Tile versions
+opsman_product_version: '1\.11\..*'      # Change to '1\.10\..*' for Ops Mgr 1.10 or other versions
+ert_product_version: '1\.10\..*'
+iso_product_version: '1\.10\..*'
+mysql_product_version: '1\.8\..*'
+rabbit_product_version: '1\.9\..*'
+scs_product_version: '1\.3\..*'
+
 ## vCenter Params
 vcenter_host: <YOUR VCENTER URL|IP> #REQUIRED
 vcenter_usr: administrator@vsphere.local #REQUIRED

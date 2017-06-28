@@ -132,7 +132,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: ops-manager
-    product_version: '1\.11\..*'
+    product_version: {{opsman_product_version}} #'1\.11\..*'
     sort_by: semver
 
 - name: pivnet-er-product
@@ -140,7 +140,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: elastic-runtime
-    product_version: '1\.11\.*'
+    product_version: {{ert_product_version}} #'1\.11\.*'
     sort_by: semver
 
 - name: pivnet-iso-product
@@ -148,7 +148,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: isolation-segment
-    product_version: '1\.11\.*'
+    product_version: {{iso_product_version}} #'1\.11\.*'
     sort_by: semver
 
 jobs:
@@ -443,8 +443,8 @@ jobs:
       TILE_ERT_ENABLE_C2C: {{ert_enable_c2c}}
       TILE_ERT_C2C_NETWORK_CIDR: {{ert_c2c_network_cidr}}
       TILE_ERT_C2C_VTEP_PORT: {{ert_c2c_vtep_port}}
-      TILE_ERT_ROUTER_SECURITY_GROUP: {{ert_router_security_group}}              
-      TILE_ERT_TCP_ROUTER_SECURITY_GROUP: {{ert_tcp_router_security_group}} 
+      TILE_ERT_ROUTER_SECURITY_GROUP: {{ert_router_security_group}}
+      TILE_ERT_TCP_ROUTER_SECURITY_GROUP: {{ert_tcp_router_security_group}}
       TILE_ERT_DIEGO_BRAIN_SECURITY_GROUP: {{ert_diego_brain_security_group}}
       TILE_ERT_MYSQL_PROXY_SECURITY_GROUP: {{ert_mysql_proxy_security_group}}
 
@@ -549,8 +549,8 @@ jobs:
       SEGMENT_NAME: {{tile_iso_segment_name_1}}
       IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst_1}} # Use the instance count provided for nsx
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
-      TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group_1}}              
-      TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group_1}} 
+      TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group_1}}
+      TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group_1}}
       TILE_ISO_ENABLE_C2C: {{tile_iso_enable_c2c_1}}
       TILE_ISO_C2C_NETWORK_CIDR: {{tile_iso_c2c_network_cidr_1}}
       TILE_ISO_C2C_VTEP_PORT: {{tile_iso_c2c_vtep_port_1}}
@@ -638,6 +638,7 @@ jobs:
     - get: om-cli
       globs: om-linux
       passed: [uninstall-products]
+      trigger: true
     - get: govc
       params:
         globs:

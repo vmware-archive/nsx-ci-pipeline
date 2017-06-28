@@ -14,6 +14,7 @@ nsx_edge_params: &nsx-edge-params
   NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
   NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
   NSX_EDGE_GEN_ENABLE_DLR: {{nsx_edge_gen_enable_dlr}}
+  NSX_EDGE_GEN_BOSH_NSX_ENABLED: {{nsx_edge_gen_bosh_nsx_enabled}}
   ESG_GATEWAY_1: {{esg_gateway_1}}
   ESG_SIZE: {{esg_size}}
   ESG_OSPF_PASSWORD_1: {{esg_ospf_password_1}}
@@ -131,7 +132,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: ops-manager
-    product_version: '1\.10\..*'
+    product_version: {{opsman_product_version}} #'1\.11\..*'
     sort_by: semver
 
 - name: pivnet-er-product
@@ -139,7 +140,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: elastic-runtime
-    product_version: '1\.10\.*'
+    product_version: {{ert_product_version}} #'1\.11\.*'
     sort_by: semver
 
 - name: pivnet-iso-product
@@ -147,7 +148,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: isolation-segment
-    product_version: '1\.10\.*'
+    product_version: {{iso_product_version}} #'1\.11\.*'
     sort_by: semver
 
 jobs:
@@ -254,6 +255,9 @@ jobs:
       VCENTER_PWD: {{vcenter_pwd}}
       VCENTER_DATA_CENTER: {{vcenter_data_center}}
       VCENTER_DISK_TYPE: {{disk_type}}
+      NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
+      NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
+      NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
       STORAGE_NAMES: {{storage_names}}
       INFRA_NETWORK_NAME: {{infra_network_name}}
       INFRA_VCENTER_NETWORK: {{infra_vsphere_network}}
@@ -435,6 +439,14 @@ jobs:
       LOGGREGATOR_TC_INSTANCES: {{loggregator_traffic_controller_instances}}
       TCP_ROUTER_INSTANCES: {{tcp_router_instances}}
       DEPLOYMENT_NW_CIDR: {{deployment_nw_cidr}}
+      NSX_APPS_MGR_NAME: {{nsx_apps_mgr_name}}
+      TILE_ERT_ENABLE_C2C: {{ert_enable_c2c}}
+      TILE_ERT_C2C_NETWORK_CIDR: {{ert_c2c_network_cidr}}
+      TILE_ERT_C2C_VTEP_PORT: {{ert_c2c_vtep_port}}
+      TILE_ERT_ROUTER_SECURITY_GROUP: {{ert_router_security_group}}
+      TILE_ERT_TCP_ROUTER_SECURITY_GROUP: {{ert_tcp_router_security_group}}
+      TILE_ERT_DIEGO_BRAIN_SECURITY_GROUP: {{ert_diego_brain_security_group}}
+      TILE_ERT_MYSQL_PROXY_SECURITY_GROUP: {{ert_mysql_proxy_security_group}}
 
 - name: product-apply-changes-ert
   plan:
@@ -537,6 +549,11 @@ jobs:
       SEGMENT_NAME: {{tile_iso_segment_name_1}}
       IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst_1}} # Use the instance count provided for nsx
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
+      TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group_1}}
+      TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group_1}}
+      TILE_ISO_ENABLE_C2C: {{tile_iso_enable_c2c_1}}
+      TILE_ISO_C2C_NETWORK_CIDR: {{tile_iso_c2c_network_cidr_1}}
+      TILE_ISO_C2C_VTEP_PORT: {{tile_iso_c2c_vtep_port_1}}
       
 - name: product-apply-changes-iso
   plan:
@@ -620,6 +637,7 @@ jobs:
     - get: om-cli
       globs: om-linux
       passed: [uninstall-products]
+      trigger: true
     - get: govc
       params:
         globs:
