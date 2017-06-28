@@ -29,6 +29,8 @@
 - All desired vSphere Datacenter,Cluster,& Resource Pool objects must exist.  The pipeline will not create them.
 - vCenter Account must have proper permissions.
 
+## Support for PCF 1.11 integration with NSX and C2C
+Modify the pivnet resources to refer to '1\.11\..*' version for the ops man, ert, iso and other tiles to use the PCF 1.11 version that has integration with NSX Security Groups and LBR features along with Container to Container networking. For PCF 1.10 or older versions, the jobs (like gorouter) would use static ip based membership unlike the dynamic security group based membership in PCF1.11. 
 
 Video Link(s)
 
