@@ -25,10 +25,24 @@ openssl s_client  -servername $NSX_MANAGER_ADDRESS \
                   >  /tmp/complete_nsx_manager.log
 
 # Get the host name instead of ip
-NSX_MANAGER_HOST_ADDRESS=`cat /tmp/complete_nsx_manager.log \
+if [ "$NSX_MANAGER_FQDN" == "" ]; then
+  echo "Fully qualified domain name for NSX Manager not provided, looking up from the NSX Manager cert!!"
+  
+  NSX_MANAGER_HOST_ADDRESS=`cat /tmp/complete_nsx_manager.log \
                           | grep Subject | grep "CN=" \
                           | awk '{print $NF}' \
                           | sed -e 's/CN=//g' `
+else
+  NSX_MANAGER_HOST_ADDRESS=$NSX_MANAGER_FQDN
+fi
+
+echo "Fully qualified domain name for NSX Manager: $NSX_MANAGER_HOST_ADDRESS"
+  
+NO_OF_FIELDS=$(echo "$NSX_MANAGER_HOST_ADDRESS" | awk -F '.' '{print NF}')
+if [ $NO_OF_FIELDS -lt 3 ]; then
+  echo "Fully qualified domain name for NSX Manager not provided nor available from the given NSX Manager cert!!"
+  exit 1
+fi
 
 cat /tmp/complete_nsx_manager.log \
                   |  awk '/BEGIN /,/END / {print }' \

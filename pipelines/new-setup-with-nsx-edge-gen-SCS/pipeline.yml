@@ -311,6 +311,7 @@ jobs:
       VCENTER_DATA_CENTER: {{vcenter_data_center}}
       VCENTER_DISK_TYPE: {{disk_type}}
       NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
+      NSX_MANAGER_FQDN: {{nsx_edge_gen_nsx_manager_fqdn}}
       NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
       NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
       STORAGE_NAMES: {{storage_names}}
