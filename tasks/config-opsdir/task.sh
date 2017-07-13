@@ -22,24 +22,31 @@ openssl s_client  -servername $NSX_MANAGER_ADDRESS \
                   -connect ${NSX_MANAGER_ADDRESS}:443 \
                   </dev/null 2>/dev/null \
                   | openssl x509 -text \
-                  >  /tmp/complete_nsx_manager.log
+                  >  /tmp/complete_nsx_manager_cert.log
 
-
-NSX_MANAGER_CERT_ADDRESS=`cat /tmp/complete_nsx_manager.log \
+NSX_MANAGER_CERT_ADDRESS=`cat /tmp/complete_nsx_manager_cert.log \
                         | grep Subject | grep "CN=" \
                         | awk '{print $NF}' \
                         | sed -e 's/CN=//g' `
 
-
 echo "Fully qualified domain name for NSX Manager: $NSX_MANAGER_FQDN"
 echo "Host name associated with NSX Manager cert: $NSX_MANAGER_CERT_ADDRESS"
-  
-cat /tmp/complete_nsx_manager.log \
+
+# Get all certs from the nsx manager
+openssl s_client -host $NSX_MANAGER_ADDRESS \
+                 -port 443 -prexit -showcerts \
+                 </dev/null 2>/dev/null  \
+                 >  /tmp/nsx_manager_all_certs.log
+
+# Get the very last CA cert from the showcerts result
+cat /tmp/nsx_manager_all_certs.log \
                   |  awk '/BEGIN /,/END / {print }' \
-                  >  /tmp/nsx_manager.cert
+                  | tail -30                        \
+                  |  awk '/BEGIN /,/END / {print }' \
+                  >  /tmp/nsx_manager_cacert.log
 
 # Strip newlines and replace them with \r\n
-cat /tmp/nsx_manager.cert | tr '\n' '#'| sed -e 's/#/\\r\\n/g'   > /tmp/nsx_manager.edited_cert
+cat /tmp/nsx_manager_cacert.log | tr '\n' '#'| sed -e 's/#/\\r\\n/g'   > /tmp/nsx_manager_edited_cacert.log
 
 #CSV parsing Function for mutiple AZs
 
@@ -142,11 +149,6 @@ fi
 # Overwrite iaas conf
 if [ "$IS_NSX_ENABLED" == "true" ]; then
 
-  echo "Fully qualified domain name for NSX Manager: $NSX_MANAGER_FQDN"
-  echo "Host name associated with NSX Manager cert: $NSX_MANAGER_CERT_ADDRESS"
-  if [ "$NSX_MANAGER_FQDN" == "$NSX_MANAGER_CERT_ADDRESS" ]; then 
-  # If the hostname matches the cert hostname for NSX Manager, 
-  # then add the cert
   cat > /tmp/iaas_conf.txt <<-EOF
 {
   "vcenter_host": "$VCENTER_HOST",
@@ -164,32 +166,9 @@ if [ "$IS_NSX_ENABLED" == "true" ]; then
   "nsx_address": "${NSX_MANAGER_FQDN}",
   "nsx_username": "${NSX_MANAGER_ADMIN_USER}",
   "nsx_password": "${NSX_MANAGER_ADMIN_PASSWD}",
-  "nsx_ca_certificate": "$(cat /tmp/nsx_manager.edited_cert)"
+  "nsx_ca_certificate": "$(cat /tmp/nsx_manager_edited_cacert.log)"
 }
 EOF
-   else 
-   # If the cert does not contain the fully qualified domain name for the NSX Manager,
-   # then skip the cert
-  cat > /tmp/iaas_conf.txt <<-EOF
-{
-  "vcenter_host": "$VCENTER_HOST",
-  "vcenter_username": "$VCENTER_USR",
-  "vcenter_password": "$VCENTER_PWD",
-  "datacenter": "$VCENTER_DATA_CENTER",
-  "disk_type": "$VCENTER_DISK_TYPE",
-  "ephemeral_datastores_string": "$STORAGE_NAMES",
-  "persistent_datastores_string": "$STORAGE_NAMES",
-  "bosh_vm_folder": "pcf_vms",
-  "bosh_template_folder": "pcf_templates",
-  "bosh_disk_path": "pcf_disk",
-  "ssl_verification_enabled": false,
-  "nsx_networking_enabled": true,
-  "nsx_address": "${NSX_MANAGER_FQDN}",
-  "nsx_username": "${NSX_MANAGER_ADMIN_USER}",
-  "nsx_password": "${NSX_MANAGER_ADMIN_PASSWD}"
-}
-EOF
-
 fi
 
 IAAS_CONFIGURATION=$(cat /tmp/iaas_conf.txt)

@@ -73,7 +73,7 @@ vcenter_pwd: <YOUR VCENTER ADMIN PASSWD> #REQUIRED
 vcenter_data_center: Datacenter #REQUIRED
 
 ## NSX Integration Params
-nsx_edge_gen_nsx_manager_address: <YOUR NSX MANAGER URL|IP> #REQUIRED
+nsx_edge_gen_nsx_manager_address: <YOUR NSX MANAGER IP> #REQUIRED
 nsx_edge_gen_nsx_manager_fqdn: <YOUR NSX MANAGER HOSTNAME with FQDN> #REQUIRED
 nsx_edge_gen_nsx_manager_admin_user: admin #REQUIRED
 nsx_edge_gen_nsx_manager_admin_passwd: <YOUR NSX MANAGER PASSWORD> #REQUIRED
