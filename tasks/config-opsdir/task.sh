@@ -24,26 +24,16 @@ openssl s_client  -servername $NSX_MANAGER_ADDRESS \
                   | openssl x509 -text \
                   >  /tmp/complete_nsx_manager.log
 
-# Get the host name instead of ip
-if [ "$NSX_MANAGER_FQDN" == "" ]; then
-  echo "Fully qualified domain name for NSX Manager not provided, looking up from the NSX Manager cert!!"
-  
-  NSX_MANAGER_HOST_ADDRESS=`cat /tmp/complete_nsx_manager.log \
-                          | grep Subject | grep "CN=" \
-                          | awk '{print $NF}' \
-                          | sed -e 's/CN=//g' `
-else
-  NSX_MANAGER_HOST_ADDRESS=$NSX_MANAGER_FQDN
-fi
 
-echo "Fully qualified domain name for NSX Manager: $NSX_MANAGER_HOST_ADDRESS"
-  
-NO_OF_FIELDS=$(echo "$NSX_MANAGER_HOST_ADDRESS" | awk -F '.' '{print NF}')
-if [ $NO_OF_FIELDS -lt 3 ]; then
-  echo "Fully qualified domain name for NSX Manager not provided nor available from the given NSX Manager cert!!"
-  exit 1
-fi
+NSX_MANAGER_CERT_ADDRESS=`cat /tmp/complete_nsx_manager.log \
+                        | grep Subject | grep "CN=" \
+                        | awk '{print $NF}' \
+                        | sed -e 's/CN=//g' `
 
+
+echo "Fully qualified domain name for NSX Manager: $NSX_MANAGER_FQDN"
+echo "Host name associated with NSX Manager cert: $NSX_MANAGER_CERT_ADDRESS"
+  
 cat /tmp/complete_nsx_manager.log \
                   |  awk '/BEGIN /,/END / {print }' \
                   >  /tmp/nsx_manager.cert
@@ -151,6 +141,12 @@ fi
 
 # Overwrite iaas conf
 if [ "$IS_NSX_ENABLED" == "true" ]; then
+
+  echo "Fully qualified domain name for NSX Manager: $NSX_MANAGER_FQDN"
+  echo "Host name associated with NSX Manager cert: $NSX_MANAGER_CERT_ADDRESS"
+  if [ "$NSX_MANAGER_FQDN" == "$NSX_MANAGER_CERT_ADDRESS" ]; then 
+  # If the hostname matches the cert hostname for NSX Manager, 
+  # then add the cert
   cat > /tmp/iaas_conf.txt <<-EOF
 {
   "vcenter_host": "$VCENTER_HOST",
@@ -165,12 +161,35 @@ if [ "$IS_NSX_ENABLED" == "true" ]; then
   "bosh_disk_path": "pcf_disk",
   "ssl_verification_enabled": false,
   "nsx_networking_enabled": true,
-  "nsx_address": "${NSX_MANAGER_HOST_ADDRESS}",
+  "nsx_address": "${NSX_MANAGER_FQDN}",
   "nsx_username": "${NSX_MANAGER_ADMIN_USER}",
   "nsx_password": "${NSX_MANAGER_ADMIN_PASSWD}",
   "nsx_ca_certificate": "$(cat /tmp/nsx_manager.edited_cert)"
 }
 EOF
+   else 
+   # If the cert does not contain the fully qualified domain name for the NSX Manager,
+   # then skip the cert
+  cat > /tmp/iaas_conf.txt <<-EOF
+{
+  "vcenter_host": "$VCENTER_HOST",
+  "vcenter_username": "$VCENTER_USR",
+  "vcenter_password": "$VCENTER_PWD",
+  "datacenter": "$VCENTER_DATA_CENTER",
+  "disk_type": "$VCENTER_DISK_TYPE",
+  "ephemeral_datastores_string": "$STORAGE_NAMES",
+  "persistent_datastores_string": "$STORAGE_NAMES",
+  "bosh_vm_folder": "pcf_vms",
+  "bosh_template_folder": "pcf_templates",
+  "bosh_disk_path": "pcf_disk",
+  "ssl_verification_enabled": false,
+  "nsx_networking_enabled": true,
+  "nsx_address": "${NSX_MANAGER_FQDN}",
+  "nsx_username": "${NSX_MANAGER_ADMIN_USER}",
+  "nsx_password": "${NSX_MANAGER_ADMIN_PASSWD}"
+}
+EOF
+
 fi
 
 IAAS_CONFIGURATION=$(cat /tmp/iaas_conf.txt)

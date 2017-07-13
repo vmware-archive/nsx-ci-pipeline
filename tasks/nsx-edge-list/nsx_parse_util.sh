@@ -147,7 +147,7 @@ export ISOZONE_SWITCH_1_TCPROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_OUT
 export ISOZONE_SWITCH_1_GOROUTER_LBR_DETAILS=$(fn_get_component_pool_details "$NSX_GEN_OUTPUT" "IsoZone-01" "go-router")
 export ISOZONE_SWITCH_1_TCPROUTER_LBR_DETAILS=$(fn_get_component_pool_details "$NSX_GEN_OUTPUT" "IsoZone-01" "tcp-router")
 
-echo "Found ISOZONE-01 Virtual Switch           : $ISOZONE_SWITCH_1_VCENTER_NETWORK"
+echo "Found ISOZONE-01 Virtual Switch            : $ISOZONE_SWITCH_1_VCENTER_NETWORK"
 echo ""
 echo "Found LBR    IP   for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_LBR_IP"
 echo "Found Static IPs  for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS"
@@ -165,14 +165,14 @@ export ISOZONE_SWITCH_2_TCPROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_OUT
 export ISOZONE_SWITCH_2_GOROUTER_LBR_DETAILS=$(fn_get_component_pool_details "$NSX_GEN_OUTPUT" "IsoZone-02" "go-router")
 export ISOZONE_SWITCH_2_TCPROUTER_LBR_DETAILS=$(fn_get_component_pool_details "$NSX_GEN_OUTPUT" "IsoZone-02" "tcp-router")
 
-echo "Found ISOZONE-02 Virtual Switch           : $ISOZONE_SWITCH_2_VCENTER_NETWORK"
+echo "Found ISOZONE-02 Virtual Switch            : $ISOZONE_SWITCH_2_VCENTER_NETWORK"
 echo ""
 echo "Found LBR    IP   for ISOZONE-02 GoRouter  : $ISOZONE_SWITCH_2_GOROUTER_LBR_IP"
 echo "Found Static IPs  for ISOZONE-02 GoRouter  : $ISOZONE_SWITCH_2_GOROUTER_STATIC_IPS"
 echo "Found LBR    IP   for ISOZONE-02 TcpRouter : $ISOZONE_SWITCH_2_TCPROUTER_LBR_IP"
 echo "Found Static IPs  for ISOZONE-02 TcpRouter : $ISOZONE_SWITCH_2_TCPROUTER_STATIC_IPS"
-echo "Found LBR Details for ISOZONE-01 GoRouter  : $ISOZONE_SWITCH_2_GOROUTER_LBR_DETAILS"
-echo "Found LBR Details for ISOZONE-01 TcpRouter : $ISOZONE_SWITCH_2_TCPROUTER_LBR_DETAILS"
+echo "Found LBR Details for ISOZONE-02 GoRouter  : $ISOZONE_SWITCH_2_GOROUTER_LBR_DETAILS"
+echo "Found LBR Details for ISOZONE-02 TcpRouter : $ISOZONE_SWITCH_2_TCPROUTER_LBR_DETAILS"
 echo ""
 
 export ISOZONE_SWITCH_3_VCENTER_NETWORK=$(fn_get_pg "$NSX_GEN_OUTPUT" "IsoZone-03")
@@ -183,7 +183,7 @@ export ISOZONE_SWITCH_3_TCPROUTER_LBR_IP=$(fn_get_component_lbr_ip "$NSX_GEN_OUT
 export ISOZONE_SWITCH_3_GOROUTER_LBR_DETAILS=$(fn_get_component_pool_details "$NSX_GEN_OUTPUT" "IsoZone-03" "go-router")
 export ISOZONE_SWITCH_3_TCPROUTER_LBR_DETAILS=$(fn_get_component_pool_details "$NSX_GEN_OUTPUT" "IsoZone-03" "tcp-router")
 
-echo "Found ISOZONE-03 Virtual Switch           : $ISOZONE_SWITCH_3_VCENTER_NETWORK"
+echo "Found ISOZONE-03 Virtual Switch            : $ISOZONE_SWITCH_3_VCENTER_NETWORK"
 echo ""
 echo "Found LBR    IP   for ISOZONE-03 GoRouter  : $ISOZONE_SWITCH_3_GOROUTER_LBR_IP"
 echo "Found Static IPs  for ISOZONE-03 GoRouter  : $ISOZONE_SWITCH_3_GOROUTER_STATIC_IPS"
