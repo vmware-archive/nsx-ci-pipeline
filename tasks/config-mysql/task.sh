@@ -23,6 +23,12 @@ else
   exit 1
 fi
 
+# Check if Bosh Director is v1.11 or higher
+export BOSH_PRODUCT_VERSION=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
+export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
+export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
+
 TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-mysql`
 
 export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
@@ -32,6 +38,11 @@ export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
 
 export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
 export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
+
+export PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                     curl -p "/api/v0/staged/products" -x GET \
+                     | jq '.[] | select(.installation_name | contains("p-mysql-")) | .guid' | tr -d '"')
+
 
 function fn_get_azs {
      local azs_csv=$1
@@ -70,6 +81,35 @@ EOF
 else
   PROPERTIES="{"
 fi
+
+# Check if bosh director is v1.11+
+export SUPPORTS_SYSLOG=false
+if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
+  if [ "$BOSH_MINOR_VERSION" -ge 11 ]; then
+    SUPPORTS_SYSLOG=true
+  fi
+else
+  export SUPPORTS_SYSLOG=true
+fi
+
+# Check if the tile metadata supports syslog 
+if [ "$SUPPORTS_SYSLOG" == "true" ]; then
+
+  MYSQL_TILE_PROPERTIES=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                      curl -p "/api/v0/staged/products/${PRODUCT_GUID}/properties" \
+                      2>/dev/null)
+  supports_syslog=$(echo $MYSQL_TILE_PROPERTIES | grep properties.syslog)
+  if [ "$supports_syslog" != "" ]; then
+    PROPERTIES=$(cat <<-EOF
+$PROPERTIES
+  ".properties.syslog": {
+    "value": "disabled"
+  }, 
+EOF
+) 
+  fi
+fi 
+
 
 PROPERTIES=$(cat <<-EOF
 $PROPERTIES
@@ -117,9 +157,6 @@ fi
 # Proceed if NSX is enabled on Bosh Director
 # Support NSX LBR Integration
 
-PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                     curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("p-mysql-")) | .guid' | tr -d '"')
 
 # $MYSQL_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
 # Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'

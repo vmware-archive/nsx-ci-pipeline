@@ -32,6 +32,14 @@
 ## Support for PCF 1.11 integration with NSX and C2C
 Modify the pivnet resources to refer to '1\.11\..*' version for the ops man, ert, iso and other tiles to use the PCF 1.11 version that has integration with NSX Security Groups and LBR features along with Container to Container networking. For PCF 1.10 or older versions, the jobs (like gorouter) would use static ip based membership unlike the dynamic security group based membership in PCF1.11. 
 
+Note: The BOSH and Ops Mgr 1.11 integration requires the NSX Manager to present a self-signed or appropriate CA signed cert that matches the hostname specified for the NSX Manager.
+Ops Mgr would report failures in validation of the cert if:
+1) fully qualified hostname is specified for NSX Manager but the cert only contains just the hostname.
+2) IP is specified for NSX but cert presents hostname (partial or fully qualified)
+3) Just hostname specified that matches the cert but the address resolution would fail without full qualification.
+
+Recommendation is to ensure the NSX Manager has a cert that specifies the fully qualified hostname or has a subjectAltName (SAN) field with IP address or host that matches the provided NSX Manager (instead of only fully qualified host name).
+
 Video Link(s)
 
 - PCF-NSX Demo (March 20, 2017): [stream-video](http://pcf-bt-vmware.s3-us-west-2.amazonaws.com/btvid.html) or [download-video](http://pcf-bt-vmware.s3-us-west-2.amazonaws.com/pcf-nsx-demo.mp4) (800MB | 24:44)

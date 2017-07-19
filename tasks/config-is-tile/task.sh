@@ -24,10 +24,9 @@ fi
 
 # Check if Bosh Director is v1.11 or higher
 export bosh_product_version=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/staged/products" 2>/dev/null | jq '.[].product_version' | tr -d '"')
+           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
 export bosh_major_version=$(echo $bosh_product_version | awk -F '.' '{print $1}' )
 export bosh_minor_version=$(echo $bosh_product_version | awk -F '.' '{print $2}' )
-
 
 export cf_product_version=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
           curl -p "/api/v0/staged/products" -x GET | jq '.[] | select(.installation_name | contains("cf-")) | .product_version' | tr -d '"')
