@@ -89,7 +89,9 @@ nsx_edge_gen_nsx_manager_transport_zone: <YOUR NSX TRANSPORT ZONE> #REQUIRED
 nsx_edge_gen_nsx_manager_distributed_portgroup: <YOUR NSX DISTRIBUTED PORTGROUP> #REQUIRED - used for DLR uplink, as transit network between the deployed esg and the dlr
 nsx_edge_gen_egde_datastore: <YOUR DATASTORE FOR NSX EDGES> #REQUIRED example: vsanDatastore
 nsx_edge_gen_egde_cluster: <YOUR CLUSTER FOR NSX EDGES> #REQUIRED example: Cluster1
-nsx_edge_gen_name: nsx-pipeline-sample #string name for NSX objects
+
+# Unique identifier and under `15 charactes` in length.
+nsx_edge_gen_name: nsx-pipeline1 #string name for NSX objects
 
 ## To enable or disable DLR in the NSX Edge config
 ## valid values: (true|false) 

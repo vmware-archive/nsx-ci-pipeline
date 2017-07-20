@@ -12,7 +12,7 @@ fi
 function fn_get_pg {
   local nsx_log=$1
   local search_string_net=$2
-  local search_string="lswitch-${NSX_EDGE_GEN_NAME}-${search_string_net}"
+  local search_string="lsw-${NSX_EDGE_GEN_NAME}-${search_string_net}"
   vwire_pg=$(
   cat ${nsx_log} | \
   grep -i ${search_string} | \
