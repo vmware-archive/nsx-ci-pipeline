@@ -57,7 +57,7 @@ function fn_get_azs {
 
 function fn_get_pg {
   local search_string_net=$1
-  local search_string="lswitch-${NSX_EDGE_GEN_NAME}-${search_string_net}"
+  local search_string="lsw-${NSX_EDGE_GEN_NAME}-${search_string_net}"
   vwire_pg=$(
   cat ${NSX_GEN_OUTPUT} | \
   grep ${search_string} | \
