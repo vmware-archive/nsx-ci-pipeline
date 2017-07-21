@@ -51,6 +51,28 @@ export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
 export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
 export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
 
+# when-changed option for errands is only applicable from Ops Mgr 1.10+
+export IS_ERRAND_WHEN_CHANGED_ENABLED=false
+
+if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
+  if [ "$BOSH_MINOR_VERSION" -ge 10 ]; then
+    export IS_ERRAND_WHEN_CHANGED_ENABLED=true
+  fi
+else
+  export IS_ERRAND_WHEN_CHANGED_ENABLED=true
+fi
+
+# No C2C support in PCF 1.9, 1.10 and older versions
+# only from 1.11+
+export SUPPORTS_C2C=false
+if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
+  if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
+    export SUPPORTS_C2C=true   
+  fi
+else
+  
+fi
+
 function fn_get_azs {
      local azs_csv=$1
      echo $azs_csv | awk -F "," -v braceopen='{' -v braceclose='}' -v name='"name":' -v quote='"' -v OFS='"},{"name":"' '$1=$1 {print braceopen name quote $0 quote braceclose}'
@@ -270,15 +292,6 @@ EOF
 )
 
 
-# No C2C support in PCF 1.9, 1.10 and older versions
-export SUPPORTS_C2C=false
-if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
-  if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
-    export SUPPORTS_C2C=true   
-  fi
-else
-  export SUPPORTS_C2C=true
-fi
 
 # PCF supports C2C
 if [ "$SUPPORTS_C2C" == "true" ]; then
@@ -573,10 +586,15 @@ EOF
 
 fi
 
-# Set Errands to on Demand
-echo "applying errand configuration"
-sleep 6
-ERT_ERRANDS=$(cat <<-EOF
+PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                     curl -p "/api/v0/staged/products" -x GET \
+                     | jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"')
+
+# Set Errands to on Demand for 1.10
+if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
+  echo "applying errand configuration"
+  sleep 6
+  ERT_ERRANDS=$(cat <<-EOF
 {"errands":[
   {"name":"smoke-tests","post_deploy":"when-changed"},
   {"name":"push-apps-manager","post_deploy":"when-changed"},
@@ -590,13 +608,10 @@ ERT_ERRANDS=$(cat <<-EOF
 EOF
 )
 
-PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                     curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"')
-
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                             curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
                             -x PUT -d "$ERT_ERRANDS"
+fi
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then

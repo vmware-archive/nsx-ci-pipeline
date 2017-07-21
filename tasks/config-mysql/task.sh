@@ -29,6 +29,17 @@ export BOSH_PRODUCT_VERSION=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS
 export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
 export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
 
+
+export IS_ERRAND_WHEN_CHANGED_ENABLED=false
+if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
+  if [ "$BOSH_MINOR_VERSION" -ge 10 ]; then
+    export IS_ERRAND_WHEN_CHANGED_ENABLED=true
+  fi
+else
+  export IS_ERRAND_WHEN_CHANGED_ENABLED=true
+fi
+
+
 TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-mysql`
 
 export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
@@ -148,6 +159,23 @@ EOF
 
 
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
+
+# Set Errands to on Demand for 1.10
+if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
+  echo "applying errand configuration"
+  sleep 6
+  MYSQL_ERRANDS=$(cat <<-EOF
+{"errands":[
+  {"name":"broker-registrar","post_deploy":"when-changed"},
+  {"name":"smoke-tests","post_deploy":"when-changed"}]}
+EOF
+)
+
+  ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                            curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
+                            -x PUT -d "$MYSQL_ERRANDS"
+
+fi
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then

@@ -23,15 +23,30 @@ else
   exit 1
 fi
 
+# Check if Bosh Director is v1.11 or higher
+export BOSH_PRODUCT_VERSION=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
+export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
+export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
+
+
+export IS_ERRAND_WHEN_CHANGED_ENABLED=false
+if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
+  if [ "$BOSH_MINOR_VERSION" -ge 10 ]; then
+    export IS_ERRAND_WHEN_CHANGED_ENABLED=true
+  fi
+else
+  export IS_ERRAND_WHEN_CHANGED_ENABLED=true
+fi
+
 TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-rabbitmq`
 
 export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
 export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
-
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
-
 export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
 export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
+
+./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
 
 function fn_get_azs {
      local azs_csv=$1
@@ -89,8 +104,6 @@ $PROPERTIES
 EOF
 )
 
-
-
 RESOURCES=$(cat <<-EOF
 {
   "rabbitmq-haproxy": {
@@ -107,16 +120,36 @@ EOF
 
 ./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
 
+PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                     curl -p "/api/v0/staged/products" -x GET \
+                     | jq '.[] | select(.installation_name | contains("p-rabbitmq-")) | .guid' | tr -d '"')
+
+
+# Set Errands to on Demand for 1.10
+if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
+  echo "applying errand configuration"
+  sleep 6
+  RABBITMQ_ERRANDS=$(cat <<-EOF
+{"errands":[
+  {"name":"broker-registrar","post_deploy":"when-changed"}
+  ]
+}
+EOF
+)
+
+  ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                              curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
+                              -x PUT -d "$RABBITMQ_ERRANDS"
+fi
+
+# Proceed if NSX is enabled on Bosh Director
+# Support NSX LBR Integration
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
   exit
 fi
 
-# Proceed if NSX is enabled on Bosh Director
-# Support NSX LBR Integration
-PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                     curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("p-rabbitmq-")) | .guid' | tr -d '"')
+
 
 # $RABBITMQ_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
 # Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'
