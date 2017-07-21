@@ -71,8 +71,8 @@ opsman_product_version: '1\.11\.*'      # Change to '1\.10\.*' for Ops Mgr 1.10 
 ert_product_version: '1\.11\.*'
 iso_product_version: '1\.11\.*'
 mysql_product_version: '1\.8\.*'
-rabbit_product_version: '1\.9\.*'
-scs_product_version: '1\.3\.*'
+rabbit_product_version: '1\.7\.*'
+scs_product_version: '1\.4\.*'
 
 ## vCenter Params
 vcenter_host: <YOUR VCENTER URL|IP> #REQUIRED

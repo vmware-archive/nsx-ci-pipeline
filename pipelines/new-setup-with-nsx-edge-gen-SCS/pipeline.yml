@@ -62,9 +62,6 @@ groups:
   - upload-elastic-runtime-tile
   - config-elastic-runtime-tile
   - product-apply-changes-ert
-  - upload-iso-tile
-  - config-iso-tile
-  - product-apply-changes-iso
   - upload-mysql-tile
   - config-mysql-tile
   - product-apply-changes-mysql
@@ -74,6 +71,9 @@ groups:
   - upload-scs-tile
   - config-scs-tile
   - product-apply-changes-scs
+  - upload-iso-tile
+  - config-iso-tile
+  - product-apply-changes-iso
   
 - name: ert
   jobs:
@@ -530,14 +530,14 @@ jobs:
   - aggregate:
     - get: concourse-vsphere
       trigger: true
-      passed: [product-apply-changes-ert]
+      passed: [product-apply-changes-scs]
     - get: pivnet-iso-product
       params:
         globs:
         - "*.pivotal"
     - get: om-cli
       globs: om-linux
-      passed: [product-apply-changes-ert]
+      passed: [product-apply-changes-scs]
     - get: pivnet-cli
       params:
         globs:
