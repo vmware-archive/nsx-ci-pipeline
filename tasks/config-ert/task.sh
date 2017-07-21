@@ -70,7 +70,7 @@ if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
     export SUPPORTS_C2C=true   
   fi
 else
-  
+  export SUPPORTS_C2C=true
 fi
 
 function fn_get_azs {
