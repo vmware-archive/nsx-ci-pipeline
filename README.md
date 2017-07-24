@@ -440,7 +440,7 @@ tile_iso_application_network_mtu_1: 1454
 tile_iso_insecure_docker_registry_list_1:          
 
 ## Segment Name
-tile_iso_segment_name_1:     # REQUIRED, sample: zone1
+tile_iso_segment_name_1:  CHANGEME   # REQUIRED, sample: zone1
 
 # Router instances for Iso already configured via esg_go_router_isozone_1_inst_1
 #tile_iso_router_instances_1: 1 # IGNORE

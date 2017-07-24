@@ -141,7 +141,6 @@ EOF
 )
 fi
 
-
 # No C2C support in PCF 1.9, 1.10 and older versions
 export SUPPORTS_C2C=false
 if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
@@ -152,6 +151,15 @@ else
   export SUPPORTS_C2C=true
 fi
 
+# PCF IsoSegment tile 1.11.1 had following properties
+# but not exposed in versions 1.11.2+:
+  # ".properties.container_networking.enable.network_cidr": {
+  #     "value": "$TILE_ISO_C2C_NETWORK_CIDR"
+  # },
+  # ".properties.container_networking.enable.vtep_port": {
+  #   "value": "$TILE_ISO_C2C_VTEP_PORT"
+  # }
+
 # PCF supports C2C
 if [ "$SUPPORTS_C2C" == "true" ]; then
 
@@ -159,11 +167,8 @@ if [ "$SUPPORTS_C2C" == "true" ]; then
   if [ "$TILE_ISO_ENABLE_C2C" == "enable" ]; then
     PROPERTIES=$(cat <<-EOF
 $PROPERTIES
-  ".properties.container_networking.enable.network_cidr": {
-      "value": "$TILE_ISO_C2C_NETWORK_CIDR"
-  },
-  ".properties.container_networking.enable.vtep_port": {
-    "value": "$TILE_ISO_C2C_VTEP_PORT"
+  ".properties.container_networking": {
+      "value": "enable"
   }
 }
 EOF
@@ -192,6 +197,7 @@ EOF
 )
 fi
 # End of PROPERTIES block
+
 
 
 RESOURCES=$(cat <<-EOF
