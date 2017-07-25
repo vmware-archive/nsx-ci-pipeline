@@ -671,7 +671,7 @@ do
     #echo "Resource config : $RESOURCE_CONFIG"
     # Remove trailing brace to add additional elements
     # Remove also any empty nsx_security_groups
-    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG | sed -e 's/}$//1' | sed -e 's/"nsx_security_groups": null,//')
+    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG | sed -e 's/}$//1' | sed -e 's/"nsx_security_groups": null,\{0,1\}//')
     NSX_LBR_PAYLOAD=" \"nsx_lbs\": ["
 
     index=1
@@ -702,7 +702,7 @@ do
     NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD ] ")
     #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
 
-    UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG , \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
+    UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
     echo "Job: $job_name with GUID: $job_guid and RESOURCE_CONFIG : $UPDATED_RESOURCE_CONFIG"
 
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
