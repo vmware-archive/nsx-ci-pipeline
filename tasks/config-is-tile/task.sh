@@ -335,7 +335,28 @@ do
     #echo "Resource config : $RESOURCE_CONFIG"
     # Remove trailing brace to add additional elements
     # Remove also any empty nsx_security_groups
-    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG | sed -e 's/}$//1' | sed -e 's/"nsx_security_groups": null,\{0,1\}//')
+    # Sample RESOURCE_CONFIG with nsx_security_group comes middle with ','
+    # { "instance_type": { "id": "automatic" },
+    #   "instances": 1,
+    #   "nsx_security_groups": null,
+    #   "persistent_disk": { "size_mb": "1024" }
+    # }
+    # or nsx_security_group comes last without ','
+    # { "instance_type": { "id": "automatic" },
+    #   "instances": 1,
+    #   "nsx_security_groups": null
+    # }
+    # Strip the ending brace and also "nsx_security_group": null
+
+    # Strip last braces
+    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG | sed -e '$ s/}$//')
+    # Strip any empty nsx_security_groups
+    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG1 | sed -e 's/"nsx_security_groups": null//')
+    # Remove any empty parameters and strip any existing last commas
+    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG1 | sed -e 's/, ,/,/g' | sed -e '$ s/,$//' )
+    # Now add back a comma so we can add additional parameters
+    RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG ,")
+        
     NSX_LBR_PAYLOAD=" \"nsx_lbs\": ["
 
     index=1
