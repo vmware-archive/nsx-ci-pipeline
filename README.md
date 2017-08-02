@@ -457,6 +457,55 @@ tile_iso_router_security_group_1:
 tile_iso_tcp_router_security_group_1:
 
 
+
+### Begin of Add Additional Iso Seg Tiles
+##
+## Use this block for adding multiple iso-segments
+## these dont have any index suffix
+## Used by the pipelines/add-additional-iso-segment/pipeline.yml
+## Modify and rerun pipeline with new parameters...
+##
+replicator_name: test1       # Needs to be under 10 characters
+tile_iso_network_name: "ISOZONE-02" # Must match with one of the pre-configured iso segment networks
+tile_az_iso_singleton: az1
+tile_azs_iso: az1,az2,az3
+# SSL Termination valid values: (terminate_at_router|terminate_at_router_ert_cert|terminate_before_router)
+# Default is terminate_before_router
+tile_iso_ssl_termination_point: terminate_before_router
+## Leave ssl blank for Iso Tile
+tile_iso_ssl_cert:
+tile_iso_ssl_private_key:
+tile_iso_router_ssl_ciphers:
+## C2C Container to Container networking - applicable only for PCF1.11+
+## valid values: [enable|disable]
+tile_iso_enable_c2c: enable # Default
+tile_iso_c2c_network_cidr: 10.255.0.0/16
+tile_iso_c2c_vtep_port: 4789
+## Leave static ips blank
+tile_iso_router_static_ips:
+## Leave blank disk and memory - fill if necessary (in MB)
+tile_iso_cell_disk_capacity:
+tile_iso_cell_memory_capacity:
+## Edit if necessary
+tile_iso_application_network_cidr: 10.254.0.0/22
+tile_iso_application_network_mtu: 1454
+## Fill if necessary
+tile_iso_insecure_docker_registry_list:
+## Segment Name
+tile_iso_segment_name: zone1    # REQUIRED
+## Edit as necessary
+tile_iso_router_instances: 1
+tile_iso_tcp_router_instances: 0
+tile_iso_diego_cell_instances: 2
+## NSX Security Group tie-up
+## Needs to be filled for automatic registration of job against additional NSX Security Group
+## and LBR (GoRouter, TCPRouter)
+## If no security group provided, binding of security group would be ignored for the job
+tile_iso_router_security_group:
+tile_iso_tcp_router_security_group:  
+
+### End of Add Additional Iso Seg Tiles
+
 ```
 
 5. Now you can execute the following commands:
