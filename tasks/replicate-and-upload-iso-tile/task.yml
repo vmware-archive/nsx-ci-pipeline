@@ -13,12 +13,13 @@ params:
   PIVNET_API_TOKEN:
   SERVICE_STRING: 
   REPLICATOR_NAME:
-    
+
 inputs:
   - name: pivnet-er-product
   - name: concourse-vsphere
   - name: om-cli
   - name: pivnet-cli
+  - name: replicator
 
 run:
   path: concourse-vsphere/tasks/replicate-and-upload-iso-tile/task.sh

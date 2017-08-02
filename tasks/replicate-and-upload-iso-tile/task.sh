@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 PIVNET_CLI=`find ./pivnet-cli -name "*linux-amd64*"`
 
