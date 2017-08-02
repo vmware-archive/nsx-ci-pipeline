@@ -35,8 +35,8 @@ nsx_edge_params: &nsx-edge-params
   ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}
   ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
   ESG_GO_ROUTER_INSTANCES_1: {{router_instances}}
-  ESG_DIEGO_BRAIN_INSTANCES_1: {{diego_brain_instances}}
   ESG_TCP_ROUTER_INSTANCES_1: {{tcp_router_instances}}
+  ESG_DIEGO_BRAIN_INSTANCES_1: {{diego_brain_instances}}
   ESG_MYSQL_ERT_PROXY_INSTANCES_1: {{mysql_proxy_instances}}
   ESG_MYSQL_TILE_PROXY_INSTANCES_1: {{tile_mysql_proxy_instances}}
   ESG_RABBITMQ_TILE_PROXY_INSTANCES_1: {{tile_rabbit_proxy_instances}}
@@ -868,6 +868,7 @@ jobs:
       INSECURE_DOCKER_REGISTRY_LIST: {{tile_iso_insecure_docker_registry_list_1}}
       SEGMENT_NAME: {{tile_iso_segment_name_1}}
       IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst_1}} # Use the instance count provided for nsx
+      IS_TCP_ROUTER_INSTANCES: {{esg_tcp_router_isozone_1_inst_1}}
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
       TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group_1}}
       TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group_1}}

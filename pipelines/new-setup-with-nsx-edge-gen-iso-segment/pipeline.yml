@@ -531,7 +531,7 @@ jobs:
       OPS_MGR_PWD: {{om_pwd}}
       OPS_MGR_GENERATE_SSL_ENDPOINT: {{om_generate_ssl_endpoint}}
       NETWORK_NAME: {{tile_iso_network_name_1}}
-      PRODUCT_NAME: {{tile_iso_product_name_1}}
+      PRODUCT_NAME: p-isolation-segment
       TILE_AZS_ISO: {{tile_azs_iso_1}}
       TILE_AZ_ISO_SINGLETON: {{tile_az_iso_singleton_1}}
       NETWORK_NAME: {{tile_iso_network_name_1}}
@@ -549,6 +549,7 @@ jobs:
       INSECURE_DOCKER_REGISTRY_LIST: {{tile_iso_insecure_docker_registry_list_1}}
       SEGMENT_NAME: {{tile_iso_segment_name_1}}
       IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst_1}} # Use the instance count provided for nsx
+      IS_TCP_ROUTER_INSTANCES: {{esg_tcp_router_isozone_1_inst_1}}
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
       TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group_1}}
       TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group_1}}

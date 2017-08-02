@@ -549,6 +549,7 @@ jobs:
       INSECURE_DOCKER_REGISTRY_LIST: {{tile_iso_insecure_docker_registry_list_1}}
       SEGMENT_NAME: {{tile_iso_segment_name_1}}
       IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst_1}} # Use the instance count provided for nsx
+      IS_TCP_ROUTER_INSTANCES: {{esg_tcp_router_isozone_1_inst_1}}
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
       TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group_1}}
       TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group_1}}

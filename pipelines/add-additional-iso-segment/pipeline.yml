@@ -55,12 +55,9 @@ groups:
 
 - name: add-iso-segment
   jobs:
-  - nsx-edge-gen
-
-- name: remove-iso-segment
-  jobs:
-  - nsx-edge-destroy
-
+  - replicate-and-upload-iso-tile
+  - config-iso-product
+  - apply-changes
 
 resource_types:
 - name: pivnet
@@ -149,8 +146,9 @@ jobs:
         - name: concourse-vsphere
         - name: om-cli
         - name: pivnet-cli
+        - name: replicator
       run:
-        path: concourse-vsphere/tasks/replicate-and-upload-iso-tile/task.yml
+        path: concourse-vsphere/tasks/replicate-and-upload-iso-tile/task.sh
       params:
         OPS_MGR_HOST: {{om_host}}
         OPS_MGR_USR: {{om_usr}}
@@ -167,28 +165,29 @@ jobs:
       params:
         globs:
         - "*.pivotal"
-      passed: [stage-product]
+      passed: [replicate-and-upload-iso-tile]
       trigger: true
     - get: om-cli
       params:
         globs:
         - "*-linux"
-      passed: [stage-product]
+      passed: [replicate-and-upload-iso-tile]
+    - get: nsx-edge-gen
 
   - task: nsx-edge-list
     file: concourse-vsphere/tasks/nsx-edge-list/task.yml
     params: *nsx-edge-params
 
   - task: config-iso-tile
-    file: concourse-vsphere/tasks/config-is-tile/task.yml
+    file: concourse-vsphere/tasks/config-replicated-is-tile/task.yml
     params:
-      PRODUCT_IDENTIFIER: p-isolation-segment-{{replicator_name}}
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
       OPS_MGR_GENERATE_SSL_ENDPOINT: {{om_generate_ssl_endpoint}}
       NETWORK_NAME: {{tile_iso_network_name}}
-      PRODUCT_NAME: p-isolation-segment-{{replicator_name}}
+      REPLICATOR_NAME: {{replicator_name}}
+      PRODUCT_NAME: {{replicator_name}}
       TILE_AZS_ISO: {{tile_azs_iso}}
       TILE_AZ_ISO_SINGLETON: {{tile_az_iso_singleton}}
       NETWORK_NAME: {{tile_iso_network_name}}
@@ -205,7 +204,8 @@ jobs:
       APPLICATION_NETWORK_MTU: {{tile_iso_application_network_mtu}}
       INSECURE_DOCKER_REGISTRY_LIST: {{tile_iso_insecure_docker_registry_list}}
       SEGMENT_NAME: {{tile_iso_segment_name}}
-      IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst}} # Use the instance count provided for nsx
+      IS_ROUTER_INSTANCES: {{tile_iso_router_instances}} # Use the instance count provided for nsx
+      IS_TCP_ROUTER_INSTANCES: {{tile_iso_tcp_router_instances}}
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances}}
       TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group}}
       TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group}}

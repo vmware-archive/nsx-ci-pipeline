@@ -35,14 +35,7 @@ export cf_major_version=$(echo $cf_product_version | awk -F '.' '{print $1}' )
 export cf_minor_version=$(echo $cf_product_version | awk -F '.' '{print $2}' )
 
 
-# Can only support one version of the default isolation segment tile
-# Search for the tile using the specified product name if available
-# or search using p-iso as default iso product name
-if [ -z "$PRODUCT_NAME" -o "$PRODUCT_NAME" == "p-isolation-segment" ]]; then
-  TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment`
-else
-  TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment-${PRODUCT_NAME}`
-fi
+TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment-${${REPLICATOR_NAME}}`
 
 export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
 export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
@@ -134,7 +127,7 @@ EOF
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
   PROPERTIES=$(cat <<-EOF
 $PROPERTIES
-  ".isolated_router.static_ips": {
+  ".isolated_router_${REPLICATOR_NAME}.static_ips": {
     "value": "$ROUTER_STATIC_IPS"
   },
 EOF
@@ -189,7 +182,7 @@ else
   # Older version, no C2C support
   PROPERTIES=$(cat <<-EOF
 $PROPERTIES
-  ".isolated_diego_cell.garden_network_pool": {
+  ".isolated_diego_cell_${REPLICATOR_NAME}.garden_network_pool": {
       "value": "$APPLICATION_NETWORK_CIDR"
     }
 }
@@ -202,11 +195,11 @@ fi
 
 RESOURCES=$(cat <<-EOF
 {
-  "isolated_router": {
+  "isolated_router_${REPLICATOR_NAME}": {
     "instance_type": {"id": "automatic"},
     "instances" : $IS_ROUTER_INSTANCES
   },
-  "isolated_diego_cell": {
+  "isolated_diego_cell_${REPLICATOR_NAME}": {
     "instance_type": {"id": "automatic"},
     "instances" : $IS_DIEGO_CELL_INSTANCES
   }
@@ -272,7 +265,7 @@ fi
 
 PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                      curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("p-isolation-segment-")) | .guid' | tr -d '"')
+                     | jq '.[] | select(.installation_name | contains("p-isolation-segment-${REPLICATOR_NAME}")) | .guid' | tr -d '"')
 
 # $ISO_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
 # Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'
