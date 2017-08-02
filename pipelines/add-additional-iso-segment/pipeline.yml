@@ -209,6 +209,7 @@ jobs:
       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances}}
       TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group}}
       TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group}}
+      TILE_ISO_ISOLATED_DIEGO_CELL_SECURITY_GROUP: {{tile_iso_diego_cell_security_group}}
       TILE_ISO_ENABLE_C2C: {{tile_iso_enable_c2c}}
       TILE_ISO_C2C_NETWORK_CIDR: {{tile_iso_c2c_network_cidr}}
       TILE_ISO_C2C_VTEP_PORT: {{tile_iso_c2c_vtep_port}}

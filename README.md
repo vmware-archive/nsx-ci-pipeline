@@ -52,9 +52,11 @@ Video Link(s)
 3. Create a directory for you Concourse parameters|configuration file: `mkdir params`
 4. Past parameters the sample below into a new file,  ***change the required min variables!!!*** : `vi params/env1-params.yml`
 
+## Installing additional Isolation Segments
+Use the add-additional-iso-segment pipeline and provide the params as specified in the sample template (without indexes) while modifying the network, replicator name, segment names.. and then run the pipeline for each additional iso-segment. The network should have already been created using nsx-edge-gen (following the ISOZONE-0* marker). Atmost 3 iso segments are supported.
+Any additional segments would require extending the nsx-edge-list and nsx-edge-gen tasks along with the pipeline constructs.
 
-
-**To use this pipeline create the env1-params.yml file with the following sample.  Replace all variables commented as `REQUIRED`!!!**
+**To use this pipeline to create the env1-params.yml file with the following sample.  Replace all variables commented as `REQUIRED`!!!**
 
 ```
 #########################
@@ -320,6 +322,11 @@ ert_router_security_group:
 ert_tcp_router_security_group:
 ert_diego_brain_security_group:
 ert_mysql_proxy_security_group:
+ert_diego_cell_security_group:
+# Add additional job security groups following the convention
+# ert_<job_name>_security_group:
+# And also a parameter in upper case into the pipeline with this value:
+# ERT_<JOB_NAME>_SECURITY_GROUP: {{ert_<job_name>_security_group}}
 
 ## ERT Target email address to receive mysql monitor notifications
 mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED example: mglynn@pivotal.io
@@ -371,6 +378,10 @@ tile_mysql_monitor_email: mglynn@pivotal.io
 ## and LBR (GoRouter, TCPRouter, MYSQL, SSH)
 ## If no security group provided, binding of lbr & security group would be ignored for the job
 tile_mysql_proxy_security_group:  
+# Add additional job security groups following the convention
+# tile_mysql_<job_name>_security_group:
+# And also a parameter in upper case into the pipeline with this value:
+# TILE_MYSQL_<JOB_NAME>_SECURITY_GROUP: {{tile_mysql_<job_name>_security_group}}
 
 ###################
 ## Rabbit config ##
@@ -394,6 +405,10 @@ tile_rabbit_admin_passwd: rabbitadmin
 ## and LBR (GoRouter, TCPRouter, MYSQL, SSH)
 ## If no security group provided, binding of lbr & security group would be ignored for the job
 tile_rabbit_haproxy_security_group:
+# Add additional job security groups following the convention
+# tile_rabbit_<job_name>_security_group:
+# And also a parameter in upper case into the pipeline with this value:
+# TILE_RABBIT_<JOB_NAME>_SECURITY_GROUP: {{tile_rabbit_<job_name>_security_group}}
 
 
 ###################
@@ -455,6 +470,7 @@ tile_iso_diego_cell_instances_1: 2
 ## If no security group provided, it would use defaults
 tile_iso_router_security_group_1:               
 tile_iso_tcp_router_security_group_1:
+tile_iso_diego_cell_security_group_1:
 
 
 
@@ -465,7 +481,7 @@ tile_iso_tcp_router_security_group_1:
 ## Used by the pipelines/add-additional-iso-segment/pipeline.yml
 ## Modify and rerun pipeline with new parameters...
 ##
-replicator_name: test1       # Needs to be under 10 characters
+replicator_name: test1       # REQUIRED - Needs to be under 10 characters
 tile_iso_network_name: "ISOZONE-02" # Must match with one of the pre-configured iso segment networks
 tile_az_iso_singleton: az1
 tile_azs_iso: az1,az2,az3
@@ -503,6 +519,7 @@ tile_iso_diego_cell_instances: 2
 ## If no security group provided, binding of security group would be ignored for the job
 tile_iso_router_security_group:
 tile_iso_tcp_router_security_group:  
+tile_iso_diego_cell_security_group:  
 
 ### End of Add Additional Iso Seg Tiles
 

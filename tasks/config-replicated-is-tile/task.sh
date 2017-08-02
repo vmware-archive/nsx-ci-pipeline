@@ -35,7 +35,7 @@ export cf_major_version=$(echo $cf_product_version | awk -F '.' '{print $1}' )
 export cf_minor_version=$(echo $cf_product_version | awk -F '.' '{print $2}' )
 
 
-TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment-${${REPLICATOR_NAME}}`
+TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment-${REPLICATOR_NAME}`
 
 export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
 export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
@@ -103,19 +103,19 @@ esac
 
 PROPERTIES=$(cat <<-EOF
 {
-  ".isolated_diego_cell.executor_disk_capacity": {
+  ".isolated_diego_cell_${REPLICATOR_NAME}.executor_disk_capacity": {
     "value": "$CELL_DISK_CAPACITY"
   },
-  ".isolated_diego_cell.executor_memory_capacity": {
+  ".isolated_diego_cell_${REPLICATOR_NAME}.executor_memory_capacity": {
     "value": "$CELL_MEMORY_CAPACITY"
   },
-  ".isolated_diego_cell.garden_network_mtu": {
+  ".isolated_diego_cell_${REPLICATOR_NAME}.garden_network_mtu": {
     "value": $APPLICATION_NETWORK_MTU
   },
-  ".isolated_diego_cell.insecure_docker_registry_list": {
+  ".isolated_diego_cell_${REPLICATOR_NAME}.insecure_docker_registry_list": {
     "value": "$INSECURE_DOCKER_REGISTRY_LIST"
   },
-  ".isolated_diego_cell.placement_tag": {
+  ".isolated_diego_cell_${REPLICATOR_NAME}.placement_tag": {
     "value": "$SEGMENT_NAME"
   },
 EOF
@@ -265,7 +265,7 @@ fi
 
 PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                      curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("p-isolation-segment-${REPLICATOR_NAME}")) | .guid' | tr -d '"')
+                     | jq -r --arg REPLICATOR_NAME "$REPLICATOR_NAME" '.[] | select(.installation_name | contains("p-isolation-segment") and contains($REPLICATOR_NAME)) | .guid' | tr -d '"')
 
 # $ISO_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
 # Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'
@@ -282,14 +282,17 @@ JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 for job_guid in $(cat /tmp/jobs_list.log | jq '.guid' | tr -d '"')
 do
   job_name=$(cat /tmp/jobs_list.log | grep -B1 $job_guid | grep name | awk -F '"' '{print $4}')
+  job_name_upper=$(echo ${job_name^^} | sed -e 's/-/_/')
+  job_name_without_replicator=$(echo ${job_name} | sed -e "s/_${REPLICATOR_NAME}//")
+  job_name_upper_without_replicator=$(echo ${job_name_without_replicator^^} | sed -e 's/-/_/' )
+
+  # Check for security group defined for the given job from Env
+  # Expecting only one security group env variable per job (can have a comma separated list)
+  SECURITY_GROUP=$(env | grep "TILE_ISO_${job_name_upper_without_replicator}_SECURITY_GROUP" | awk -F '=' '{print $2}')
+
   match=$(echo $job_name | grep -e $JOBS_REQUIRING_LBR_PATTERN  || true)
-  if [ "$match" != "" ]; then
-    echo "$job requires Loadbalancer..."
-    job_name_upper=$(echo ${job_name^^} | sed -e 's/-/_/')
-        
-    # Check for security group defined for the given job from Env
-    # Expecting only one security group env variable per job (can have a comma separated list)
-    SECURITY_GROUP=$(env | grep "TILE_ISO_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
+  if [ "$match" != "" -o $SECURITY_GROUP != "" ]; then
+    echo "$job requires Loadbalancer or security group..."
 
     # Use an auto-security group based on product guid by Bosh 
     # for grouping all vms with the same security group
@@ -312,13 +315,16 @@ do
     # We support atmost 3 iso segments...
     case "$NETWORK_NAME" in
       *01) 
-      LBR_DETAILS=${ISO_TILE_1_JOBS_LBR_MAP[$job_name]}
+      LBR_DETAILS=${ISO_TILE_1_JOBS_LBR_MAP[$job_name_without_replicator]}
       ;;
       *02)
-      LBR_DETAILS=${ISO_TILE_2_JOBS_LBR_MAP[$job_name]}
+      LBR_DETAILS=${ISO_TILE_2_JOBS_LBR_MAP[$job_name_without_replicator]}
       ;;
       *03)
-      LBR_DETAILS=${ISO_TILE_3_JOBS_LBR_MAP[$job_name]}
+      LBR_DETAILS=${ISO_TILE_3_JOBS_LBR_MAP[$job_name_without_replicator]}
+      ;;
+      *04)
+      LBR_DETAILS=${ISO_TILE_4_JOBS_LBR_MAP[$job_name_without_replicator]}
       ;;
     esac
 

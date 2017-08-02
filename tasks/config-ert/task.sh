@@ -636,16 +636,16 @@ JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 for job_guid in $(cat /tmp/jobs_list.log | jq '.guid' | tr -d '"')
 do
   job_name=$(cat /tmp/jobs_list.log | grep -B1 $job_guid | grep name | awk -F '"' '{print $4}')
+  job_name_upper=$(echo ${job_name^^} | sed -e 's/-/_/')
+  
+  # Check for security group defined for the given job from Env
+  # Expecting only one security group env variable per job (can have a comma separated list)
+  SECURITY_GROUP=$(env | grep "TILE_ERT_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
+
   match=$(echo $job_name | grep -e $JOBS_REQUIRING_LBR_PATTERN  || true)
-  if [ "$match" != "" ]; then
-
-    echo "$job requires Loadbalancer..."
-    job_name_upper=$(echo ${job_name^^} | sed -e 's/-/_/g')
+  if [ "$match" != "" -o $SECURITY_GROUP != "" ]; then
+    echo "$job requires Loadbalancer or security group..."
     
-    # Check for security group defined for the given job from Env
-    # Expecting only one security group env variable per job (can have a comma separated list)
-    SECURITY_GROUP=$(env | grep "TILE_ERT_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
-
     # Use an auto-security group based on product guid by Bosh 
     # for grouping all vms with the same security group
     NEW_SECURITY_GROUP=\"${PRODUCT_GUID}\"
