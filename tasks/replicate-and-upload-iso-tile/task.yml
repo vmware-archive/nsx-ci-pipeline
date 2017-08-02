@@ -1,0 +1,24 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: {repository: nsxedgegen/nsx-edge-gen-worker}
+
+params:
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
+  PIVNET_API_TOKEN:
+  SERVICE_STRING: 
+  REPLICATOR_NAME:
+    
+inputs:
+  - name: pivnet-er-product
+  - name: concourse-vsphere
+  - name: om-cli
+  - name: pivnet-cli
+
+run:
+  path: concourse-vsphere/tasks/replicate-and-upload-iso-tile/task.sh

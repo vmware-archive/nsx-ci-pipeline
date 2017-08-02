@@ -1,0 +1,242 @@
+---
+# Use reference instead of repeating the nsx-edge params
+nsx_edge_params: &nsx-edge-params
+  VCENTER_HOST: {{vcenter_host}}
+  VCENTER_USR: {{vcenter_usr}}
+  VCENTER_PWD: {{vcenter_pwd}}
+  VCENTER_DATA_CENTER: {{vcenter_data_center}}
+  NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
+  NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
+  NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
+  NSX_EDGE_GEN_NSX_MANAGER_TRANSPORT_ZONE: {{nsx_edge_gen_nsx_manager_transport_zone}}
+  NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP: {{nsx_edge_gen_nsx_manager_distributed_portgroup}}
+  NSX_EDGE_GEN_EDGE_DATASTORE: {{nsx_edge_gen_egde_datastore}}
+  NSX_EDGE_GEN_EDGE_CLUSTER: {{nsx_edge_gen_egde_cluster}}
+  NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
+  NSX_EDGE_GEN_ENABLE_DLR: {{nsx_edge_gen_enable_dlr}}
+  NSX_EDGE_GEN_BOSH_NSX_ENABLED: {{nsx_edge_gen_bosh_nsx_enabled}}
+  ESG_GATEWAY_1: {{esg_gateway_1}}
+  ESG_SIZE: {{esg_size}}
+  ESG_OSPF_PASSWORD_1: {{esg_ospf_password_1}}
+  ESG_CLI_USERNAME_1: {{esg_cli_username_1}}
+  ESG_CLI_PASSWORD_1: {{esg_cli_password_1}}
+  ESG_ERT_CERTS_NAME_1: {{ert_certs_name_1}}
+  ESG_ERT_CERTS_CONFIG_SYSTEMDOMAIN_1: {{system_domain}}
+  ESG_ERT_CERTS_CONFIG_APPDOMAIN_1: {{apps_domain}}
+  ESG_ERT_CERTS_CONFIG_OU: {{ert_certs_ou}}
+  ESG_ERT_CERTS_CONFIG_COUNTRY: {{ert_certs_country}}
+  ESG_ISO_CERTS_NAME_1_1: {{iso_certs_name_1}}
+  ESG_ISO_CERTS_SWITCH_1_1: {{isozone_switch_name_1}}
+  ESG_ISO_CERTS_CONFIG_DOMAINS_1_1: {{iso_certs_domains_1}}
+  ESG_ISO_CERTS_CONFIG_OU_1_1: {{iso_certs_ou_1}}
+  ESG_ISO_CERTS_CONFIG_COUNTRY_1_1: {{iso_certs_country_1}}
+  ESG_OPSMGR_UPLINK_IP_1: {{esg_opsmgr_uplink_ip_1}}
+  ESG_GO_ROUTER_UPLINK_IP_1: {{esg_go_router_uplink_ip_1}}
+  ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}
+  ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
+  ESG_GO_ROUTER_INSTANCES_1: {{router_instances}}
+  ESG_DIEGO_BRAIN_INSTANCES_1: {{diego_brain_instances}}
+  ESG_TCP_ROUTER_INSTANCES_1: {{tcp_router_instances}}
+  ESG_MYSQL_ERT_PROXY_INSTANCES_1: {{mysql_proxy_instances}}
+  ESG_MYSQL_TILE_PROXY_INSTANCES_1: {{tile_mysql_proxy_instances}}
+  ESG_RABBITMQ_TILE_PROXY_INSTANCES_1: {{tile_rabbit_proxy_instances}}
+  ESG_DEFAULT_UPLINK_IP_1: {{esg_default_uplink_ip_1}}
+  ESG_DEFAULT_UPLINK_PG_1: {{esg_default_uplink_pg_1}}
+  ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
+  ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
+  ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_go_router_isozone_1_uplink_ip_1}}
+  ESG_GO_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
+  ESG_GO_ROUTER_ISOZONE_1_INST_1: {{esg_go_router_isozone_1_inst_1}}
+  ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
+  ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
+  ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
+
+groups:
+
+- name: add-iso-segment
+  jobs:
+  - nsx-edge-gen
+
+- name: remove-iso-segment
+  jobs:
+  - nsx-edge-destroy
+
+
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+
+- name: om-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: om
+    access_token: {{github_token}}
+
+- name: pivnet-cli
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: pivnet-cli
+    access_token: {{github_token}}
+
+- name: concourse-vsphere
+  type: git
+  source:
+    uri: https://github.com/cf-platform-eng/nsx-ci-pipeline.git
+    branch: master
+
+- name: nsx-edge-gen
+  type: git
+  source:
+    uri: https://github.com/cf-platform-eng/nsx-edge-gen.git
+    branch: master
+    username: {{github_user}}
+    password: {{github_token}}
+
+- name: pivnet-iso-product
+  type: pivnet
+  source:
+    api_token: {{pivnet_token}}
+    product_slug: isolation-segment
+    product_version: {{iso_product_version}}
+    sort_by: semver
+
+- name: replicator
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: replicator
+    access_token: {{github_token}}
+
+jobs:
+
+- name: replicate-and-upload-iso-tile
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+    - get: pivnet-iso-product
+      params:
+        globs:
+        - "*.pivotal"
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+    - get: pivnet-cli
+      params:
+        globs:
+        - "*linux-amd64*"
+    - get: replicator
+      params:
+        globs:
+        - "*linux*"
+
+  - task: replicate-and-upload-iso-tile
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: {repository: nsxedgegen/nsx-edge-gen-worker}
+      inputs:
+        - name: pivnet-iso-product
+        - name: concourse-vsphere
+        - name: om-cli
+        - name: pivnet-cli
+      run:
+        path: concourse-vsphere/tasks/replicate-and-upload-iso-tile/task.yml
+      params:
+        OPS_MGR_HOST: {{om_host}}
+        OPS_MGR_USR: {{om_usr}}
+        OPS_MGR_PWD: {{om_pwd}}
+        SERVICE_STRING: "iso"
+        PIVNET_API_TOKEN: {{pivnet_token}}
+        REPLICATOR_NAME: {{replicator_name}}
+
+- name: config-iso-product
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+    - get: pivnet-iso-product
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [stage-product]
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+      passed: [stage-product]
+
+  - task: nsx-edge-list
+    file: concourse-vsphere/tasks/nsx-edge-list/task.yml
+    params: *nsx-edge-params
+
+  - task: config-iso-tile
+    file: concourse-vsphere/tasks/config-is-tile/task.yml
+    params:
+      PRODUCT_IDENTIFIER: p-isolation-segment-{{replicator_name}}
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+      OPS_MGR_GENERATE_SSL_ENDPOINT: {{om_generate_ssl_endpoint}}
+      NETWORK_NAME: {{tile_iso_network_name}}
+      PRODUCT_NAME: p-isolation-segment-{{replicator_name}}
+      TILE_AZS_ISO: {{tile_azs_iso}}
+      TILE_AZ_ISO_SINGLETON: {{tile_az_iso_singleton}}
+      NETWORK_NAME: {{tile_iso_network_name}}
+      SYSTEM_DOMAIN: {{system_domain}}
+      APPS_DOMAIN: {{apps_domain}}
+      SSL_TERMINATION_POINT: {{tile_iso_ssl_termination_point}}
+      SSL_CERT: {{tile_iso_ssl_cert}}
+      SSL_PRIVATE_KEY: {{tile_iso_ssl_private_key}}
+      ROUTER_SSL_CIPHERS: {{tile_iso_router_ssl_ciphers}}
+      ROUTER_STATIC_IPS: {{tile_iso_router_static_ips}}
+      CELL_DISK_CAPACITY: {{tile_iso_cell_disk_capacity}}
+      CELL_MEMORY_CAPACITY: {{tile_iso_cell_memory_capacity}}
+      APPLICATION_NETWORK_CIDR: {{tile_iso_application_network_cidr}}
+      APPLICATION_NETWORK_MTU: {{tile_iso_application_network_mtu}}
+      INSECURE_DOCKER_REGISTRY_LIST: {{tile_iso_insecure_docker_registry_list}}
+      SEGMENT_NAME: {{tile_iso_segment_name}}
+      IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst}} # Use the instance count provided for nsx
+      IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances}}
+      TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group}}
+      TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group}}
+      TILE_ISO_ENABLE_C2C: {{tile_iso_enable_c2c}}
+      TILE_ISO_C2C_NETWORK_CIDR: {{tile_iso_c2c_network_cidr}}
+      TILE_ISO_C2C_VTEP_PORT: {{tile_iso_c2c_vtep_port}}
+
+
+- name: apply-changes
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+      trigger: true
+      passed: [config-iso-product]
+    - get: pivnet-iso-product
+      resource: pivnet-iso-product
+      params:
+        globs:
+        - "*.pivotal"
+      passed: [config-iso-product]
+      trigger: true
+    - get: om-cli
+      params:
+        globs:
+        - "*-linux"
+      passed: [config-iso-product]
+
+  - task: apply-changes
+    file: concourse-vsphere/tasks/apply-changes/task.yml
+    params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+     
