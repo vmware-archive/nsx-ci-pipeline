@@ -5,7 +5,7 @@
 - NSX-V must have the following constructs created:
 
 	- Cluster(s) must have VXLAN(vTEPS) prepared & functional 
-	- A NSX Transport Zone must exist
+	- A NSX Transport Zone can already exist or would be created (requires the cluster names)
 - vSphere environment must have at least **1** of the following ***[Standard PortGroup|Distributed PortGroup|Logical Switch]*** for an `uplink` port group.  
    - This port group must have a network that is routable in the environment.  This is the `uplink` network
 - vSphere environment must have at least **1** of the following ***[Distributed PortGroup]*** for an `uplink` port group, required for DLR uplink (as transit network between the deployed esg and the dlr) if DLR option is enabled. 
@@ -52,6 +52,19 @@ Video Link(s)
 3. Create a directory for you Concourse parameters|configuration file: `mkdir params`
 4. Past parameters the sample below into a new file,  ***change the required min variables!!!*** : `vi params/env1-params.yml`
 
+## Validation of settings using `nsx-edge-gen`
+1. Get a copy of the [nsx-edge-gen](https://github.com/cf-platform-eng/nsx-ci-pipeline.git) repo.
+
+   Ensure the requirements are met (python, pip install of the requirements specified in the nsx-edge-gen README).  
+2. Edit the sample script under `test/run-test.sh` with the relevant parameters
+3. Run the script without any args, so the default 'list' operation is invoked ( using `<path>/run-test.sh`) - this would test basic connectivity and show a description of configuration that would be used for any creation.
+4. If there are any errors, correct them (possibly creds, endpoints etc)
+5. Try to create a nsx edge instance using `<path>/run-test.sh build`
+6. Ensure the creation succeeds against the vSphere env. Fix any errors as needed (like name of resources, certs, other settings)
+7. Destroy the edge instance using `<path>/run-test.sh destroy`
+7. Tweak options as necessary and run create/destroy
+8. Then apply any changes to the main params file for the nsx-ci-pipeline and start the pipeline.
+
 ## Installing additional Isolation Segments
 Use the add-additional-iso-segment pipeline and provide the params as specified in the sample template (without indexes) while modifying the network, replicator name, segment names.. and then run the pipeline for each additional iso-segment. The network should have already been created using nsx-edge-gen (following the ISOZONE-0* marker). Atmost 3 iso segments are supported.
 Any additional segments would require extending the nsx-edge-list and nsx-edge-gen tasks along with the pipeline constructs.
@@ -88,6 +101,8 @@ nsx_edge_gen_nsx_manager_fqdn: <YOUR NSX MANAGER HOSTNAME with FQDN> #REQUIRED
 nsx_edge_gen_nsx_manager_admin_user: admin #REQUIRED
 nsx_edge_gen_nsx_manager_admin_passwd: <YOUR NSX MANAGER PASSWORD> #REQUIRED
 nsx_edge_gen_nsx_manager_transport_zone: <YOUR NSX TRANSPORT ZONE> #REQUIRED
+nsx_edge_gen_nsx_manager_transport_zone_clusters: <COMMA SEPARATED NSX CLUSTERS FOR TRANSPORT ZONE> #REQUIRED if Transport Zone does not exist and needs to be created. example:Cluster1,Cluster2
+
 nsx_edge_gen_nsx_manager_distributed_portgroup: <YOUR NSX DISTRIBUTED PORTGROUP> #REQUIRED - used for DLR uplink, as transit network between the deployed esg and the dlr
 nsx_edge_gen_egde_datastore: <YOUR DATASTORE FOR NSX EDGES> #REQUIRED example: vsanDatastore
 nsx_edge_gen_egde_cluster: <YOUR CLUSTER FOR NSX EDGES> #REQUIRED example: Cluster1

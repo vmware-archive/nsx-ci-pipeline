@@ -38,7 +38,7 @@ export cf_minor_version=$(echo $cf_product_version | awk -F '.' '{print $2}' )
 # Can only support one version of the default isolation segment tile
 # Search for the tile using the specified product name if available
 # or search using p-iso as default iso product name
-if [ -z "$PRODUCT_NAME" -o "$PRODUCT_NAME" == "p-isolation-segment" ]]; then
+if [ -z "$PRODUCT_NAME" -o "$PRODUCT_NAME" == "p-isolation-segment" ]; then
   TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment`
 else
   TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment-${PRODUCT_NAME}`

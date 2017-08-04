@@ -44,4 +44,4 @@ inputs:
   - name: nsx-gen-output
 
 run:
-  path: concourse-vsphere/tasks/config-is-tile/task.sh
+  path: concourse-vsphere/tasks/config-replicated-is-tile/task.sh
