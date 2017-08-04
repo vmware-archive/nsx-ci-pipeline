@@ -101,7 +101,7 @@ nsx_edge_gen_nsx_manager_fqdn: <YOUR NSX MANAGER HOSTNAME with FQDN> #REQUIRED
 nsx_edge_gen_nsx_manager_admin_user: admin #REQUIRED
 nsx_edge_gen_nsx_manager_admin_passwd: <YOUR NSX MANAGER PASSWORD> #REQUIRED
 nsx_edge_gen_nsx_manager_transport_zone: <YOUR NSX TRANSPORT ZONE> #REQUIRED
-nsx_edge_gen_nsx_manager_transport_zone_clusters: "" #Can be Empty; REQUIRED if Transport Zone does not exist and needs to be created. example:"Cluster1,Cluster2"
+nsx_edge_gen_nsx_manager_transport_zone_clusters:  #Can be Empty; REQUIRED if Transport Zone does not exist and needs to be created. example:"Cluster1,Cluster2"
 
 nsx_edge_gen_nsx_manager_distributed_portgroup: YOUR NSX DISTRIBUTED PORTGROUP #REQUIRED - used for DLR uplink, as transit network between the deployed esg and the dlr
 nsx_edge_gen_egde_datastore: <YOUR DATASTORE FOR NSX EDGES> #REQUIRED example: vsanDatastore
