@@ -183,7 +183,8 @@ jobs:
         globs:
         - "*linux_amd64*"
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
     - get: pivnet-opsman-product
       params:
         globs:
@@ -237,7 +238,8 @@ jobs:
       passed: [install-opsmgr]
       trigger: true
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [install-opsmgr]
     - get: nsx-edge-gen
 
@@ -318,7 +320,8 @@ jobs:
       trigger: true
       passed: [configure-ops-director]
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [configure-ops-director]
 
   - task: apply-changes
@@ -339,7 +342,8 @@ jobs:
         globs:
         - "*.pivotal"
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [opsman-apply-changes]
     - get: pivnet-cli
       params:
@@ -361,7 +365,8 @@ jobs:
       trigger: true
       passed: [upload-elastic-runtime-tile]
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [upload-elastic-runtime-tile]
     - get: nsx-edge-gen
 
@@ -458,7 +463,8 @@ jobs:
       passed: [config-elastic-runtime-tile]
       trigger: true
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [config-elastic-runtime-tile]
 
   - task: apply-changes
@@ -483,7 +489,8 @@ jobs:
         globs:
         - "*.pivotal"
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [product-apply-changes-ert]
     - get: pivnet-cli
       params:
@@ -517,7 +524,8 @@ jobs:
       trigger: true
       passed: [upload-iso-tile]
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [upload-iso-tile]
     - get: nsx-edge-gen
 
@@ -567,7 +575,8 @@ jobs:
       passed: [config-iso-tile]
       trigger: true
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [config-iso-tile]
 
   - task: apply-changes
@@ -619,7 +628,8 @@ jobs:
   - aggregate:
     - get: concourse-vsphere
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [configure-ops-director]
   - task: delete-products
     file: concourse-vsphere/tasks/delete-products/task.yml
@@ -640,7 +650,8 @@ jobs:
   - aggregate:
     - get: concourse-vsphere
     - get: om-cli
-      globs: om-linux
+      params:
+        globs: om-linux
       passed: [uninstall-products]
       trigger: true
     - get: govc
