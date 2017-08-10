@@ -46,7 +46,7 @@ jobs:
         - "*.pivotal"
       trigger: true
     - get: om-cli
-      globs: om-linux
+      globs: [om-linux]
     - get: pivnet-cli
       params:
         globs:
@@ -67,7 +67,7 @@ jobs:
       trigger: true
       # passed: [upgrade-elastic-runtime-tile]
     - get: om-cli
-      globs: om-linux
+      globs: [om-linux]
       passed: [upgrade-elastic-runtime-tile]
 
   - task: config-er-tile
@@ -122,7 +122,7 @@ jobs:
       trigger: true
       passed: [config-elastic-runtime-tile]
     - get: om-cli
-      globs: om-linux
+      globs: [om-linux]
       passed: [config-elastic-runtime-tile]
 
   - task: enable-ert-errands
@@ -139,7 +139,7 @@ jobs:
       trigger: true
       passed: [enable-errands]
     - get: om-cli
-      globs: om-linux
+      globs: [om-linux]
       passed: [enable-errands]
 
   - task: apply-changes
@@ -156,7 +156,7 @@ jobs:
       trigger: true
       passed: [product-apply-changes]
     - get: om-cli
-      globs: om-linux
+      globs: [om-linux]
       passed: [product-apply-changes]
 
   - task: disable-ert-errands
@@ -173,7 +173,7 @@ jobs:
       trigger: true
       passed: [disable-errands]
     - get: om-cli
-      globs: om-linux
+      globs: [om-linux]
       passed: [disable-errands]
 
   - task: apply-changes
