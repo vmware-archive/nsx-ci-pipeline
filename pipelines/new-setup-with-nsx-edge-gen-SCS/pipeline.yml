@@ -442,6 +442,7 @@ jobs:
       SYSLOG_PORT: {{syslog_port}}
       SYSLOG_PROTOCOL: {{syslog_protocol}}
       SYSLOG_DRAIN_BUFFER_SIZE: {{syslog_drain_buffer_size}}
+      ENABLE_SECURITY_EVENT_LOGGING: {{enable_security_event_logging}}
       LOGGREGATOR_ENDPOINT_PORT: {{loggregator_endpoint_port}}
       SSL_TERMINATION: {{ssl_termination}}
       SSL_CERT: {{ssl_cert}}
