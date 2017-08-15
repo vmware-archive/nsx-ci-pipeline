@@ -643,7 +643,7 @@ do
   SECURITY_GROUP=$(env | grep "TILE_ERT_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
 
   match=$(echo $job_name | grep -e $JOBS_REQUIRING_LBR_PATTERN  || true)
-  if [ "$match" != "" -o $SECURITY_GROUP != "" ]; then
+  if [ "$match" != "" -o "$SECURITY_GROUP" != "" ]; then
     echo "$job requires Loadbalancer or security group..."
     
     # Use an auto-security group based on product guid by Bosh 
