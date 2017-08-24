@@ -31,6 +31,7 @@ if [ "$ISOZONE_SWITCH_NAME_1" != "" ]; then
   -esg_tcp_router_isozone_1_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1
   -esg_tcp_router_isozone_1_switch_1 $ISOZONE_SWITCH_NAME_1
   -esg_tcp_router_isozone_1_inst_1 $ESG_TCP_ROUTER_ISOZONE_1_INST_1
+  -esg_go_router_isozone_1_ssl_term_1 $ESG_GO_ROUTER_ISOZONE_1_SSL_TERM_1
    "
 
   if [ "$ESG_ISO_CERTS_CONFIG_DOMAINS_1_1" != "" ]; then
@@ -54,6 +55,7 @@ if [ "$ISOZONE_SWITCH_NAME_2" != "" ]; then
   -esg_tcp_router_isozone_2_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_2_UPLINK_IP_1
   -esg_tcp_router_isozone_2_switch_1 $ISOZONE_SWITCH_NAME_2
   -esg_tcp_router_isozone_2_inst_1 $ESG_TCP_ROUTER_ISOZONE_2_INST_1
+  -esg_go_router_isozone_2_ssl_term_1 $ESG_GO_ROUTER_ISOZONE_2_SSL_TERM_1
   "
 
   if [ "$ESG_ISO_CERTS_CONFIG_DOMAINS_2_1" != "" ]; then
@@ -77,6 +79,7 @@ if [ "$ISOZONE_SWITCH_NAME_3" != "" ]; then
   -esg_tcp_router_isozone_3_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_3_UPLINK_IP_1
   -esg_tcp_router_isozone_3_switch_1 $ISOZONE_SWITCH_NAME_3
   -esg_tcp_router_isozone_3_inst_1 $ESG_TCP_ROUTER_ISOZONE_3_INST_1
+  -esg_go_router_isozone_3_ssl_term_1 $ESG_GO_ROUTER_ISOZONE_3_SSL_TERM_1
   "
 
   if [ "$ESG_ISO_CERTS_CONFIG_DOMAINS_3_1" != "" ]; then
@@ -99,6 +102,7 @@ fi
 -esg_ert_certs_1 "$ESG_ERT_CERTS_NAME_1"   \
 -esg_ert_certs_config_sysd_1 "$ESG_ERT_CERTS_CONFIG_SYSTEMDOMAIN_1"   \
 -esg_ert_certs_config_appd_1 "$ESG_ERT_CERTS_CONFIG_APPDOMAIN_1"   \
+-esg_go_router_ssl_term_1 "$ESG_GO_ROUTER_SSL_TERM_1" \
 -esg_opsmgr_uplink_ip_1 $ESG_OPSMGR_UPLINK_IP_1   \
 -esg_go_router_uplink_ip_1 $ESG_GO_ROUTER_UPLINK_IP_1   \
 -esg_diego_brain_uplink_ip_1 $ESG_DIEGO_BRAIN_UPLINK_IP_1   \
@@ -124,8 +128,8 @@ fi
 -nsxmanager_dportgroup "$NSX_EDGE_GEN_NSX_MANAGER_DISTRIBUTED_PORTGROUP" \
 -nsxmanager_uplink_ip $ESG_DEFAULT_UPLINK_IP_1  \
 -nsxmanager_uplink_port "$ESG_DEFAULT_UPLINK_PG_1" \
--nsxmanager_en_dlr $NSX_EDGE_GEN_ENABLE_DLR \
--nsxmanager_bosh_nsx_enabled $NSX_EDGE_GEN_BOSH_NSX_ENABLED \
+-nsxmanager_en_dlr "$NSX_EDGE_GEN_ENABLE_DLR" \
+-nsxmanager_bosh_nsx_enabled "$NSX_EDGE_GEN_BOSH_NSX_ENABLED" \
 $ARGS \
 list | tee $NSX_GEN_OUTPUT 2>&1 
 

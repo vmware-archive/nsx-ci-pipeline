@@ -1,6 +1,5 @@
-#!/bin/bash
+#!/bin/bash -e
 
-set -e
 
 chmod +x om-cli/om-linux
 

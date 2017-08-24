@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 chmod +x om-cli/om-linux
 
 until $(curl --output /dev/null -k --silent --head --fail https://$OPS_MGR_HOST/setup); do

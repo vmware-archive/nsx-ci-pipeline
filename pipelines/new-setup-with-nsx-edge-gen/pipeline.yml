@@ -35,6 +35,7 @@ nsx_edge_params: &nsx-edge-params
   ESG_GO_ROUTER_UPLINK_IP_1: {{esg_go_router_uplink_ip_1}}
   ESG_DIEGO_BRAIN_UPLINK_IP_1: {{esg_diego_brain_uplink_ip_1}}
   ESG_TCP_ROUTER_UPLINK_IP_1: {{esg_tcp_router_uplink_ip_1}}
+  ESG_GO_ROUTER_SSL_TERM_1: {{esg_go_router_ssl_term_1}}
   ESG_GO_ROUTER_INSTANCES_1: {{router_instances}}
   ESG_DIEGO_BRAIN_INSTANCES_1: {{diego_brain_instances}}
   ESG_TCP_ROUTER_INSTANCES_1: {{tcp_router_instances}}
@@ -51,6 +52,7 @@ nsx_edge_params: &nsx-edge-params
   ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_tcp_router_isozone_1_uplink_ip_1}}
   ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
   ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
+  ESG_GO_ROUTER_ISOZONE_1_SSL_TERM_1: {{esg_go_router_isozone_1_ssl_term_1}}
 
 groups:
 - name: all
@@ -118,13 +120,13 @@ resources:
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-ci-pipeline.git
-    branch: master
+    branch: ssl_term
 
 - name: nsx-edge-gen
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-edge-gen.git
-    branch: master
+    branch: ssl_term
     username: {{github_user}}
     password: {{github_token}}
 
