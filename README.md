@@ -123,6 +123,12 @@ nsx_edge_gen_enable_dlr: false # REQUIRED
 ## and avoid populating it (if true) as Bosh would use security groups to associate pool with job members
 nsx_edge_gen_bosh_nsx_enabled: true # REQUIRED -> true for PCF 1.11+, false for PCF 1.10 or older
 
+# Set to true (default) if ssl should be terminated by LBR 
+# and only unencrypted traffic forwarded to GoRouter
+# Set to false if encypted traffic should be forwarded as pass-through by LBR 
+# and ssl needs to be terminated only at GoRouter
+esg_go_router_ssl_term_1: true 
+
 esg_size: compact # valid values (compact|large|xlarge|quadlarge)
 esg_ospf_password_1: P1v0t4l
 esg_cli_username_1: admin 
@@ -149,6 +155,13 @@ esg_go_router_isozone_1_uplink_ip_1: <YOUR ISO1-VIP> #REQUIRED example: 10.172.1
 esg_go_router_isozone_1_inst_1: 2                    # Number of go-routers for IsoZone1
 esg_tcp_router_isozone_1_uplink_ip_1: <YOUR TCP-ROUTER_ISO1-VIP> #REQUIRED example: 10.172.16.105
 esg_tcp_router_isozone_1_inst_1: 2 # Number of tcp-routers for IsoZone1
+
+# Set to true (default) if ssl should be terminated by LBR 
+# and only unencrypted traffic forwarded to IsoZone-1 GoRouter
+# Set to false if encypted traffic should be forwarded as pass-through by LBR 
+# and ssl needs to be terminated only at IsoZone-1 GoRouter
+esg_go_router_isozone_1_ssl_term_1: true
+
 
 ## Certs for Isozone-1
 # Specify comma separated list of domains for isozone1 to generate self-signed cert
@@ -263,7 +276,9 @@ syslog_drain_buffer_size: 10000
 # haproxy - haproxy handles ssl termination
 # external_ssl - gorouter handles ssl termination
 # external_non_ssl - for lbr handles ssl termination - default for NSX-V
-ssl_termination: external_non_ssl # Default
+# esg_go_router_ssl_term_1 should be `true` for `external_non_ssl`
+# esg_go_router_ssl_term_1 should be `false` for `external_ssl`
+ssl_termination: external_non_ssl # Default 
 
 ## ERT Wildcard domain certs go here
 ssl_cert:
@@ -442,7 +457,9 @@ tile_iso_network_name_1: "ISOZONE-01" # Modify according to ISOZONE defined earl
 
 # SSL Termination valid values: (terminate_at_router|terminate_at_router_ert_cert|terminate_before_router)
 # Default is terminate_before_router
-tile_iso_ssl_termination_point_1: terminate_before_router
+# esg_go_router_isozone_1_ssl_term_1 should be value `true` for `terminate_before_router`
+# esg_go_router_isozone_1_ssl_term_1 should be value `false` for `terminate_at_router`
+tile_iso_ssl_termination_point_1: terminate_before_router # Default
 
 ## Leave ssl blank for Iso Tile 
 tile_iso_ssl_cert_1:           
