@@ -120,13 +120,13 @@ resources:
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-ci-pipeline.git
-    branch: ssl_term
+    branch: master
 
 - name: nsx-edge-gen
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-edge-gen.git
-    branch: ssl_term
+    branch: master
     username: {{github_user}}
     password: {{github_token}}
 
