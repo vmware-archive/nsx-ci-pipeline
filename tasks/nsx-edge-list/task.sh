@@ -93,6 +93,13 @@ if [ "$ISOZONE_SWITCH_NAME_3" != "" ]; then
   fi
 fi
 
+if [ "$SSL_CERT" != "" ]; then
+  ARGS="$ARGS 
+  -esg_ert_certs_key_1 $SSL_CERT 
+  -esg_ert_certs_cert_1 $SSL_PRIVATE_KEY
+  "  
+fi
+
 ./nsx-gen/bin/nsxgen \
 -c "$NSX_EDGE_GEN_NAME" \
 -esg_name_1 "$NSX_EDGE_GEN_NAME" \
