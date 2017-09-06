@@ -94,28 +94,28 @@ if [ "$ISOZONE_SWITCH_NAME_3" != "" ]; then
 fi
 
 
-if [ "$ERT_SSL_CERT" != "" ]; then
+if [ "$(echo $ERT_SSL_CERT | grep '.')" != "" ]; then
   ARGS="$ARGS \
   -esg_ert_certs_cert_1 \"$ERT_SSL_CERT\" \
   -esg_ert_certs_key_1 \"$ERT_SSL_PRIVATE_KEY\" \
   "
 fi
 
-if [ "$ISOZONE_SSL_CERT_1" != "" ]; then
+if [ "$(echo $ISOZONE_SSL_CERT_1 | grep '.')" != "" ]; then
   ARGS="$ARGS \
   -esg_iso_certs_cert_1_1 \"$ISOZONE_SSL_CERT_1\" \
   -esg_iso_certs_key_1_1 \"$ISOZONE_SSL_PRIVATE_KEY_1\" \
   "
 fi
 
-if [ "$ISOZONE_SSL_CERT_2" != "" ]; then
+if [ "$(echo $ISOZONE_SSL_CERT_2 | grep '.')" != "" ]; then
   ARGS="$ARGS \
   -esg_iso_certs_cert_2_1 \"$ISOZONE_SSL_CERT_2\" \
   -esg_iso_certs_key_2_1 \"$ISOZONE_SSL_PRIVATE_KEY_2\" \
   "
 fi
 
-if [ "$ISOZONE_SSL_CERT_3" != "" ]; then
+if [ "$(echo $ISOZONE_SSL_CERT_3 | grep '.')" != "" ]; then
   #echo $ISOZONE_SSL_CERT_3 | tr '\n' '#'| sed -e 's/#/\\r\\n/g' > /tmp/iso3_sanitised_ssl_cert
   #echo $ISOZONE_SSL_PRIVATE_KEY_3 | tr '\n' '#'| sed -e 's/#/\\r\\n/g'  > /tmp/iso3_sanitised_ssl_private_key
 

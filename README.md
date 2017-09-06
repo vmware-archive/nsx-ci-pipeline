@@ -66,8 +66,8 @@ Video Link(s)
 8. Then apply any changes to the main params file for the nsx-ci-pipeline and start the pipeline.
 
 ## Installing additional Isolation Segments
-Use the add-additional-iso-segment pipeline and provide the params as specified in the sample template (without indexes) while modifying the network, replicator name, segment names.. and then run the pipeline for each additional iso-segment. The network should have already been created using nsx-edge-gen (following the ISOZONE-0* marker). Atmost 3 iso segments are supported.
-Any additional segments would require extending the nsx-edge-list and nsx-edge-gen tasks along with the pipeline constructs.
+Use the add-additional-iso-segment pipeline and provide the params as specified in the sample template (without indexes) while modifying the network, replicator name, segment names.. and then run the `add-additional-iso-segment` pipeline for each additional iso-segment. The network should have already been created using nsx-edge-gen (following the ISOZONE-0* marker). Atmost 3 iso segments are supported.
+Any additional segments would require extending the nsx-edge-list and nsx-edge-gen tasks along with the pipeline constructs (add additional input params in pipeline/tasks.yml and task.sh).
 
 **To use this pipeline to create the env1-params.yml file with the following sample.  Replace all variables commented as `REQUIRED`!!!**
 
@@ -280,9 +280,24 @@ syslog_drain_buffer_size: 10000
 # esg_go_router_ssl_term_1 should be `false` for `external_ssl`
 ssl_termination: external_non_ssl # Default 
 
-## ERT Wildcard domain certs go here
-ssl_cert:
-ssl_private_key:
+## ERT Wildcard domain certs go here - Default is blank
+ssl_cert: #Default - auto-generate
+ssl_private_key: #Default - auto-generate
+## If there are existing certs, use following syntax:
+#ssl_private_key: |
+#  -----BEGIN RSA PRIVATE KEY-----
+#  MIIEpAIBAAKCAQEA6XfcB2MMp7yCzq3n4b8bEQPzcR1RWPLz5/vsPK4vZVJS11VB
+#  ....
+#  9fVNRbdC3GQrjFxQhH9LexNa6eQ63A0RukvpDByosY7eqSQkeMa0tA==
+#  -----END RSA PRIVATE KEY-----
+#ssl_cert: |
+#  -----BEGIN CERTIFICATE-----
+#  MIIDdjCCAl6gAwIBAgIJALdmBzYOBrc2MA0GCSqGSIb3DQEBBQUAMEgxJjAkBgNV
+#  .....
+#  GuMpLQeNPvgGf/jpKWyjuQurh9lzmC9eYP8=
+#  -----END CERTIFICATE-----
+
+
 
 disable_http_proxy: true
 
@@ -461,10 +476,26 @@ tile_iso_network_name_1: "ISOZONE-01" # Modify according to ISOZONE defined earl
 # esg_go_router_isozone_1_ssl_term_1 should be value `false` for `terminate_at_router`
 tile_iso_ssl_termination_point_1: terminate_before_router # Default
 
-## Leave ssl blank for Iso Tile 
-tile_iso_ssl_cert_1:           
-tile_iso_ssl_private_key_1:       
+## Leave ssl blank for Iso Tile - default is blank
+tile_iso_ssl_cert_1: # Default - auto-generate
+tile_iso_ssl_private_key_1: # Default - auto-generate    
+
+## If there are existing certs, use following syntax:
+#tile_iso_ssl_private_key_1: |
+#  -----BEGIN RSA PRIVATE KEY-----
+#  MIIEpAIBAAKCAQEA6XfcB2MMp7yCzq3n4b8bEQPzcR1RWPLz5/vsPK4vZVJS11VB
+#  ....
+#  9fVNRbdC3GQrjFxQhH9LexNa6eQ63A0RukvpDByosY7eqSQkeMa0tA==
+#  -----END RSA PRIVATE KEY-----
+#tile_iso_ssl_cert_1: |
+#  -----BEGIN CERTIFICATE-----
+#  MIIDdjCCAl6gAwIBAgIJALdmBzYOBrc2MA0GCSqGSIb3DQEBBQUAMEgxJjAkBgNV
+#  .....
+#  GuMpLQeNPvgGf/jpKWyjuQurh9lzmC9eYP8=
+#  -----END CERTIFICATE-----
+
 tile_iso_router_ssl_ciphers_1: 
+
 
 ## C2C Container to Container networking - applicable only for PCF1.11+ 
 ## valid values: [enable|disable]
