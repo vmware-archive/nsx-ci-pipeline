@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+export ROOT_DIR=`pwd`
+export SCRIPT_DIR=$(dirname $0)
 
 pushd nsx-edge-gen  >/dev/null 2>&1
 
@@ -13,78 +15,112 @@ if [[ -e nsx_cloud_config.yml ]]; then rm -rf nsx_cloud_config.yml; fi
 ARGS=" "
 
 if [ "$ISOZONE_SWITCH_NAME_1" != "" ]; then
-  ARGS="$ARGS 
-  -isozone_switch_name_1 $ISOZONE_SWITCH_NAME_1
-  -isozone_switch_cidr_1 $ISOZONE_SWITCH_CIDR_1
-  -esg_go_router_isozone_1_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1
-  -esg_go_router_isozone_1_switch_1 $ISOZONE_SWITCH_NAME_1
-  -esg_go_router_isozone_1_inst_1 $ESG_GO_ROUTER_ISOZONE_1_INST_1
-  -esg_tcp_router_isozone_1_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1
-  -esg_tcp_router_isozone_1_switch_1 $ISOZONE_SWITCH_NAME_1
-  -esg_tcp_router_isozone_1_inst_1 $ESG_TCP_ROUTER_ISOZONE_1_INST_1
-  -esg_go_router_isozone_1_ssl_term_1 $ESG_GO_ROUTER_ISOZONE_1_SSL_TERM_1
+  ARGS="$ARGS \
+  -isozone_switch_name_1 $ISOZONE_SWITCH_NAME_1 \
+  -isozone_switch_cidr_1 $ISOZONE_SWITCH_CIDR_1 \
+  -esg_go_router_isozone_1_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1 \
+  -esg_go_router_isozone_1_switch_1 $ISOZONE_SWITCH_NAME_1 \
+  -esg_go_router_isozone_1_inst_1 $ESG_GO_ROUTER_ISOZONE_1_INST_1 \
+  -esg_tcp_router_isozone_1_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_1_UPLINK_IP_1 \
+  -esg_tcp_router_isozone_1_switch_1 $ISOZONE_SWITCH_NAME_1 \
+  -esg_tcp_router_isozone_1_inst_1 $ESG_TCP_ROUTER_ISOZONE_1_INST_1 \
+  -esg_go_router_isozone_1_ssl_term_1 $ESG_GO_ROUTER_ISOZONE_1_SSL_TERM_1 \
    "
 
   if [ "$ESG_ISO_CERTS_CONFIG_DOMAINS_1_1" != "" ]; then
-    ARGS="$ARGS 
-    -esg_iso_certs_1_1 $ESG_ISO_CERTS_NAME_1_1
-    -esg_iso_certs_config_switch_1_1 $ESG_ISO_CERTS_SWITCH_1_1
-    -esg_iso_certs_config_ou_1_1 $ESG_ISO_CERTS_CONFIG_OU_1_1
-    -esg_iso_certs_config_cc_1_1 $ESG_ISO_CERTS_CONFIG_COUNTRY_1_1
-    -esg_iso_certs_config_domains_1_1 $ESG_ISO_CERTS_CONFIG_DOMAINS_1_1
+    ARGS="$ARGS \
+    -esg_iso_certs_1_1 $ESG_ISO_CERTS_NAME_1_1 \
+    -esg_iso_certs_config_switch_1_1 $ESG_ISO_CERTS_SWITCH_1_1 \
+    -esg_iso_certs_config_ou_1_1 $ESG_ISO_CERTS_CONFIG_OU_1_1 \
+    -esg_iso_certs_config_cc_1_1 $ESG_ISO_CERTS_CONFIG_COUNTRY_1_1 \
+    -esg_iso_certs_config_domains_1_1 $ESG_ISO_CERTS_CONFIG_DOMAINS_1_1 \
      "
   fi
 fi
 
 if [ "$ISOZONE_SWITCH_NAME_2" != "" ]; then
-  ARGS="$ARGS 
-  -isozone_switch_name_2 $ISOZONE_SWITCH_NAME_2
-  -isozone_switch_cidr_2 $ISOZONE_SWITCH_CIDR_2
-  -esg_go_router_isozone_2_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_2_UPLINK_IP_1
-  -esg_go_router_isozone_2_switch_1 $ISOZONE_SWITCH_NAME_2
-  -esg_go_router_isozone_2_inst_1 $ESG_GO_ROUTER_ISOZONE_2_INST_1
-  -esg_tcp_router_isozone_2_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_2_UPLINK_IP_1
-  -esg_tcp_router_isozone_2_switch_1 $ISOZONE_SWITCH_NAME_2
-  -esg_tcp_router_isozone_2_inst_1 $ESG_TCP_ROUTER_ISOZONE_2_INST_1
-  -esg_go_router_isozone_2_ssl_term_1 $ESG_GO_ROUTER_ISOZONE_2_SSL_TERM_1
+  ARGS="$ARGS \
+  -isozone_switch_name_2 $ISOZONE_SWITCH_NAME_2 \
+  -isozone_switch_cidr_2 $ISOZONE_SWITCH_CIDR_2 \
+  -esg_go_router_isozone_2_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_2_UPLINK_IP_1 \
+  -esg_go_router_isozone_2_switch_1 $ISOZONE_SWITCH_NAME_2 \
+  -esg_go_router_isozone_2_inst_1 $ESG_GO_ROUTER_ISOZONE_2_INST_1 \
+  -esg_tcp_router_isozone_2_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_2_UPLINK_IP_1 \
+  -esg_tcp_router_isozone_2_switch_1 $ISOZONE_SWITCH_NAME_2 \
+  -esg_tcp_router_isozone_2_inst_1 $ESG_TCP_ROUTER_ISOZONE_2_INST_1 \
+  -esg_go_router_isozone_2_ssl_term_1 $ESG_GO_ROUTER_ISOZONE_2_SSL_TERM_1 \
   "
 
   if [ "$ESG_ISO_CERTS_CONFIG_DOMAINS_2_1" != "" ]; then
-    ARGS="$ARGS 
-    -esg_iso_certs_2_1 $ESG_ISO_CERTS_NAME_2_1
-    -esg_iso_certs_config_switch_2_1 $ESG_ISO_CERTS_SWITCH_2_1
-    -esg_iso_certs_config_ou_2_1 $ESG_ISO_CERTS_CONFIG_OU_2_1
-    -esg_iso_certs_config_cc_2_1 $ESG_ISO_CERTS_CONFIG_COUNTRY_2_1
-    -esg_iso_certs_config_domains_2_1 $ESG_ISO_CERTS_CONFIG_DOMAINS_2_1
+    ARGS="$ARGS \
+    -esg_iso_certs_2_1 $ESG_ISO_CERTS_NAME_2_1 \
+    -esg_iso_certs_config_switch_2_1 $ESG_ISO_CERTS_SWITCH_2_1 \
+    -esg_iso_certs_config_ou_2_1 $ESG_ISO_CERTS_CONFIG_OU_2_1 \
+    -esg_iso_certs_config_cc_2_1 $ESG_ISO_CERTS_CONFIG_COUNTRY_2_1 \
+    -esg_iso_certs_config_domains_2_1 $ESG_ISO_CERTS_CONFIG_DOMAINS_2_1 \
      "
   fi
 fi
 
 if [ "$ISOZONE_SWITCH_NAME_3" != "" ]; then
-  ARGS="$ARGS 
-  -isozone_switch_name_3 $ISOZONE_SWITCH_NAME_3
-  -isozone_switch_cidr_3 $ISOZONE_SWITCH_CIDR_3
-  -esg_go_router_isozone_3_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_3_UPLINK_IP_1
-  -esg_go_router_isozone_3_switch_1 $ISOZONE_SWITCH_NAME_3
-  -esg_go_router_isozone_3_inst_1 $ESG_GO_ROUTER_ISOZONE_3_INST_1
-  -esg_tcp_router_isozone_3_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_3_UPLINK_IP_1
-  -esg_tcp_router_isozone_3_switch_1 $ISOZONE_SWITCH_NAME_3
-  -esg_tcp_router_isozone_3_inst_1 $ESG_TCP_ROUTER_ISOZONE_3_INST_1
-  -esg_go_router_isozone_3_ssl_term_1 $ESG_GO_ROUTER_ISOZONE_3_SSL_TERM_1
+  ARGS="$ARGS \
+  -isozone_switch_name_3 $ISOZONE_SWITCH_NAME_3 \
+  -isozone_switch_cidr_3 $ISOZONE_SWITCH_CIDR_3 \
+  -esg_go_router_isozone_3_uplink_ip_1 $ESG_GO_ROUTER_ISOZONE_3_UPLINK_IP_1 \
+  -esg_go_router_isozone_3_switch_1 $ISOZONE_SWITCH_NAME_3 \
+  -esg_go_router_isozone_3_inst_1 $ESG_GO_ROUTER_ISOZONE_3_INST_1 \
+  -esg_tcp_router_isozone_3_uplink_ip_1 $ESG_TCP_ROUTER_ISOZONE_3_UPLINK_IP_1 \
+  -esg_tcp_router_isozone_3_switch_1 $ISOZONE_SWITCH_NAME_3 \
+  -esg_tcp_router_isozone_3_inst_1 $ESG_TCP_ROUTER_ISOZONE_3_INST_1 \
+  -esg_go_router_isozone_3_ssl_term_1 $ESG_GO_ROUTER_ISOZONE_3_SSL_TERM_1 \
   "
 
   if [ "$ESG_ISO_CERTS_CONFIG_DOMAINS_3_1" != "" ]; then
-    ARGS="$ARGS 
-    -esg_iso_certs_3_1 $ESG_ISO_CERTS_NAME_3_1
-    -esg_iso_certs_config_switch_3_1 $ESG_ISO_CERTS_SWITCH_3_1
-    -esg_iso_certs_config_ou_3_1 $ESG_ISO_CERTS_CONFIG_OU_3_1
-    -esg_iso_certs_config_cc_3_1 $ESG_ISO_CERTS_CONFIG_COUNTRY_3_1
-    -esg_iso_certs_config_domains_3_1 $ESG_ISO_CERTS_CONFIG_DOMAINS_3_1
+    ARGS="$ARGS \
+    -esg_iso_certs_3_1 $ESG_ISO_CERTS_NAME_3_1 \
+    -esg_iso_certs_config_switch_3_1 $ESG_ISO_CERTS_SWITCH_3_1 \
+    -esg_iso_certs_config_ou_3_1 $ESG_ISO_CERTS_CONFIG_OU_3_1 \
+    -esg_iso_certs_config_cc_3_1 $ESG_ISO_CERTS_CONFIG_COUNTRY_3_1 \
+    -esg_iso_certs_config_domains_3_1 $ESG_ISO_CERTS_CONFIG_DOMAINS_3_1 \
      "
   fi
 fi
 
 
+if [ "$ERT_SSL_CERT" != "" ]; then
+  ARGS="$ARGS \
+  -esg_ert_certs_cert_1 \"$ERT_SSL_CERT\" \
+  -esg_ert_certs_key_1 \"$ERT_SSL_PRIVATE_KEY_1\" \
+  "
+fi
+
+if [ "$ISOZONE_SSL_CERT_1" != "" ]; then
+  ARGS="$ARGS \
+  -esg_iso_certs_cert_1_1 \"$ISOZONE_SSL_CERT_1\" \
+  -esg_iso_certs_key_1_1 \"$ISOZONE_SSL_PRIVATE_KEY_1\" \
+  "
+fi
+
+if [ "$ISOZONE_SSL_CERT_2" != "" ]; then
+  ARGS="$ARGS \
+  -esg_iso_certs_cert_2_1 \"$ISOZONE_SSL_CERT_2\" \
+  -esg_iso_certs_key_2_1 \"$ISOZONE_SSL_PRIVATE_KEY_2\" \
+  "
+fi
+
+if [ "$ISOZONE_SSL_CERT_3" != "" ]; then
+  #echo $ISOZONE_SSL_CERT_3 | tr '\n' '#'| sed -e 's/#/\\r\\n/g' > /tmp/iso3_sanitised_ssl_cert
+  #echo $ISOZONE_SSL_PRIVATE_KEY_3 | tr '\n' '#'| sed -e 's/#/\\r\\n/g'  > /tmp/iso3_sanitised_ssl_private_key
+
+  ARGS="$ARGS \
+  -esg_iso_certs_cert_3_1 \"$ISOZONE_SSL_CERT_3\" \
+  -esg_iso_certs_key_3_1 \"$ISOZONE_SSL_PRIVATE_KEY_3\" \
+  "
+fi
+
+cat >  /tmp/nsx-run.sh <<-EOF
+#!/bin/bash
+pushd "${ROOT_DIR}/nsx-edge-gen"
 ./nsx-gen/bin/nsxgen \
 -c "$NSX_EDGE_GEN_NAME" \
 -esg_name_1 "$NSX_EDGE_GEN_NAME" \
@@ -124,6 +160,10 @@ fi
 -nsxmanager_bosh_nsx_enabled "$NSX_EDGE_GEN_BOSH_NSX_ENABLED" \
 $ARGS \
 build 
+EOF
+
+chmod +x /tmp/nsx-run.sh
+/tmp/nsx-run.sh 
 
 STATUS=$?
 popd  >/dev/null 2>&1
