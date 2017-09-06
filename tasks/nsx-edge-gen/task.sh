@@ -90,7 +90,7 @@ fi
 if [ "$ERT_SSL_CERT" != "" ]; then
   ARGS="$ARGS \
   -esg_ert_certs_cert_1 \"$ERT_SSL_CERT\" \
-  -esg_ert_certs_key_1 \"$ERT_SSL_PRIVATE_KEY_1\" \
+  -esg_ert_certs_key_1 \"$ERT_SSL_PRIVATE_KEY\" \
   "
 fi
 

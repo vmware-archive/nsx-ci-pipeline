@@ -511,6 +511,7 @@ tile_iso_diego_cell_security_group_1:
 ## Use this block for adding multiple iso-segments
 ## these dont have any index suffix
 ## Used by the pipelines/add-additional-iso-segment/pipeline.yml
+## But the iso-segment related logical switches should have been already created by nsx-edge-gen task
 ## Modify and rerun pipeline with new parameters...
 ##
 replicator_name: test1       # REQUIRED - Needs to be under 10 characters
