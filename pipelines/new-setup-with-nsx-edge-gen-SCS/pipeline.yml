@@ -5,6 +5,8 @@ nsx_edge_params: &nsx-edge-params
   VCENTER_USR: {{vcenter_usr}}
   VCENTER_PWD: {{vcenter_pwd}}
   VCENTER_DATA_CENTER: {{vcenter_data_center}}
+  ERT_SSL_CERT: {{ssl_cert}}
+  ERT_SSL_PRIVATE_KEY: {{ssl_private_key}}
   NSX_EDGE_GEN_NSX_MANAGER_ADDRESS: {{nsx_edge_gen_nsx_manager_address}}
   NSX_EDGE_GEN_NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
   NSX_EDGE_GEN_NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
@@ -46,6 +48,8 @@ nsx_edge_params: &nsx-edge-params
   ESG_DEFAULT_UPLINK_PG_1: {{esg_default_uplink_pg_1}}
   ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
   ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
+  ISOZONE_SSL_CERT_1: {{tile_iso_ssl_cert_1}}
+  ISOZONE_SSL_PRIVATE_KEY_1: {{tile_iso_ssl_private_key_1}}
   ESG_GO_ROUTER_ISOZONE_1_UPLINK_IP_1: {{esg_go_router_isozone_1_uplink_ip_1}}
   ESG_GO_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
   ESG_GO_ROUTER_ISOZONE_1_INST_1: {{esg_go_router_isozone_1_inst_1}}
@@ -53,7 +57,6 @@ nsx_edge_params: &nsx-edge-params
   ESG_TCP_ROUTER_ISOZONE_1_SWITCH_1: {{isozone_switch_name_1}}
   ESG_TCP_ROUTER_ISOZONE_1_INST_1: {{esg_tcp_router_isozone_1_inst_1}}
   ESG_GO_ROUTER_ISOZONE_1_SSL_TERM_1: {{esg_go_router_isozone_1_ssl_term_1}}
-
 
 groups:
 - name: full
