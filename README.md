@@ -40,6 +40,13 @@ Ops Mgr would report failures in validation of the cert if:
 
 Recommendation is to ensure the NSX Manager has a cert that specifies the fully qualified hostname or has a subjectAltName (SAN) field with IP address or host that matches the provided NSX Manager (instead of only fully qualified host name).
 
+Hacky workaround if FDQN is not set for NSX Mgr cert:
+1) Configure Ops Mgr Director tile with the hostname of nsx matching the one in the common name of the cert
+2) Edit the /etc/hosts on the ops mgr to point the hostname to the ip address of the nsx mgr
+3) Complete application of the Director tile
+4) Once Bosh director comes up, repeat the same on the director vm (ssh and edit its /etc/hosts) so it does not again report validation errors.
+
+
 Video Link(s)
 
 - PCF-NSX Demo (March 20, 2017): [stream-video](http://pcf-bt-vmware.s3-us-west-2.amazonaws.com/btvid.html) or [download-video](http://pcf-bt-vmware.s3-us-west-2.amazonaws.com/pcf-nsx-demo.mp4) (800MB | 24:44)
