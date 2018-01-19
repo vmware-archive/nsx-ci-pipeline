@@ -66,7 +66,7 @@ Video Link(s)
 4. Past parameters the sample below into a new file,  ***change the required min variables!!!*** : `vi params/env1-params.yml`
 
 ## Validation of settings using `nsx-edge-gen`
-1. Get a copy of the [nsx-edge-gen](https://github.com/cf-platform-eng/nsx-ci-pipeline.git) repo.
+1. Get a copy of the [nsx-edge-gen](https://github.com/cf-platform-eng/nsx-edge-gen.git) repo.
 
    Ensure the requirements are met (python, pip install of the requirements specified in the nsx-edge-gen README).  
 2. Edit the sample script under `test/run-test.sh` with the relevant parameters
