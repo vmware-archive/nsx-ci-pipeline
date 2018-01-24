@@ -32,7 +32,7 @@ params:
   TILE_RABBIT_SERVER_INSTANCES:
   TILE_RABBIT_RABBITMQ_HAPROXY_SECURITY_GROUP:
 inputs:
-  - name: nsx-t-ci-pipeline
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: nsx-gen-output
 
