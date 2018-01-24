@@ -1,0 +1,40 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: nsxedgegen/nsx-edge-gen-worker
+
+params:
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
+  NETWORK_NAME:
+  SERVICE_NETWORK_NAME:
+  DEPLOYMENT_NW_AZS:
+  
+  TILE_RABBIT_ADMIN_USER:
+  TILE_RABBIT_ADMIN_PASSWD:
+  TILE_RABBIT_PROXY_INSTANCES:
+  TILE_RABBIT_SERVER_INSTANCES:
+  TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA:
+  RABBITMQ_TILE_LBR_IP:
+  
+  TILE_AZ_RABBIT_SINGLETON:
+  TILE_AZS_RABBIT:
+  TILE_RABBIT_PROXY_IPS: #RABBITMQ_TILE_STATIC_IPS:
+  TILE_RABBIT_PROXY_VIP:
+  TILE_RABBIT_ADMIN_USER:
+  TILE_RABBIT_ADMIN_PASSWD:
+  TILE_RABBIT_PROXY_INSTANCES:
+  TILE_RABBIT_SERVER_INSTANCES:
+  TILE_RABBIT_RABBITMQ_HAPROXY_SECURITY_GROUP:
+inputs:
+  - name: nsx-t-ci-pipeline
+  - name: om-cli
+  - name: nsx-gen-output
+
+run:
+  path: concourse-vsphere/tasks/config-rabbitmq/task.sh
