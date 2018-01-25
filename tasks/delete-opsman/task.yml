@@ -7,12 +7,19 @@ image_resource:
   source: {repository: nsxedgegen/nsx-edge-gen-worker}
 
 params:
+  OPS_MGR_HOST:
+  OPS_MGR_USR:
+  OPS_MGR_PWD:
   GOVC_INSECURE:
   GOVC_URL:
   GOVC_USERNAME:
   GOVC_PASSWORD:
   GOVC_DATACENTER:
+  GOVC_NETWORK:
+  GOVC_RESOURCE_POOL:
   OM_VM_NAME:
+  GOVC_NETWORK:
+  GOVC_RESOURCE_POOL:
 
 inputs:
   - name: concourse-vsphere

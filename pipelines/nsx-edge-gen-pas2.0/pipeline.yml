@@ -88,7 +88,7 @@ groups:
 - name: opsmgr-nsx-edge-destroy
   jobs:
   - wipe-opsmgr-nsx-edge
-  
+
 # - name: iso
 #   jobs:
 #   - upload-iso-tile
@@ -691,12 +691,18 @@ jobs:
   - task: delete-opsman
     file: concourse-vsphere/tasks/delete-opsman/task.yml
     params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
       GOVC_INSECURE: 1
       GOVC_URL: {{vcenter_host}}
       GOVC_USERNAME: {{vcenter_usr}}
       GOVC_PASSWORD: {{vcenter_pwd}}
       GOVC_DATACENTER: {{vcenter_data_center}}
       OM_VM_NAME: {{om_vm_name}}
+      GOVC_NETWORK: {{om_vm_network}}
+      GOVC_RESOURCE_POOL: {{om_resource_pool}}
+      GOVC_HOST: {{om_vm_host}}
 
   - task: nsx-edge-destroy
     file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
@@ -709,9 +715,7 @@ jobs:
     - get: concourse-vsphere
     - get: om-cli
       params:
-        globs: [om-linux]
-      passed: [uninstall-products]
-      trigger: true
+        globs: [om-linux]      
     - get: govc
       params:
         globs:
@@ -721,12 +725,19 @@ jobs:
   - task: delete-opsman
     file: concourse-vsphere/tasks/delete-opsman/task.yml
     params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
       GOVC_INSECURE: 1
       GOVC_URL: {{vcenter_host}}
       GOVC_USERNAME: {{vcenter_usr}}
       GOVC_PASSWORD: {{vcenter_pwd}}
       GOVC_DATACENTER: {{vcenter_data_center}}
       OM_VM_NAME: {{om_vm_name}}
+      GOVC_NETWORK: {{om_vm_network}}
+      GOVC_RESOURCE_POOL: {{om_resource_pool}}
+      GOVC_HOST: {{om_vm_host}}
+
 
   - task: nsx-edge-destroy
     file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
