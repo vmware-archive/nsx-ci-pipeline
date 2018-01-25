@@ -703,7 +703,7 @@ jobs:
       OM_VM_NAME: {{om_vm_name}}
       GOVC_NETWORK: {{om_vm_network}}
       GOVC_RESOURCE_POOL: {{om_resource_pool}}
-      GOVC_HOST: {{om_vm_host}}
+      GOVC_HOST: {{om_ip}}
 
   - task: nsx-edge-destroy
     file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
@@ -738,7 +738,7 @@ jobs:
       OM_VM_NAME: {{om_vm_name}}
       GOVC_NETWORK: {{om_vm_network}}
       GOVC_RESOURCE_POOL: {{om_resource_pool}}
-      GOVC_HOST: {{om_vm_host}}
+      GOVC_HOST: {{om_ip}}
 
 
   - task: nsx-edge-destroy

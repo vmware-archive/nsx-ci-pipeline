@@ -108,7 +108,7 @@ iaas_configuration=$(
   --arg bosh_template_folder "$BOSH_TEMPLATE_FOLDER" \
   --arg bosh_disk_path "$BOSH_DISK_PATH" \
   --arg ssl_verification_enabled false \
-  --arg nsx_networking_enabled $NSX_NETWORKING_ENABLED \
+  --arg nsx_networking_enabled true \
   --arg nsx_mode "nsx-v" \
   --arg nsx_address "$NSX_MANAGER_FQDN" \
   --arg nsx_username "$NSX_MANAGER_ADMIN_USER" \
