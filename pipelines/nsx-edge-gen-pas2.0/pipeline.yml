@@ -254,7 +254,7 @@ jobs:
     params: *nsx-edge-params
 
   - task: config-opsdir
-    file: concourse-vsphere/tasks/config-opsdir/task.yml
+    file: concourse-vsphere/tasks/config-opsdir-2.0/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
@@ -350,7 +350,7 @@ jobs:
     - get: pivnet-er-product
       params:
         globs:
-        - "*.pivotal"
+        - "cf*.pivotal"
     - get: om-cli
       params:
         globs: [om-linux]
@@ -386,7 +386,7 @@ jobs:
     params: *nsx-edge-params
 
   - task: config-er-tile
-    file: concourse-vsphere/tasks/config-ert/task.yml
+    file: concourse-vsphere/tasks/config-ert-2.0/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}

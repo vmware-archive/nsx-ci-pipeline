@@ -612,7 +612,7 @@ cf_network=$(
 
 cf_resources=$(
   jq -n \
-    --arg iaas "$IAAS" \
+    --arg iaas "vsphere" \
     --argjson consul_server_instances $CONSUL_SERVER_INSTANCES \
     --argjson nats_instances $NATS_INSTANCES \
     --argjson nfs_server_instances $NFS_SERVER_INSTANCES \
