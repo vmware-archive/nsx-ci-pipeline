@@ -169,7 +169,7 @@ MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
 
 network_configuration=$(
   jq -n \
-    --arg icmp_checks_enabled $ICMP_CHECKS_ENABLED \
+    --arg icmp_checks_enabled false \
     --arg infra_network_name "$INFRA_NETWORK_NAME" \
     --arg infra_vcenter_network "$INFRA_VCENTER_NETWORK" \
     --arg infra_network_cidr "$INFRA_NW_CIDR" \
