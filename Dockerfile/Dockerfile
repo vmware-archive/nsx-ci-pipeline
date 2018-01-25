@@ -1,4 +1,4 @@
-FROM ubuntu:17.04
+FROM ubuntu:17.10
 
 RUN apt-get update && apt-get install -y vim curl wget default-jdk maven gradle golang git jq python ruby-dev python-pip python-dev libffi-dev libssl-dev libxml2-dev libxslt1-dev zlib1g-dev
 RUN pip install --upgrade pip && pip install six pyquery xmltodict ipcalc click Jinja2 shyaml dicttoxml pprint PyYAML requests
