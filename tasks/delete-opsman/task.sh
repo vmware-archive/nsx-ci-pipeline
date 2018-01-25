@@ -11,7 +11,10 @@ export GOVC_PASSWORD=$GOVC_PASSWORD
 
 # Delete Active OpsMan
 resource_pool_path=$(govc_linux_amd64 find . -name ${GOVC_RESOURCE_POOL} | grep -i resource )
+echo "Done finding resource_pool_path : $resource_pool_path"
+
 possible_opsmans=$(govc_linux_amd64 find $resource_pool_path -type m -guest.ipAddress ${OPS_MGR_HOST} -runtime.powerState poweredOn)
+echo "Done finding possible_opsmans : $possible_opsmans"
 
 # REMOVE ME - temporarily to clean up ops mgr
 if [ "$possible_opsmans" == "" ]; then
