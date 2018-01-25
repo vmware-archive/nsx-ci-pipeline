@@ -694,6 +694,7 @@ jobs:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
+      OM_VM_NAME: {{om_vm_name}}
       GOVC_INSECURE: 1
       GOVC_URL: {{vcenter_host}}
       GOVC_USERNAME: {{vcenter_usr}}
@@ -728,6 +729,7 @@ jobs:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
+      OM_VM_NAME: {{om_vm_name}}
       GOVC_INSECURE: 1
       GOVC_URL: {{vcenter_host}}
       GOVC_USERNAME: {{vcenter_usr}}
