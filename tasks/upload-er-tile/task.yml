@@ -11,6 +11,7 @@ params:
   OPS_MGR_USR:
   OPS_MGR_PWD:
   PIVNET_API_TOKEN:
+  USE_SRT_TILE:
 
 inputs:
   - name: pivnet-er-product

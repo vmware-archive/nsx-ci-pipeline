@@ -5,7 +5,11 @@ chmod +x $PIVNET_CLI
 
 chmod +x om-cli/om-linux
 
-FILE_PATH=`find ./pivnet-er-product -name *.pivotal`
+if [ "$USE_SRT_TILE" == "true" ]; then
+  FILE_PATH=`find ./pivnet-er-product -name srt*.pivotal`
+else
+  FILE_PATH=`find ./pivnet-er-product -name cf*.pivotal`
+fi
 
 STEMCELL_VERSION=`cat ./pivnet-er-product/metadata.json | jq '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Version'`
 

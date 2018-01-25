@@ -268,7 +268,11 @@ jobs:
       NSX_MANAGER_FQDN: {{nsx_edge_gen_nsx_manager_fqdn}}
       NSX_MANAGER_ADMIN_USER: {{nsx_edge_gen_nsx_manager_admin_user}}
       NSX_MANAGER_ADMIN_PASSWD: {{nsx_edge_gen_nsx_manager_admin_passwd}}
-      STORAGE_NAMES: {{storage_names}}
+      EPHEMERAL_STORAGE_NAMES: {{ephemeral_storage_names}}
+      PERSISTENT_STORAGE_NAMES: {{persistent_storage_names}}
+      BOSH_VM_FOLDER:  {{bosh_vm_folder}}
+      BOSH_TEMPLATE_FOLDER: {{bosh_template_folder}}
+      BOSH_DISK_PATH: {{bosh_disk_path}}
       INFRA_NETWORK_NAME: {{infra_network_name}}
       INFRA_VCENTER_NETWORK: {{infra_vsphere_network}}
       INFRA_NW_CIDR: {{infra_nw_cidr}}
@@ -363,6 +367,7 @@ jobs:
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
       PIVNET_API_TOKEN: {{pivnet_token}}
+      USE_SRT_TILE: {{use_srt_tile}}
 
 - name: config-elastic-runtime-tile
   plan:
