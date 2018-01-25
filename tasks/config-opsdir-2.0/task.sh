@@ -128,7 +128,7 @@ iaas_configuration=$(
     "bosh_disk_path": $bosh_disk_path,
     "ssl_verification_enabled": $ssl_verification_enabled,
     "nsx_networking_enabled": $nsx_networking_enabled,
-    "nsx_mode": "$nsx_mode",
+    "nsx_mode": $nsx_mode,
     "nsx_address": $nsx_address,
     "nsx_username": $nsx_username,
     "nsx_password": $nsx_password,

@@ -85,6 +85,10 @@ groups:
   jobs:
   - nsx-edge-destroy
 
+- name: opsmgr-nsx-edge-destroy
+  jobs:
+  - wipe-opsmgr-nsx-edge
+  
 # - name: iso
 #   jobs:
 #   - upload-iso-tile
@@ -697,3 +701,35 @@ jobs:
   - task: nsx-edge-destroy
     file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
     params: *nsx-edge-params
+
+
+- name: wipe-opsmgr-nsx-edge
+  plan:
+  - aggregate:
+    - get: concourse-vsphere
+    - get: om-cli
+      params:
+        globs: [om-linux]
+      passed: [uninstall-products]
+      trigger: true
+    - get: govc
+      params:
+        globs:
+        - "*linux_amd64*"
+    - get: nsx-edge-gen
+
+  - task: delete-opsman
+    file: concourse-vsphere/tasks/delete-opsman/task.yml
+    params:
+      GOVC_INSECURE: 1
+      GOVC_URL: {{vcenter_host}}
+      GOVC_USERNAME: {{vcenter_usr}}
+      GOVC_PASSWORD: {{vcenter_pwd}}
+      GOVC_DATACENTER: {{vcenter_data_center}}
+      OM_VM_NAME: {{om_vm_name}}
+
+  - task: nsx-edge-destroy
+    file: concourse-vsphere/tasks/nsx-edge-destroy/task.yml
+    params: *nsx-edge-params
+
+
