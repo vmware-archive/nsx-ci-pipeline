@@ -1,7 +1,4 @@
 #!/bin/bash
-
-gunzip ./govc/govc_linux_amd64.gz
-
 export GOVC_INSECURE=1
 export GOVC_URL=$GOVC_URL
 export GOVC_USERNAME=$GOVC_USERNAME
