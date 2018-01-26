@@ -21,6 +21,12 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   IS_NSX_ENABLED=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
                curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
 
+
+  # if nsx is enabled
+  if [ "$IS_NSX_ENABLED" != "null" -a "$IS_NSX_ENABLED" != "" ]; then
+    IS_NSX_ENABLED=true
+  fi
+
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
@@ -101,7 +107,7 @@ DOMAINS=$(cat <<-EOF
 EOF
 )
 
-  CERTIFICATES=`$$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$DOMAINS"`
+  CERTIFICATES=`$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$DOMAINS"`
 
   export SSL_CERT=`echo $CERTIFICATES | jq '.certificate'`
   export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key'`
@@ -112,36 +118,64 @@ else
 fi
 
 
+saml_cert_domains=$(cat <<-EOF
+  {"domains": ["*.$SYSTEM_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
+EOF
+)
 
-set -eu
+saml_cert_response=`$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$saml_cert_domains"`
 
-source nsx-ci-pipeline/functions/generate_cert.sh
+saml_cert_pem=$(echo $saml_cert_response | jq --raw-output '.certificate')
+saml_key_pem=$(echo $saml_cert_response | jq --raw-output '.key')
 
-if [[ -z "$SSL_CERT" ]]; then
-  domains=(
-    "*.${SYSTEM_DOMAIN}"
-    "*.${APPS_DOMAIN}"
-    "*.login.${SYSTEM_DOMAIN}"
-    "*.uaa.${SYSTEM_DOMAIN}"
-  )
+cat > saml_auth_filters <<'EOF'
+.".uaa.service_provider_key_credentials".value = {
+  "cert_pem": $saml_cert_pem,
+  "private_key_pem": $saml_key_pem
+}
+EOF
 
-  certificates=$(generate_cert "${domains[*]}")
-  SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
-  SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
-fi
+CF_AUTH_WITH_SAML_CERTS=$(echo $CF_AUTH_PROPERTIES | jq \
+  --arg saml_cert_pem "$saml_cert_pem" \
+  --arg saml_key_pem "$saml_key_pem" \
+  --from-file saml_auth_filters \
+  --raw-output)
+
+$CMD -t https://$OPS_MGR_HOST \
+     -u $OPS_MGR_USR \
+     -p $OPS_MGR_PWD \
+     -k configure-product -n cf -p "$CF_AUTH_WITH_SAML_CERTS"
 
 
-if [[ -z "$SAML_SSL_CERT" ]]; then
-  saml_cert_domains=(
-    "*.${SYSTEM_DOMAIN}"
-    "*.login.${SYSTEM_DOMAIN}"
-    "*.uaa.${SYSTEM_DOMAIN}"
-  )
+# set -eu
 
-  saml_certificates=$(generate_cert "${saml_cert_domains[*]}")
-  SAML_SSL_CERT=$(echo $saml_certificates | jq --raw-output '.certificate')
-  SAML_SSL_PRIVATE_KEY=$(echo $saml_certificates | jq --raw-output '.key')
-fi
+# source nsx-ci-pipeline/functions/generate_cert.sh
+
+# if [[ -z "$SSL_CERT" ]]; then
+#   domains=(
+#     "*.${SYSTEM_DOMAIN}"
+#     "*.${APPS_DOMAIN}"
+#     "*.login.${SYSTEM_DOMAIN}"
+#     "*.uaa.${SYSTEM_DOMAIN}"
+#   )
+
+#   certificates=$(generate_cert "${domains[*]}")
+#   SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
+#   SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
+# fi
+
+
+# if [[ -z "$SAML_SSL_CERT" ]]; then
+#   saml_cert_domains=(
+#     "*.${SYSTEM_DOMAIN}"
+#     "*.login.${SYSTEM_DOMAIN}"
+#     "*.uaa.${SYSTEM_DOMAIN}"
+#   )
+
+#   saml_certificates=$(generate_cert "${saml_cert_domains[*]}")
+#   SAML_SSL_CERT=$(echo $saml_certificates | jq --raw-output '.certificate')
+#   SAML_SSL_PRIVATE_KEY=$(echo $saml_certificates | jq --raw-output '.key')
+# fi
 
 # SABHA 
 # Change in ERT 2.0 
@@ -153,12 +187,6 @@ if [ "$CREDHUB_PASSWORD" == "" ]; then
   CREDHUB_PASSWORD=$(echo $OPSMAN_PASSWORD{,,,,} | sed -e 's/ //g' | cut -c1-25)
 fi
 
-
-TILE_RELEASE=`$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep cf`
-
-PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
-
 $CMD \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
@@ -169,6 +197,7 @@ $CMD \
 
 cf_properties=$(
   jq -n \
+    --arg nsx_enabled "$IS_NSX_ENABLED" \
     --arg tcp_routing "$TCP_ROUTING" \
     --arg tcp_routing_ports "$TCP_ROUTING_PORTS" \
     --arg loggregator_endpoint_port "$LOGGREGATOR_ENDPOINT_PORT" \
@@ -182,11 +211,12 @@ cf_properties=$(
     --arg allow_app_ssh_access "$ALLOW_APP_SSH_ACCESS" \
     --arg ha_proxy_ips "$HA_PROXY_IPS" \
     --arg skip_cert_verify "$SKIP_CERT_VERIFY" \
-    --arg router_static_ips "$ROUTER_STATIC_IPS" \
+    --arg ert_gorouter_static_ips "$ERT_GOROUTER_STATIC_IPS" \
     --arg disable_insecure_cookies "$DISABLE_INSECURE_COOKIES" \
     --arg router_request_timeout_seconds "$ROUTER_REQUEST_TIMEOUT_IN_SEC" \
     --arg mysql_monitor_email "$MYSQL_MONITOR_EMAIL" \
-    --arg tcp_router_static_ips "$TCP_ROUTER_STATIC_IPS" \
+    --arg ert_tcprouter_static_ips "$ERT_TCPROUTER_STATIC_IPS" \
+    --arg ert_mysql_static_ips "$ERT_MYSQL_STATIC_IPS" \
     --arg company_name "$COMPANY_NAME" \
     --arg ssh_static_ips "$SSH_STATIC_IPS" \
     --arg cert_pem "$SSL_CERT" \
@@ -221,6 +251,7 @@ cf_properties=$(
     --arg saml_cert_pem "$SAML_SSL_CERT" \
     --arg saml_key_pem "$SAML_SSL_PRIVATE_KEY" \
     --arg mysql_backups "$MYSQL_BACKUPS" \
+    --arg ert_mysql_lbr_ip "$ERT_MYSQL_LBR_IP" \
     --arg mysql_backups_s3_endpoint_url "$MYSQL_BACKUPS_S3_ENDPOINT_URL" \
     --arg mysql_backups_s3_bucket_name "$MYSQL_BACKUPS_S3_BUCKET_NAME" \
     --arg mysql_backups_s3_bucket_path "$MYSQL_BACKUPS_S3_BUCKET_PATH" \
@@ -268,9 +299,6 @@ cf_properties=$(
       ".ha_proxy.skip_cert_verify": {
         "value": $skip_cert_verify
       },
-      ".router.static_ips": {
-        "value": $router_static_ips
-      },
       ".router.disable_insecure_cookies": {
         "value": $disable_insecure_cookies
       },
@@ -280,14 +308,8 @@ cf_properties=$(
       ".mysql_monitor.recipient_email": {
         "value": $mysql_monitor_email
       },
-      ".tcp_router.static_ips": {
-        "value": $tcp_router_static_ips
-      },
       ".properties.push_apps_manager_company_name": {
         "value": $company_name
-      },
-      ".diego_brain.static_ips": {
-        "value": $ssh_static_ips
       }
     }
 
@@ -374,6 +396,32 @@ cf_properties=$(
       }
     }
   
+    +
+
+    # IF NSX-V Enabled
+    if $nsx_enabled == "true" then
+    {
+      ".router.static_ips": {
+        "value": $ert_gorouter_static_ips
+      },
+      ".tcp_router.static_ips": {
+        "value": $ert_tcprouter_static_ips
+      },
+      ".diego_brain.static_ips": {
+        "value": $ssh_static_ips
+      },
+      ".mysql_proxy.static_ips": {
+        "value": $ert_mysql_static_ips
+      }
+    }
+    else
+    {
+      ".mysql_proxy.service_hostname": {
+        "value": $ert_mysql_lbr_ip
+      }
+    }
+    end
+
     +
 
     # HAProxy Forward TLS
@@ -621,7 +669,7 @@ cf_resources=$(
     --argjson consul_server_instances $CONSUL_SERVER_INSTANCES \
     --argjson nats_instances $NATS_INSTANCES \
     --argjson nfs_server_instances $NFS_SERVER_INSTANCES \
-    --argjson mysql_proxy_instances $$ERT_MYSQL_LBR_IP \
+    --argjson mysql_proxy_instances $MYSQL_PROXY_INSTANCES \
     --argjson mysql_instances $MYSQL_INSTANCES \
     --argjson backup_prepare_instances $BACKUP_PREPARE_INSTANCES \
     --argjson diego_database_instances $DIEGO_DATABASE_INSTANCES \

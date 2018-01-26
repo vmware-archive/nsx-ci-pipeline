@@ -430,10 +430,15 @@ jobs:
       MAIL_ATTR_NAME: {{mail_attribute_name}}
       FIRST_NAME_ATTR: {{first_name_attribute}}
       LAST_NAME_ATTR: {{last_name_attribute}}
+      SECURITY_ACKNOWLEDGEMENT: {{security_acknowledgement}}
+      ENABLE_SECURITY_EVENT_LOGGING: {{enable_security_event_logging}}
       SYSTEM_DOMAIN: {{system_domain}}
       APPS_DOMAIN: {{apps_domain}}
+      DEFAULT_QUOTA_MEMORY_LIMIT_IN_MB:
+      DEFAULT_QUOTA_MAX_SERVICES_COUNT:
       HA_PROXY_IPS: {{ha_proxy_ips}}
       SKIP_CERT_VERIFY: {{skip_cert_verify}}
+      DISABLE_INSECURE_COOKIES: {{disable_insecure_cookies}}
       ROUTER_STATIC_IPS: {{router_static_ips}}
       MYSQL_MONITOR_EMAIL: {{mysql_monitor_email}}
       TCP_ROUTER_STATIC_IPS: {{tcp_router_static_ips}}
@@ -443,6 +448,9 @@ jobs:
       NATS_INSTANCES: {{nats_instances}}
       ETCD_TLS_SERVER_INSTANCES: {{etcd_tls_server_instances}}
       NFS_SERVER_INSTANCES: {{nfs_server_instances}}
+      SYSLOG_ADAPTER_INSTANCES: {{syslog_adapter_instances}}
+      INTERNET_CONNECTED: {{internet_connected}}
+      CONTAINER_NETWORKING_NW_CIDR: {{container_networking_nw_cidr}}
       MYSQL_PROXY_INSTANCES: {{mysql_proxy_instances}}
       MYSQL_INSTANCES: {{mysql_instances}}
       BACKUP_PREPARE_INSTANCES: {{backup_prepare_instances}}
