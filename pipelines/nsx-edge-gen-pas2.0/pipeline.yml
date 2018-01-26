@@ -675,8 +675,8 @@ jobs:
       params:
         globs: [om-linux]
       passed: [configure-ops-director]
-  - task: delete-products
-    file: concourse-vsphere/tasks/delete-products/task.yml
+  - task: delete-installation
+    file: concourse-vsphere/tasks/destroy-installation/task.sh
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
