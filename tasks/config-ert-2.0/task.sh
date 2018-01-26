@@ -2,8 +2,9 @@
 
 chmod +x om-cli/om-linux
 
-CMD=./om-cli/om-linux
 export ROOT_DIR=`pwd`
+export PATH=$PATH:$ROOT_DIR/om-cli
+
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -18,7 +19,7 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   # created by hte NSX_GEN_UTIL script
   source /tmp/jobs_lbr_map.out
 
-  IS_NSX_ENABLED=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+  IS_NSX_ENABLED=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
                curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
 
 
@@ -34,7 +35,7 @@ fi
 
 
 # Check if Bosh Director is v1.11 or higher
-export BOSH_PRODUCT_VERSION=$($CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+export BOSH_PRODUCT_VERSION=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
            curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
 export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
 export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
@@ -46,12 +47,12 @@ export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}'
 #                            awk -F '.' '{print $1"."$2"."$3".250"}' ) 
 # use $ERT_MYSQL_LBR_IP for proxy - retreived from nsx-gen-list
 
-TILE_RELEASE=`$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep cf`
+TILE_RELEASE=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep cf`
 
 export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
 export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
+om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
 
 export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
 export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
@@ -86,96 +87,63 @@ function fn_get_azs {
 OTHER_AVAILABILITY_ZONES=$(fn_get_azs $AZS_ERT)
 
 
-CF_NETWORK=$(cat <<-EOF
-{
-  "singleton_availability_zone": {
-    "name": "$AZ_ERT_SINGLETON"
-  },
-  "other_availability_zones": [
-    $OTHER_AVAILABILITY_ZONES
-  ],
-  "network": {
-    "name": "$NETWORK_NAME"
-  }
-}
-EOF
-)
+# if [[ -z "$SSL_CERT" ]]; then
+# DOMAINS=$(cat <<-EOF
+#   {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
+# EOF
+# )
+
+#   CERTIFICATES=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$DOMAINS"`
+
+#   export SSL_CERT=`echo $CERTIFICATES | jq '.certificate'`
+#   export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key'`
+#   # echo "SSL_CERT is" $SSL_CERT
+#   # echo "SSL_PRIVATE_KEY is" $SSL_PRIVATE_KEY
+# else
+#   echo "Using certs passed in YML"
+# fi
+
+
+# saml_cert_domains=$(cat <<-EOF
+#   {"domains": ["*.$SYSTEM_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
+# EOF
+# )
+
+# saml_cert_response=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$saml_cert_domains"`
+
+# SAML_SSL_CERT=$(echo $saml_cert_response | jq --raw-output '.certificate')
+# SAML_SSL_PRIVATE_KEY=$(echo $saml_cert_response | jq --raw-output '.key')
+
+
+set -eu
+
+source $ROOT/functions/generate_cert.sh
 
 if [[ -z "$SSL_CERT" ]]; then
-DOMAINS=$(cat <<-EOF
-  {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
-EOF
-)
+  domains=(
+    "*.${SYSTEM_DOMAIN}"
+    "*.${APPS_DOMAIN}"
+    "*.login.${SYSTEM_DOMAIN}"
+    "*.uaa.${SYSTEM_DOMAIN}"
+  )
 
-  CERTIFICATES=`$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$DOMAINS"`
-
-  export SSL_CERT=`echo $CERTIFICATES | jq '.certificate'`
-  export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key'`
-  # echo "SSL_CERT is" $SSL_CERT
-  # echo "SSL_PRIVATE_KEY is" $SSL_PRIVATE_KEY
-else
-  echo "Using certs passed in YML"
+  certificates=$(generate_cert "${domains[*]}")
+  SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
+  SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
 fi
 
 
-saml_cert_domains=$(cat <<-EOF
-  {"domains": ["*.$SYSTEM_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
-EOF
-)
+if [[ -z "$SAML_SSL_CERT" ]]; then
+  saml_cert_domains=(
+    "*.${SYSTEM_DOMAIN}"
+    "*.login.${SYSTEM_DOMAIN}"
+    "*.uaa.${SYSTEM_DOMAIN}"
+  )
 
-saml_cert_response=`$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$saml_cert_domains"`
-
-saml_cert_pem=$(echo $saml_cert_response | jq --raw-output '.certificate')
-saml_key_pem=$(echo $saml_cert_response | jq --raw-output '.key')
-
-cat > saml_auth_filters <<'EOF'
-.".uaa.service_provider_key_credentials".value = {
-  "cert_pem": $saml_cert_pem,
-  "private_key_pem": $saml_key_pem
-}
-EOF
-
-CF_AUTH_WITH_SAML_CERTS=$(echo $CF_AUTH_PROPERTIES | jq \
-  --arg saml_cert_pem "$saml_cert_pem" \
-  --arg saml_key_pem "$saml_key_pem" \
-  --from-file saml_auth_filters \
-  --raw-output)
-
-$CMD -t https://$OPS_MGR_HOST \
-     -u $OPS_MGR_USR \
-     -p $OPS_MGR_PWD \
-     -k configure-product -n cf -p "$CF_AUTH_WITH_SAML_CERTS"
-
-
-# set -eu
-
-# source nsx-ci-pipeline/functions/generate_cert.sh
-
-# if [[ -z "$SSL_CERT" ]]; then
-#   domains=(
-#     "*.${SYSTEM_DOMAIN}"
-#     "*.${APPS_DOMAIN}"
-#     "*.login.${SYSTEM_DOMAIN}"
-#     "*.uaa.${SYSTEM_DOMAIN}"
-#   )
-
-#   certificates=$(generate_cert "${domains[*]}")
-#   SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
-#   SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
-# fi
-
-
-# if [[ -z "$SAML_SSL_CERT" ]]; then
-#   saml_cert_domains=(
-#     "*.${SYSTEM_DOMAIN}"
-#     "*.login.${SYSTEM_DOMAIN}"
-#     "*.uaa.${SYSTEM_DOMAIN}"
-#   )
-
-#   saml_certificates=$(generate_cert "${saml_cert_domains[*]}")
-#   SAML_SSL_CERT=$(echo $saml_certificates | jq --raw-output '.certificate')
-#   SAML_SSL_PRIVATE_KEY=$(echo $saml_certificates | jq --raw-output '.key')
-# fi
+  saml_certificates=$(generate_cert "${saml_cert_domains[*]}")
+  SAML_SSL_CERT=$(echo $saml_certificates | jq --raw-output '.certificate')
+  SAML_SSL_PRIVATE_KEY=$(echo $saml_certificates | jq --raw-output '.key')
+fi
 
 # SABHA 
 # Change in ERT 2.0 
@@ -187,7 +155,7 @@ if [ "$CREDHUB_PASSWORD" == "" ]; then
   CREDHUB_PASSWORD=$(echo $OPSMAN_PASSWORD{,,,,} | sed -e 's/ //g' | cut -c1-25)
 fi
 
-$CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   --username $OPS_MGR_USR \
@@ -642,13 +610,11 @@ cf_properties=$(
 #       },
       
 
-
-
 cf_network=$(
   jq -n \
     --arg network_name "$NETWORK_NAME" \
-    --arg other_azs "$DEPLOYMENT_NW_AZS" \
-    --arg singleton_az "$ERT_SINGLETON_JOB_AZ" \
+    --arg other_azs "$AZS_ERT" \
+    --arg singleton_az "$AZ_ERT_SINGLETON" \
     '
     {
       "network": {
@@ -753,7 +719,7 @@ cf_resources=$(
     '
 )
 
-$CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   --username $OPS_MGR_USR \
@@ -764,6 +730,34 @@ $CMD \
   --product-network "$cf_network" \
   --product-resources "$cf_resources"
 
+
+PRODUCT_GUID=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                     curl -p "/api/v0/staged/products" -x GET \
+                     | jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"')
+
+# Set Errands to on Demand for 1.10
+if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
+  echo "applying errand configuration"
+  sleep 6
+  ERT_ERRANDS=$(cat <<-EOF
+{"errands":[
+  {"name":"smoke_tests","post_deploy":"when-changed"},
+  {"name":"push-usage-service","post_deploy":"when-changed"},
+  {"name":"push-apps-manager","post_deploy":"when-changed"},
+  {"name":"deploy-notifications","post_deploy":"when-changed"},
+  {"name":"deploy-notifications-ui","post_deploy":"when-changed"},
+  {"name":"push-pivotal-account","post_deploy":"when-changed"},
+  {"name":"deploy-autoscaling","post_deploy":"when-changed"},
+  {"name":"register-broker","post_deploy":"when-changed"},
+  {"name":"nfsbrokerpush","post_deploy":"when-changed"}
+]}
+EOF
+)
+
+om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+                            curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
+                            -x PUT -d "$ERT_ERRANDS"
+fi
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
@@ -781,7 +775,7 @@ JOBS_REQUIRING_LBR=$ERT_TILE_JOBS_REQUIRING_LBR
 JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 
 # Get job guids for deployment (from staged product)
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                               curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" 2>/dev/null \
                               | jq '.[] | .[] ' > /tmp/jobs_list.log
 
@@ -817,7 +811,7 @@ do
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
     LBR_DETAILS=${ERT_TILE_JOBS_LBR_MAP[$job_name]}
 
-    RESOURCE_CONFIG=$($CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+    RESOURCE_CONFIG=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config" \
                       2>/dev/null)
     #echo "Resource config : $RESOURCE_CONFIG"
@@ -879,7 +873,7 @@ do
     echo "Job: $job_name with GUID: $job_guid and RESOURCE_CONFIG : $UPDATED_RESOURCE_CONFIG"
 
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
-    $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD  \
+    om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD  \
             curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
             -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
 

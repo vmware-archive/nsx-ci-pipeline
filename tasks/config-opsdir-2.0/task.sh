@@ -4,9 +4,9 @@ set -eu
 
 chmod +x om-cli/om-linux
 
-CMD=./om-cli/om-linux
-
 export ROOT_DIR=`pwd`
+export PATH=$PATH:$ROOT_DIR/om-cli
+
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -340,7 +340,7 @@ EOF
 )
 
 # So split the configure steps into iaas that uses curl to PUT and normal path for director config
-$CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   --username $OPS_MGR_USR \
@@ -353,7 +353,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   --username $OPS_MGR_USR \
@@ -366,7 +366,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   --username $OPS_MGR_USR \
@@ -379,7 +379,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   --username $OPS_MGR_USR \
@@ -392,7 +392,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   --username $OPS_MGR_USR \
@@ -408,7 +408,7 @@ fi
 
 # Having trouble with om-cli with new network_assignment structure 
 # that wraps single_az and network inside json structure instead of string
-$CMD \
+om-linux \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   --username $OPS_MGR_USR \

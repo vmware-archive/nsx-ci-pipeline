@@ -6,9 +6,9 @@ function generate_cert () (
 
   local response=$(
     om-linux \
-      --target "https://${OPSMAN_DOMAIN_OR_IP_ADDRESS}" \
-      --username "$OPSMAN_USERNAME" \
-      --password "$OPSMAN_PASSWORD" \
+      -t "https://${OPS_MGR_HOST}" \
+      -u "$OPS_MGR_USR" \
+      -p "$OPS_MGR_PWD" \
       --skip-ssl-validation \
       curl \
       --silent \
