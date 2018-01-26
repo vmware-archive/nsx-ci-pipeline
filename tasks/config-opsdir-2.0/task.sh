@@ -169,7 +169,7 @@ EOF
 
 network_configuration=$(
   jq -n \
-    --arg icmp_checks_enabled false \
+    --argjson icmp_checks_enabled false \
     --arg infra_network_name "$INFRA_NETWORK_NAME" \
     --arg infra_vcenter_network "$INFRA_VCENTER_NETWORK" \
     --arg infra_network_cidr "$INFRA_NW_CIDR" \
@@ -406,7 +406,8 @@ if [ $? != 0 ]; then
 fi
 
 
-# Having trouble with om-cli with new network_assignemtn structure that wraps single_az and network inside json structure instead of string
+# Having trouble with om-cli with new network_assignment structure 
+# that wraps single_az and network inside json structure instead of string
 $CMD \
   --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
