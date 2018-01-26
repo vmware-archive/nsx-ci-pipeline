@@ -24,7 +24,6 @@ params:
 
 inputs:
   - name: concourse-vsphere
-  - name: govc
 
 run:
   path: concourse-vsphere/tasks/delete-opsman/task.sh

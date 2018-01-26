@@ -47,11 +47,11 @@ cat /tmp/nsx_manager_all_certs.log \
                   >  /tmp/nsx_manager_cacert.log
 
 # Strip newlines and replace them with \r\n
-cat /tmp/nsx_manager_cacert.log | tr '\n' '#'| sed -e 's/#/\\r\\n/g'   > /tmp/nsx_manager_edited_cacert.log
+cat /tmp/nsx_manager_cacert.log | tr '\n' '#'| sed -e 's/#/\\n/g'   > /tmp/nsx_manager_edited_cacert.log
 
 #CSV parsing Function for mutiple AZs
 
-NSX_CA_CERTIFICATE=$(cat /tmp/nsx_manager_edited_cacert.log)
+NSX_MANAGER_CA_CERTIFICATE=$(cat /tmp/nsx_manager_cacert.log)
 
 function fn_get_azs {
      local azs_csv=$1
@@ -113,7 +113,7 @@ iaas_configuration=$(
   --arg nsx_address "$NSX_MANAGER_FQDN" \
   --arg nsx_username "$NSX_MANAGER_ADMIN_USER" \
   --arg nsx_password "$NSX_MANAGER_ADMIN_PASSWD" \
-  --arg nsx_ca_certificate "$NSX_CA_CERTIFICATE" \
+  --arg nsx_ca_certificate "$NSX_MANAGER_CA_CERTIFICATE" \
   '
   {
     "vcenter_host": $vcenter_host,
@@ -160,11 +160,11 @@ EOF
 )
 
 
-MY_INFRA_AZS=$(fn_get_azs $INFRA_NW_AZ)
-MY_DEPLOYMENT_AZS=$(fn_get_azs $DEPLOYMENT_NW_AZ)
-MY_SERVICES_AZS=$(fn_get_azs $SERVICES_NW_AZ)
-MY_DYNAMIC_SERVICES_AZS=$(fn_get_azs $DYNAMIC_SERVICES_NW_AZ)
-MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
+# MY_INFRA_AZS=$(fn_get_azs $INFRA_NW_AZ)
+# MY_DEPLOYMENT_AZS=$(fn_get_azs $DEPLOYMENT_NW_AZ)
+# MY_SERVICES_AZS=$(fn_get_azs $SERVICES_NW_AZ)
+# MY_DYNAMIC_SERVICES_AZS=$(fn_get_azs $DYNAMIC_SERVICES_NW_AZ)
+# MY_ISOZONE_SWITCH_1_AZS=$(fn_get_azs $ISOZONE_SWITCH_1_NW_AZ)
 
 
 network_configuration=$(
@@ -176,35 +176,35 @@ network_configuration=$(
     --arg infra_reserved_ip_ranges "$INFRA_EXCLUDED_RANGE" \
     --arg infra_dns "$INFRA_NW_DNS" \
     --arg infra_gateway "$INFRA_NW_GATEWAY" \
-    --arg infra_availability_zones "$MY_INFRA_AZS" \
+    --arg infra_availability_zones "$INFRA_NW_AZ" \
     --arg deployment_network_name "$DEPLOYMENT_NETWORK_NAME" \
     --arg deployment_vcenter_network "$DEPLOYMENT_VCENTER_NETWORK" \
     --arg deployment_network_cidr "$DEPLOYMENT_NW_CIDR" \
     --arg deployment_reserved_ip_ranges "$DEPLOYMENT_EXCLUDED_RANGE" \
     --arg deployment_dns "$DEPLOYMENT_NW_DNS" \
     --arg deployment_gateway "$DEPLOYMENT_NW_GATEWAY" \
-    --arg deployment_availability_zones "$MY_DEPLOYMENT_AZS" \
+    --arg deployment_availability_zones "$DEPLOYMENT_NW_AZ" \
     --arg services_network_name "$SERVICES_NETWORK_NAME" \
     --arg services_vcenter_network "$SERVICES_VCENTER_NETWORK" \
     --arg services_network_cidr "$SERVICES_NW_CIDR" \
     --arg services_reserved_ip_ranges "$SERVICES_EXCLUDED_RANGE" \
     --arg services_dns "$SERVICES_NW_DNS" \
     --arg services_gateway "$SERVICES_NW_GATEWAY" \
-    --arg services_availability_zones "$MY_SERVICES_AZS" \
-    --arg dynamic_services_network_name "$DYNAMIC_SERVICES_VCENTER_NETWORK" \
+    --arg services_availability_zones "$SERVICES_NW_AZ" \
+    --arg dynamic_services_network_name "$DYNAMIC_SERVICES_NETWORK_NAME" \
     --arg dynamic_services_vcenter_network "$DYNAMIC_SERVICES_VCENTER_NETWORK" \
     --arg dynamic_services_network_cidr "$DYNAMIC_SERVICES_NW_CIDR" \
     --arg dynamic_services_reserved_ip_ranges "$DYNAMIC_SERVICES_EXCLUDED_RANGE" \
     --arg dynamic_services_dns "$DYNAMIC_SERVICES_NW_DNS" \
     --arg dynamic_services_gateway "$DYNAMIC_SERVICES_NW_GATEWAY" \
-    --arg dynamic_services_availability_zones "$MY_DYNAMIC_SERVICES_AZS" \
-    --arg isozone_switch1_network_name "$ISOZONE_SWITCH_1_VCENTER_NETWORK" \
+    --arg dynamic_services_availability_zones "$DYNAMIC_SERVICES_NW_AZ" \
+    --arg isozone_switch1_network_name "$ISOZONE_SWITCH_1_NETWORK_NAME" \
     --arg isozone_switch1_vcenter_network "$DYNAMIC_SERVICES_VCENTER_NETWORK" \
     --arg isozone_switch1_network_cidr "$ISOZONE_SWITCH_CIDR_1" \
     --arg isozone_switch1_reserved_ip_ranges "$ISOZONE_SWITCH_1_EXCLUDED_RANGE" \
     --arg isozone_switch1_dns "$ISOZONE_SWITCH_1_NW_DNS" \
     --arg isozone_switch1_gateway "$ISOZONE_SWITCH_1_NW_GATEWAY" \
-    --arg isozone_switch1_availability_zones "$MY_ISOZONE_SWITCH_1_AZS" \
+    --arg isozone_switch1_availability_zones "$ISOZONE_SWITCH_1_NW_AZ" \
     '
     {
       "icmp_checks_enabled": $icmp_checks_enabled,
@@ -219,7 +219,7 @@ network_configuration=$(
               "reserved_ip_ranges": $infra_reserved_ip_ranges,
               "dns": $infra_dns,
               "gateway": $infra_gateway,
-              "availability_zones": ($infra_availability_zones | split(","))
+              "availability_zone_names": ($infra_availability_zones | split(","))
             }
           ]
         },
@@ -233,7 +233,7 @@ network_configuration=$(
               "reserved_ip_ranges": $deployment_reserved_ip_ranges,
               "dns": $deployment_dns,
               "gateway": $deployment_gateway,
-              "availability_zones": ($deployment_availability_zones | split(","))
+              "availability_zone_names": ($deployment_availability_zones | split(","))
             }
           ]
         },
@@ -247,7 +247,7 @@ network_configuration=$(
               "reserved_ip_ranges": $services_reserved_ip_ranges,
               "dns": $services_dns,
               "gateway": $services_gateway,
-              "availability_zones": ($services_availability_zones | split(","))
+              "availability_zone_names": ($services_availability_zones | split(","))
             }
           ]
         },
@@ -261,7 +261,7 @@ network_configuration=$(
               "reserved_ip_ranges": $dynamic_services_reserved_ip_ranges,
               "dns": $dynamic_services_dns,
               "gateway": $dynamic_services_gateway,
-              "availability_zones": ($dynamic_services_availability_zones | split(","))
+              "availability_zone_names": ($dynamic_services_availability_zones | split(","))
             }
           ]
         },
@@ -275,7 +275,7 @@ network_configuration=$(
               "reserved_ip_ranges": $isozone_switch1_reserved_ip_ranges,
               "dns": $isozone_switch1_dns,
               "gateway": $isozone_switch1_gateway,
-              "availability_zones": ($isozone_switch1_availability_zones | split(","))
+              "availability_zone_names": ($isozone_switch1_availability_zones | split(","))
             }
           ]
         }
@@ -286,8 +286,8 @@ network_configuration=$(
 director_config=$(cat <<-EOF
 {
   "ntp_servers_string": "$NTP_SERVER_IPS",
-  "resurrector_enabled": $ENABLE_VM_RESURRECTOR,
-  "max_threads": $MAX_THREADS,
+  "resurrector_enabled": true,
+  "max_threads": null,
   "database_type": "internal",
   "blobstore_type": "local",
   "director_hostname": "$OPS_DIR_HOSTNAME"
@@ -305,14 +305,14 @@ security_configuration=$(
     }'
 )
 
-network_assignment=$(
+network_az_assignment=$(
 jq -n \
-  --arg infra_availability_zones "$MY_INFRA_AZS" \
+  --arg infra_availability_zones "$INFRA_NW_AZ" \
   --arg network "$INFRA_NETWORK_NAME" \
   '
   {
-    "singleton_availability_zone": ($infra_availability_zones | split(",") | .[0]),
-    "network": $network
+    "singleton_availability_zone": { "name": ($infra_availability_zones | split(",") | .[0]) },
+    "network": { "name": $network }
   }'
 )
 
@@ -331,12 +331,20 @@ wrapped_iaas_config=$(cat << EOF
 EOF
 )
 
+
+wrapped_network_az_assignment=$(cat << EOF
+{
+   "network_and_az" : $network_az_assignment
+}
+EOF
+)
+
 # So split the configure steps into iaas that uses curl to PUT and normal path for director config
 $CMD \
-  --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+  --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
-  --username $OPSMAN_USERNAME \
-  --password $OPSMAN_PASSWORD \
+  --username $OPS_MGR_USR \
+  --password $OPS_MGR_PWD \
   curl -p '/api/v0/staged/director/properties' \
   -x PUT -d  "$wrapped_iaas_config"
 # Check for errors
@@ -346,10 +354,10 @@ if [ $? != 0 ]; then
 fi
 
 $CMD \
-  --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+  --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
-  --username $OPSMAN_USERNAME \
-  --password $OPSMAN_PASSWORD \
+  --username $OPS_MGR_USR \
+  --password $OPS_MGR_PWD \
   configure-bosh \
   --director-configuration "$director_config"
 # Check for errors
@@ -358,7 +366,24 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS -k -u $OPSMAN_USERNAME -p $OPSMAN_PASSWORD \
+$CMD \
+  --target https://$OPS_MGR_HOST \
+  --skip-ssl-validation \
+  --username $OPS_MGR_USR \
+  --password $OPS_MGR_PWD \
+  configure-bosh \
+  --security-configuration "$security_configuration"
+# Check for errors
+if [ $? != 0 ]; then
+  echo "Bosh Security configuration failed!!"
+  exit 1
+fi
+
+$CMD \
+  --target https://$OPS_MGR_HOST \
+  --skip-ssl-validation \
+  --username $OPS_MGR_USR \
+  --password $OPS_MGR_PWD \
   curl -p "/api/v0/staged/director/availability_zones" \
   -x PUT -d "$az_configuration"
 # Check for errors
@@ -368,16 +393,29 @@ if [ $? != 0 ]; then
 fi
 
 $CMD \
-  --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
+  --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
-  --username $OPSMAN_USERNAME \
-  --password $OPSMAN_PASSWORD \
-  configure-bosh \
-  --networks-configuration "$network_configuration" \
-  --network-assignment "$network_assignment" \
-  --security-configuration "$security_configuration"
+  --username $OPS_MGR_USR \
+  --password $OPS_MGR_PWD \
+  -k curl -p "/api/v0/staged/director/networks" \
+  -x PUT -d "$network_configuration" \
 # Check for errors
 if [ $? != 0 ]; then
-  echo "Networks configuration and AZ assignemnt failed!!"
+  echo "Networks configuration failed!!"
+  exit 1
+fi
+
+
+# Having trouble with om-cli with new network_assignemtn structure that wraps single_az and network inside json structure instead of string
+$CMD \
+  --target https://$OPS_MGR_HOST \
+  --skip-ssl-validation \
+  --username $OPS_MGR_USR \
+  --password $OPS_MGR_PWD \
+  -k curl -p "/api/v0/staged/director/network_and_az" \
+  -x PUT -d "$wrapped_network_az_assignment" \
+# Check for errors
+if [ $? != 0 ]; then
+  echo "Networks configuration and AZ assignment failed!!"
   exit 1
 fi

@@ -154,12 +154,17 @@ if [ "$CREDHUB_PASSWORD" == "" ]; then
 fi
 
 
-TILE_RELEASE=`$CMD -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS -u $OPSMAN_USERNAME -p $OPSMAN_PASSWORD -k available-products | grep cf`
+TILE_RELEASE=`$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep cf`
 
 PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
 PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
 
-$CMD -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS -u $OPSMAN_USERNAME -p $OPSMAN_PASSWORD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
+$CMD \
+  --target https://$OPS_MGR_HOST \
+  --skip-ssl-validation \
+  --username $OPS_MGR_USR \
+  --password $OPS_MGR_PWD \
+  -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
 
 
 cf_properties=$(
@@ -701,10 +706,10 @@ cf_resources=$(
 )
 
 $CMD \
-  --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
-  --username $OPSMAN_USERNAME \
-  --password $OPSMAN_PASSWORD \
+  --target https://$OPS_MGR_HOST \
   --skip-ssl-validation \
+  --username $OPS_MGR_USR \
+  --password $OPS_MGR_PWD \
   configure-product \
   --product-name cf \
   --product-properties "$cf_properties" \
