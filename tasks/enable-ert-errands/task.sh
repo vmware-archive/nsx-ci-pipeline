@@ -4,6 +4,8 @@ chmod +x om-cli/om-linux
 
 export ROOT_DIR=`pwd`
 export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+
 
 ERT_ERRANDS=$(cat <<-EOF
 {"errands": [

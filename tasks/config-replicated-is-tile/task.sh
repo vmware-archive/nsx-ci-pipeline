@@ -4,6 +4,8 @@ chmod +x om-cli/om-linux
 
 export ROOT_DIR=`pwd`
 export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -24,28 +26,16 @@ else
 fi
 
 # Check if Bosh Director is v1.11 or higher
-export bosh_product_version=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
-export bosh_major_version=$(echo $bosh_product_version | awk -F '.' '{print $1}' )
-export bosh_minor_version=$(echo $bosh_product_version | awk -F '.' '{print $2}' )
+BOSH_VERSION=$(check_bosh_version)
+PRODUCT_VERSION=$(check_product_version "p-isolation-segment-${REPLICATOR_NAME}")
 
-export cf_product_version=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-          curl -p "/api/v0/staged/products" -x GET | jq '.[] | select(.installation_name | contains("cf-")) | .product_version' | tr -d '"')
-
-export cf_major_version=$(echo $cf_product_version | awk -F '.' '{print $1}' )
-export cf_minor_version=$(echo $cf_product_version | awk -F '.' '{print $2}' )
-
-
-TILE_RELEASE=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment-${REPLICATOR_NAME}`
-
-export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
-
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
-
-export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
-
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k stage-product \
+    -p $PRODUCT_NAME \
+    -v $PRODUCT_VERSION
 
 function fn_get_azs {
      local azs_csv=$1
@@ -137,8 +127,8 @@ fi
 
 # No C2C support in PCF 1.9, 1.10 and older versions
 export SUPPORTS_C2C=false
-if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
-  if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
+if [ $PRODUCT_MAJOR_VERSION -le 1 ]; then
+  if [ $PRODUCT_MINOR_VERSION -ge 11 ]; then
     export SUPPORTS_C2C=true   
   fi
 else
@@ -208,7 +198,16 @@ RESOURCES=$(cat <<-EOF
 EOF
 )
 
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
+om-linux \
+  -t https://$OPS_MGR_HOST \
+  --skip-ssl-validation \
+  -u $OPS_MGR_USR \
+  -p $OPS_MGR_PWD \
+  -k configure-product \
+  -n $PRODUCT_NAME \
+  -p "$PROPERTIES" \
+  -pn "$NETWORK" \
+  -pr "$RESOURCES"
 
 if [[ "$SSL_TERMINATION_POINT" == "terminate_at_router" ]]; then
 echo "Terminating SSL at the goRouters and using self signed/provided certs..."
@@ -254,7 +253,14 @@ EOF
 
 fi
 
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$SSL_PROPERTIES"
+om-linux \
+  -t https://$OPS_MGR_HOST \
+  --skip-ssl-validation \
+  -u $OPS_MGR_USR \
+  -p $OPS_MGR_PWD \
+  -k configure-product \
+  -n $PRODUCT_NAME \
+  -p "$SSL_PROPERTIES"
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then

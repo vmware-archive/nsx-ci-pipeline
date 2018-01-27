@@ -4,29 +4,31 @@ chmod +x om-cli/om-linux
 
 export ROOT_DIR=`pwd`
 export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+
 
 # Check if Bosh Director is v1.11 or higher
-export BOSH_PRODUCT_VERSION=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
-export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
+BOSH_VERSION=$(check_bosh_version)
+PRODUCT_VERSION=$(check_product_version "p-spring-cloud-services")
 
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
-if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
-  if [ "$BOSH_MINOR_VERSION" -ge 10 ]; then
+if [ $BOSH_MAJOR_VERSION -le 1 ]; then
+  if [ $BOSH_MINOR_VERSION -ge 10 ]; then
     export IS_ERRAND_WHEN_CHANGED_ENABLED=true
   fi
 else
   export IS_ERRAND_WHEN_CHANGED_ENABLED=true
 fi
 
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k stage-product \
+    -p $PRODUCT_NAME \
+    -v $PRODUCT_VERSION
 
-TILE_RELEASE=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-spring-cloud-services`
-
-PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
-
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
+export PRODUCT_GUID=$(check_staged_product_guid "p-spring-cloud-services")
 
 function fn_get_azs {
      local azs_csv=$1
@@ -63,11 +65,15 @@ PROPERTIES=$(cat <<-EOF
 EOF
 )
 
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES"  -pn "$NETWORK"
-
-PRODUCT_GUID=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                     curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("p-spring-cloud-services")) | .guid' | tr -d '"')
+om-linux \
+  -t https://$OPS_MGR_HOST \
+  --skip-ssl-validation \
+  -u $OPS_MGR_USR \
+  -p $OPS_MGR_PWD \
+  -k configure-product \
+  -n $PRODUCT_NAME \
+  -p "$PROPERTIES" \
+  -pn "$NETWORK"
 
 
 # Set Errands to on Demand for 1.10

@@ -4,6 +4,8 @@ chmod +x om-cli/om-linux
 
 export ROOT_DIR=`pwd`
 export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -24,34 +26,27 @@ else
 fi
 
 # Check if Bosh Director is v1.11 or higher
-export bosh_product_version=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
-export bosh_major_version=$(echo $bosh_product_version | awk -F '.' '{print $1}' )
-export bosh_minor_version=$(echo $bosh_product_version | awk -F '.' '{print $2}' )
 
-export cf_product_version=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-          curl -p "/api/v0/staged/products" -x GET | jq '.[] | select(.installation_name | contains("cf-")) | .product_version' | tr -d '"')
-
-export cf_major_version=$(echo $cf_product_version | awk -F '.' '{print $1}' )
-export cf_minor_version=$(echo $cf_product_version | awk -F '.' '{print $2}' )
-
+BOSH_VERSION=$(check_bosh_version)
+CF_PRODUCT_VERSION=$(check_product_version "cf")
 
 # Can only support one version of the default isolation segment tile
 # Search for the tile using the specified product name if available
 # or search using p-iso as default iso product name
+
 if [ -z "$PRODUCT_NAME" -o "$PRODUCT_NAME" == "p-isolation-segment" ]; then
-  TILE_RELEASE=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment`
+  PRODUCT_VERSION=$(check_product_version "p-isolation-segment")
 else
-  TILE_RELEASE=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment-${PRODUCT_NAME}`
+  PRODUCT_VERSION=$(check_product_version "p-isolation-segment-${PRODUCT_NAME}")
 fi
 
-export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
-
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
-
-export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k stage-product \
+    -p $PRODUCT_NAME \
+    -v $PRODUCT_VERSION
 
 
 function fn_get_azs {
@@ -83,7 +78,12 @@ DOMAINS=$(cat <<-EOF
 EOF
 )
 
-  CERTIFICATES=`$om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$DOMAINS"`
+  CERTIFICATES=$(om-linux \
+                  -t https://$OPS_MGR_HOST \
+                  -u $OPS_MGR_USR \
+                  -p $OPS_MGR_PWD  \
+                  -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" \
+                  -x POST -d "$DOMAINS")
 
   export SSL_CERT=`echo $CERTIFICATES | jq '.certificate' | tr -d '"'`
   export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key' | tr -d '"'`
@@ -144,8 +144,8 @@ fi
 
 # No C2C support in PCF 1.9, 1.10 and older versions
 export SUPPORTS_C2C=false
-if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
-  if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
+if [ $PRODUCT_MAJOR_VERSION -le 1 ]; then
+  if [ $PRODUCT_MINOR_VERSION -ge 11 ]; then
     export SUPPORTS_C2C=true   
   fi
 else
@@ -200,7 +200,6 @@ fi
 # End of PROPERTIES block
 
 
-
 RESOURCES=$(cat <<-EOF
 {
   "isolated_router": {
@@ -215,7 +214,15 @@ RESOURCES=$(cat <<-EOF
 EOF
 )
 
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k configure-product \
+    -n $PRODUCT_NAME \
+    -p "$PROPERTIES" \
+    -pn "$NETWORK" \
+    -pr "$RESOURCES"
 
 if [[ "$SSL_TERMINATION_POINT" == "terminate_at_router" ]]; then
 echo "Terminating SSL at the goRouters and using self signed/provided certs..."
@@ -261,7 +268,13 @@ EOF
 
 fi
 
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$SSL_PROPERTIES"
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k configure-product \
+    -n $PRODUCT_NAME \
+    -p "$SSL_PROPERTIES"
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
@@ -270,10 +283,7 @@ fi
 
 # Proceed if NSX is enabled on Bosh Director
 # Support NSX LBR Integration
-
-PRODUCT_GUID=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                     curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("p-isolation-segment-")) | .guid' | tr -d '"')
+export PRODUCT_GUID=$(check_staged_product_guid "p-isolation-segment-")
 
 # $ISO_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
 # Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'
@@ -283,9 +293,13 @@ JOBS_REQUIRING_LBR=$ISO_TILE_JOBS_REQUIRING_LBR
 JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 
 # Get job guids for deployment (from staged product)
-om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                              curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" 2>/dev/null \
-                              | jq '.[] | .[] ' > /tmp/jobs_list.log
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" \
+    2>/dev/null \
+    | jq '.[] | .[] ' > /tmp/jobs_list.log
 
 for job_guid in $(cat /tmp/jobs_list.log | jq '.guid' | tr -d '"')
 do
@@ -418,9 +432,9 @@ do
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
     om-linux \
         -t https://$OPS_MGR_HOST \
-        -k -u $OPS_MGR_USR \
+        -u $OPS_MGR_USR \
         -p $OPS_MGR_PWD  \
-        curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
+        -k curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
         -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
 
     # final structure

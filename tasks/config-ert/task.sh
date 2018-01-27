@@ -4,6 +4,9 @@ chmod +x om-cli/om-linux
 
 export ROOT_DIR=`pwd`
 export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -28,12 +31,6 @@ else
 fi
 
 
-# Check if Bosh Director is v1.11 or higher
-export BOSH_PRODUCT_VERSION=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
-export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
-
 
 # No need to associate a static ip for MySQL Proxy for ERT
 # export MYSQL_ERT_PROXY_IP=$(echo ${DEPLOYMENT_NW_CIDR} | \
@@ -41,21 +38,23 @@ export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}'
 #                            awk -F '.' '{print $1"."$2"."$3".250"}' ) 
 # use $ERT_MYSQL_LBR_IP for proxy - retreived from nsx-gen-list
 
-TILE_RELEASE=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep cf`
+BOSH_VERSION=$(check_bosh_version)
+PRODUCT_VERSION=$(check_product_version "cf")
 
-export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
-
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
-
-export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
+om-linux \
+  -t https://$OPS_MGR_HOST \
+  --skip-ssl-validation \
+  -u $OPS_MGR_USR \
+  -p $OPS_MGR_PWD \
+  -k stage-product \
+  -p $PRODUCT_NAME \
+  -v $PRODUCT_VERSION
 
 # when-changed option for errands is only applicable from Ops Mgr 1.10+
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
 
-if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
-  if [ "$BOSH_MINOR_VERSION" -ge 10 ]; then
+if [ $BOSH_MAJOR_VERSION -le 1 ]; then
+  if [ $BOSH_MINOR_VERSION -ge 10 ]; then
     export IS_ERRAND_WHEN_CHANGED_ENABLED=true
   fi
 else
@@ -65,8 +64,8 @@ fi
 # No C2C support in PCF 1.9, 1.10 and older versions
 # only from 1.11+
 export SUPPORTS_C2C=false
-if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
-  if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
+if [ $PRODUCT_MAJOR_VERSION -le 1 ]; then
+  if [ $PRODUCT_MINOR_VERSION -ge 11 ]; then
     export SUPPORTS_C2C=true   
   fi
 else
@@ -428,7 +427,16 @@ CF_RESOURCES=$(cat <<-EOF
 EOF
 )
 
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_PROPERTIES" -pn "$CF_NETWORK" -pr "$CF_RESOURCES"
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k configure-product \
+    -n cf \
+    -p "$CF_PROPERTIES" \
+    -pn "$CF_NETWORK" \
+    -pr "$CF_RESOURCES"
+
 
 if [[ "$AUTHENTICATION_MODE" == "internal" ]]; then
 echo "Configuring Internal Authentication in ERT..."
@@ -519,8 +527,13 @@ CF_AUTH_WITH_SAML_CERTS=$(echo $CF_AUTH_PROPERTIES | jq \
   --from-file saml_auth_filters \
   --raw-output)
 
-
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_AUTH_WITH_SAML_CERTS"
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k configure-product \
+    -n cf \
+    -p "$CF_AUTH_WITH_SAML_CERTS"
 
 if [[ ! -z "$SYSLOG_HOST" ]]; then
 
@@ -547,7 +560,13 @@ CF_SYSLOG_PROPERTIES=$(cat <<-EOF
 EOF
 )
 
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_SYSLOG_PROPERTIES"
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k configure-product \
+    -n cf \
+    -p "$CF_SYSLOG_PROPERTIES"
 
 fi
 
@@ -582,13 +601,17 @@ CF_SMTP_PROPERTIES=$(cat <<-EOF
 EOF
 )
 
-om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n cf -p "$CF_SMTP_PROPERTIES"
+om-linux \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k configure-product \
+    -n cf \
+    -p "$CF_SMTP_PROPERTIES"
 
 fi
 
-PRODUCT_GUID=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                     curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"')
+export PRODUCT_GUID=$(check_staged_product_guid "cf-")
 
 # Set Errands to on Demand for 1.10
 if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
@@ -608,9 +631,12 @@ if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
 EOF
 )
 
-om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                            curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
-                            -x PUT -d "$ERT_ERRANDS"
+  om-linux \
+      -t https://$OPS_MGR_HOST \
+      -u $OPS_MGR_USR \
+      -p $OPS_MGR_PWD \
+      -k curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
+      -x PUT -d "$ERT_ERRANDS"
 fi
 
 # if nsx is not enabled, skip remaining steps

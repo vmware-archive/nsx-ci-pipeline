@@ -6,6 +6,8 @@ chmod +x $PIVNET_CLI
 chmod +x om-cli/om-linux
 export ROOT_DIR=`pwd`
 export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+
 
 FILE_PATH=`find ./pivnet-$SERVICE_STRING-product -name *.pivotal`
 

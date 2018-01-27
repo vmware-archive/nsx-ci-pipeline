@@ -4,7 +4,10 @@ PIVNET_CLI=`find ./pivnet-cli -name "*linux-amd64*"`
 chmod +x $PIVNET_CLI
 
 chmod +x om-cli/om-linux
+export ROOT_DIR=`pwd`
 export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+
 
 if [ "$USE_SRT_TILE" == "true" ]; then
   FILE_PATH=`find ./pivnet-er-product -name srt*.pivotal`

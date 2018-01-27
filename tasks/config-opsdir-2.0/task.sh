@@ -6,6 +6,8 @@ chmod +x om-cli/om-linux
 
 export ROOT_DIR=`pwd`
 export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -341,12 +343,11 @@ EOF
 
 # So split the configure steps into iaas that uses curl to PUT and normal path for director config
 om-linux \
-  --target https://$OPS_MGR_HOST \
-  --skip-ssl-validation \
-  --username $OPS_MGR_USR \
-  --password $OPS_MGR_PWD \
-  curl -p '/api/v0/staged/director/properties' \
-  -x PUT -d  "$wrapped_iaas_config"
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k curl -p '/api/v0/staged/director/properties' \
+    -x PUT -d  "$wrapped_iaas_config"
 # Check for errors
 if [ $? != 0 ]; then
   echo "IaaS configuration failed!!"
@@ -354,12 +355,11 @@ if [ $? != 0 ]; then
 fi
 
 om-linux \
-  --target https://$OPS_MGR_HOST \
-  --skip-ssl-validation \
-  --username $OPS_MGR_USR \
-  --password $OPS_MGR_PWD \
-  configure-bosh \
-  --director-configuration "$director_config"
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k configure-bosh \
+    --director-configuration "$director_config"
 # Check for errors
 if [ $? != 0 ]; then
   echo "Bosh Director configuration failed!!"
@@ -367,12 +367,11 @@ if [ $? != 0 ]; then
 fi
 
 om-linux \
-  --target https://$OPS_MGR_HOST \
-  --skip-ssl-validation \
-  --username $OPS_MGR_USR \
-  --password $OPS_MGR_PWD \
-  configure-bosh \
-  --security-configuration "$security_configuration"
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k configure-bosh \
+    --security-configuration "$security_configuration"
 # Check for errors
 if [ $? != 0 ]; then
   echo "Bosh Security configuration failed!!"
@@ -380,12 +379,11 @@ if [ $? != 0 ]; then
 fi
 
 om-linux \
-  --target https://$OPS_MGR_HOST \
-  --skip-ssl-validation \
-  --username $OPS_MGR_USR \
-  --password $OPS_MGR_PWD \
-  curl -p "/api/v0/staged/director/availability_zones" \
-  -x PUT -d "$az_configuration"
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k curl -p "/api/v0/staged/director/availability_zones" \
+    -x PUT -d "$az_configuration"
 # Check for errors
 if [ $? != 0 ]; then
   echo "Availability Zones configuration failed!!"
@@ -393,12 +391,11 @@ if [ $? != 0 ]; then
 fi
 
 om-linux \
-  --target https://$OPS_MGR_HOST \
-  --skip-ssl-validation \
-  --username $OPS_MGR_USR \
-  --password $OPS_MGR_PWD \
-  -k curl -p "/api/v0/staged/director/networks" \
-  -x PUT -d "$network_configuration" \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k curl -p "/api/v0/staged/director/networks" \
+    -x PUT -d "$network_configuration" \
 # Check for errors
 if [ $? != 0 ]; then
   echo "Networks configuration failed!!"
@@ -409,12 +406,11 @@ fi
 # Having trouble with om-cli with new network_assignment structure 
 # that wraps single_az and network inside json structure instead of string
 om-linux \
-  --target https://$OPS_MGR_HOST \
-  --skip-ssl-validation \
-  --username $OPS_MGR_USR \
-  --password $OPS_MGR_PWD \
-  -k curl -p "/api/v0/staged/director/network_and_az" \
-  -x PUT -d "$wrapped_network_az_assignment" \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k curl -p "/api/v0/staged/director/network_and_az" \
+    -x PUT -d "$wrapped_network_az_assignment" \
 # Check for errors
 if [ $? != 0 ]; then
   echo "Networks configuration and AZ assignment failed!!"
