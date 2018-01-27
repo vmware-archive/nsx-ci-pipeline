@@ -9,12 +9,11 @@ resource_pool_path=$(govc find . -name ${GOVC_RESOURCE_POOL} | grep -i resource 
 echo "Found resource_pool_path : $resource_pool_path"
 
 possible_opsmans=$(govc find $resource_pool_path -type m -guest.ipAddress ${OPS_MGR_HOST} -runtime.powerState poweredOn)
-echo "Found possible_opsmans : $possible_opsmans"
-
 # REMOVE ME - temporarily to clean up ops mgr
 if [ "$possible_opsmans" == "" ]; then
   possible_opsmans=$(govc find $resource_pool_path -type m -name ${OM_VM_NAME} )
 fi
+echo "Found possible_opsmans : $possible_opsmans"
 
 for opsman in ${possible_opsmans}; do
   network="$(govc vm.info -r=true -json ${opsman} | jq -r '.VirtualMachines[0].Guest.Net[0].Network')"
