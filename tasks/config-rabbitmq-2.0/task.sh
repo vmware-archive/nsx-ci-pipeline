@@ -290,7 +290,7 @@ do
 
       nsx_lbr_payload_json=$(echo $nsx_lbr_payload_json \
                                 | jq --argjson new_entry "$ENTRY" \
-                                '.[] += [$new_entry] ')
+                                '.nsx_lbs += [$new_entry] ')
       
       #index=$(expr $index + 1)
     done
