@@ -26,18 +26,18 @@ else
 fi
 
 # Check if Bosh Director is v1.11 or higher
-
-BOSH_VERSION=$(check_bosh_version)
-CF_PRODUCT_VERSION=$(check_product_version "cf")
+check_bosh_version
+check_installed_cf_version
+#check_installed_srt_version
 
 # Can only support one version of the default isolation segment tile
 # Search for the tile using the specified product name if available
 # or search using p-iso as default iso product name
 
 if [ -z "$PRODUCT_NAME" -o "$PRODUCT_NAME" == "p-isolation-segment" ]; then
-  PRODUCT_VERSION=$(check_product_version "p-isolation-segment")
+  check_available_product_version "p-isolation-segment"
 else
-  PRODUCT_VERSION=$(check_product_version "p-isolation-segment-${PRODUCT_NAME}")
+  check_available_product_version "p-isolation-segment-${PRODUCT_NAME}"
 fi
 
 om-linux \
@@ -47,6 +47,8 @@ om-linux \
     -k stage-product \
     -p $PRODUCT_NAME \
     -v $PRODUCT_VERSION
+
+check_staged_product_guid $PRODUCT_NAME
 
 
 function fn_get_azs {
@@ -283,7 +285,6 @@ fi
 
 # Proceed if NSX is enabled on Bosh Director
 # Support NSX LBR Integration
-export PRODUCT_GUID=$(check_staged_product_guid "p-isolation-segment-")
 
 # $ISO_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
 # Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'

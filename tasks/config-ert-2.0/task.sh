@@ -43,8 +43,8 @@ fi
 #                            awk -F '.' '{print $1"."$2"."$3".250"}' ) 
 # use $ERT_MYSQL_LBR_IP for proxy - retreived from nsx-gen-list
 
-BOSH_VERSION=$(check_bosh_version)
-PRODUCT_VERSION=$(check_product_version "cf")
+check_bosh_version
+check_available_product_version "cf"
 
 om-linux \
     -t https://$OPS_MGR_HOST \
@@ -160,7 +160,8 @@ om-linux \
   -k stage-product \
   -p $PRODUCT_NAME \
   -v $PRODUCT_VERSION
-
+  
+check_staged_product_guid "cf-"
 
 cf_properties=$(
   jq -n \
@@ -729,7 +730,6 @@ om-linux \
     -pr "$cf_resources"
 
 
-export PRODUCT_GUID=$(check_staged_product_guid "cf-")
 
 # Set Errands to on Demand for 1.10
 if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
@@ -750,12 +750,12 @@ if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
 EOF
 )
 
-om-linux \
-    -t https://$OPS_MGR_HOST \
-    -u $OPS_MGR_USR \
-    -p $OPS_MGR_PWD \
-    -k curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
-    -x PUT -d "$ERT_ERRANDS"
+  om-linux \
+      -t https://$OPS_MGR_HOST \
+      -u $OPS_MGR_USR \
+      -p $OPS_MGR_PWD \
+      -k curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
+      -x PUT -d "$ERT_ERRANDS"
 
 fi
 

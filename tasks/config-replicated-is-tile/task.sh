@@ -26,8 +26,8 @@ else
 fi
 
 # Check if Bosh Director is v1.11 or higher
-BOSH_VERSION=$(check_bosh_version)
-PRODUCT_VERSION=$(check_product_version "p-isolation-segment-${REPLICATOR_NAME}")
+check_bosh_version
+check_product_version "p-isolation-segment-${REPLICATOR_NAME}"
 
 om-linux \
     -t https://$OPS_MGR_HOST \

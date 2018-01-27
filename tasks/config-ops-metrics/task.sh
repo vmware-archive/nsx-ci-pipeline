@@ -6,8 +6,8 @@ export ROOT_DIR=`pwd`
 export PATH=$PATH:$ROOT_DIR/om-cli
 source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
 
-BOSH_VERSION=$(check_bosh_version)
-PRODUCT_VERSION=$(check_product_version "p-metrics")
+check_bosh_version
+check_product_version "p-metrics"
 
 om-linux \
     -t https://$OPS_MGR_HOST \
@@ -16,6 +16,8 @@ om-linux \
     -k stage-product \
     -p $PRODUCT_NAME \
     -v $PRODUCT_VERSION
+
+check_staged_product_guid "p-metrics"
 
 NETWORK=$(cat <<-EOF
 {

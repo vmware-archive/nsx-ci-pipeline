@@ -28,8 +28,8 @@ else
 fi
 
 # Check if Bosh Director is v1.11 or higher
-BOSH_VERSION=$(check_bosh_version)
-PRODUCT_VERSION=$(check_product_version "p-rabbitmq-")
+check_bosh_version
+check_product_version "p-rabbitmq-"
 
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
 if [ $BOSH_MAJOR_VERSION -le 1 ]; then
@@ -48,7 +48,7 @@ om-linux \
     -p $PRODUCT_NAME \
     -v $PRODUCT_VERSION
 
-export PRODUCT_GUID=$(check_staged_product_guid "p-rabbitmq-")
+check_staged_product_guid "p-rabbitmq-"
 
 
 function fn_get_azs {

@@ -38,8 +38,8 @@ fi
 #                            awk -F '.' '{print $1"."$2"."$3".250"}' ) 
 # use $ERT_MYSQL_LBR_IP for proxy - retreived from nsx-gen-list
 
-BOSH_VERSION=$(check_bosh_version)
-PRODUCT_VERSION=$(check_product_version "cf")
+check_bosh_version
+check_available_product_version "cf"
 
 om-linux \
   -t https://$OPS_MGR_HOST \
@@ -611,7 +611,7 @@ om-linux \
 
 fi
 
-export PRODUCT_GUID=$(check_staged_product_guid "cf-")
+check_staged_product_guid "cf-"
 
 # Set Errands to on Demand for 1.10
 if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then

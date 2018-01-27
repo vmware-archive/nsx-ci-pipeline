@@ -8,8 +8,8 @@ source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
 
 
 # Check if Bosh Director is v1.11 or higher
-BOSH_VERSION=$(check_bosh_version)
-PRODUCT_VERSION=$(check_product_version "p-spring-cloud-services")
+check_bosh_version
+check_product_version "p-spring-cloud-services"
 
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
 if [ $BOSH_MAJOR_VERSION -le 1 ]; then
@@ -28,7 +28,7 @@ om-linux \
     -p $PRODUCT_NAME \
     -v $PRODUCT_VERSION
 
-export PRODUCT_GUID=$(check_staged_product_guid "p-spring-cloud-services")
+check_staged_product_guid "p-spring-cloud-services"
 
 function fn_get_azs {
      local azs_csv=$1

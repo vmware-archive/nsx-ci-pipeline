@@ -2,11 +2,6 @@
 
 function check_bosh_version {  
 
-  om-linux -t "https://${OPS_MGR_HOST}" \
-          -u "$OPS_MGR_USR" \
-          -p "$OPS_MGR_PWD" \
-          -k upload-stemcell -s $SC_FILE_PATH
-
   export BOSH_PRODUCT_VERSION=$(om-linux \
                                   -t "https://${OPS_MGR_HOST}" \
                                   -u "$OPS_MGR_USR" \
@@ -21,7 +16,7 @@ function check_bosh_version {
   echo "$BOSH_PRODUCT_VERSION"
 }
 
-function check_product_version {
+function check_available_product_version {
 
   local product_code="$1"
   TILE_RELEASE=$(om-linux \
@@ -42,7 +37,7 @@ function check_product_version {
 function check_staged_product_guid {
 
   local product_code="$1"
-  PRODUCT_GUID=$(om-linux \
+  export PRODUCT_GUID=$(om-linux \
                   -t https://$OPS_MGR_HOST \
                   -u $OPS_MGR_USR \
                   -p $OPS_MGR_PWD \
