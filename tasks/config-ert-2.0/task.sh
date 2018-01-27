@@ -53,6 +53,8 @@ om-linux \
     -k stage-product \
     -p $PRODUCT_NAME \
     -v $PRODUCT_VERSION
+  
+check_staged_product_guid "cf-"
 
 # when-changed option for errands is only applicable from Ops Mgr 1.10+
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
@@ -152,16 +154,7 @@ if [ "$CREDHUB_PASSWORD" == "" ]; then
   CREDHUB_PASSWORD=$(echo $OPSMAN_PASSWORD{,,,,} | sed -e 's/ //g' | cut -c1-25)
 fi
 
-om-linux \
-  -t https://$OPS_MGR_HOST \
-  --skip-ssl-validation \
-  -u $OPS_MGR_USR \
-  -p $OPS_MGR_PWD \
-  -k stage-product \
-  -p $PRODUCT_NAME \
-  -v $PRODUCT_VERSION
-  
-check_staged_product_guid "cf-"
+
 
 cf_properties=$(
   jq -n \
@@ -792,16 +785,14 @@ do
   if [ "$match" != "" -o "$SECURITY_GROUP" != "" ]; then
     echo "$job_name requires Loadbalancer or security group..."
     
-    # Use an auto-security group based on product guid by Bosh 
+    # Check if User has specified their own security group
+    # Club that with an auto-security group based on product guid by Bosh 
     # for grouping all vms with the same security group
-    NEW_SECURITY_GROUP=\"${PRODUCT_GUID}\"
-     # Check if there are multiple security groups
-    # If so, wrap them with quotes
-    for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
-    do
-      NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP, \"$secgrp\",)
-    done
-    SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
+    if [ "$SECURITY_GROUP" != "" ]; then
+      SECURITY_GROUP="${SECURITY_GROUP},${PRODUCT_GUID}"
+    else
+      SECURITY_GROUP=${PRODUCT_GUID}
+    fi  
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
@@ -880,8 +871,8 @@ do
     done
 
     nsx_security_group_json=$(jq -n \
-                              --argjson nsx_security_groups $SECURITY_GROUP \
-                              '{ "nsx_security_groups": [ $nsx_security_groups ] }')
+                              --arg nsx_security_groups $SECURITY_GROUP \
+                              '{ "nsx_security_groups": [  ($nsx_security_groups | split(",") ) ] }')
 
     #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
     echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"

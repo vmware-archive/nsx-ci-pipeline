@@ -37,14 +37,25 @@ function check_available_product_version {
 function check_staged_product_guid {
 
   local product_code="$1"
+  # jq contains does not appear to be able to use env variable
+  # export PRODUCT_GUID=$(om-linux \
+  #                 -t https://$OPS_MGR_HOST \
+  #                 -u $OPS_MGR_USR \
+  #                 -p $OPS_MGR_PWD \
+  #                 -k curl -p "/api/v0/staged/products" \
+  #                 -x GET \
+  #                 | jq --arg product_code $product_code '.[] | select(.installation_name | contains("$product_code")) | .guid' \
+  #                 | tr -d '"')
+
   export PRODUCT_GUID=$(om-linux \
                   -t https://$OPS_MGR_HOST \
                   -u $OPS_MGR_USR \
                   -p $OPS_MGR_PWD \
                   -k curl -p "/api/v0/staged/products" \
                   -x GET \
-                  | jq '.[] | select(.installation_name | contains("$product_code")) | .guid' \
-                  | tr -d '"')
+                  | grep "guid" | grep "\"$product_code" \
+                  | awk -F '"' '{print $4}' )
+
 
   echo "$PRODUCT_GUID"
 }
