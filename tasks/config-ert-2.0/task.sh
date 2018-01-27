@@ -895,11 +895,12 @@ do
     echo "Job: $job_name with GUID: $job_guid and RESOURCE_CONFIG : $UPDATED_RESOURCE_CONFIG"
 
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
-    om-linux -t https://$OPS_MGR_HOST \
-            -k -u $OPS_MGR_USR \
-            -p $OPS_MGR_PWD  \
-            curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
-            -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
+    om-linux \
+        -t https://$OPS_MGR_HOST \
+        -k -u $OPS_MGR_USR \
+        -p $OPS_MGR_PWD  \
+        curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
+        -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
 
     # final structure
     # {

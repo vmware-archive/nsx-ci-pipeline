@@ -7,13 +7,15 @@ export PATH=$PATH:$ROOT_DIR/om-cli
 
 ERT_ERRANDS=$(cat <<-EOF
 {"errands": [
-  {"name": "smoke-tests","post_deploy": true},
+  {"name": "smoke_tests","post_deploy": true},
+  {"name": "push-usage-service","post_deploy": true},
   {"name": "push-apps-manager","post_deploy": true},
-  {"name": "notifications","post_deploy": true},
-  {"name": "notifications-ui","post_deploy": true},
+  {"name": "deploy-notifications","post_deploy": true},
+  {"name": "deploy-notifications-ui","post_deploy": true},
   {"name": "push-pivotal-account","post_deploy": true},
-  {"name": "autoscaling","post_deploy": true},
-  {"name": "autoscaling-register-broker","post_deploy": true}
+  {"name": "deploy-autoscaling","post_deploy": true},
+  {"name": "register-broker","post_deploy": true},
+  {"name": "nfsbrokerpush","post_deploy": true}
 ]}
 EOF
 )

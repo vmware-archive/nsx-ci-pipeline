@@ -2,9 +2,9 @@
 
 chmod +x om-cli/om-linux
 
-CMD=./om-cli/om-linux
-
 export ROOT_DIR=`pwd`
+export PATH=$PATH:$ROOT_DIR/om-cli
+
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -130,8 +130,14 @@ cat > /tmp/iaas_conf.txt <<-EOF
 EOF
 
 # Check if Bosh Director is v1.11 or higher
-export BOSH_PRODUCT_VERSION=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/staged/products" 2>/dev/null | jq '.[]| select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
+export BOSH_PRODUCT_VERSION=$(om-linux \
+                              -t https://$OPS_MGR_HOST \
+                              -k -u $OPS_MGR_USR \
+                              -p $OPS_MGR_PWD \
+                              -k curl -p "/api/v0/staged/products" \
+                              2>/dev/null \
+                              | jq '.[]| select(.installation_name=="p-bosh") | .product_version' \
+                              | tr -d '"')
 export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
 export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
 
@@ -318,12 +324,12 @@ EOF
 )
 
 # OM Cli v0.23.0 does not support nsx related configs
-# $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
+# om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
 #.            -i "$IAAS_CONFIGURATION" \
 #             -d "$DIRECTOR_CONFIG"
 
 # So post it directly to the ops mgr endpoint
-$CMD  -t https://$OPS_MGR_HOST -skip-ssl-validation -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om-linux  -t https://$OPS_MGR_HOST -skip-ssl-validation -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
         curl  -p "/api/v0/staged/director/properties" \
         -x PUT -d "{ \"iaas_configuration\": $IAAS_CONFIGURATION }"
 # Check for errors
@@ -332,7 +338,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
+om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
             -d "$DIRECTOR_CONFIG"
 # Check for errors
 if [ $? != 0 ]; then
@@ -340,7 +346,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/director/availability_zones" \
             -x PUT -d "$AZ_CONFIGURATION"
 # Check for errors
@@ -349,7 +355,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/director/networks" \
             -x PUT -d "$NETWORK_CONFIGURATION"
 # Check for errors
@@ -358,7 +364,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/director/network_and_az" \
             -x PUT -d "$NETWORK_ASSIGNMENT"
 # Check for errors

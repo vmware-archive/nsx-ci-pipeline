@@ -4,6 +4,7 @@ PIVNET_CLI=`find ./pivnet-cli -name "*linux-amd64*"`
 chmod +x $PIVNET_CLI
 
 chmod +x om-cli/om-linux
+export PATH=$PATH:$ROOT_DIR/om-cli
 
 if [ "$USE_SRT_TILE" == "true" ]; then
   FILE_PATH=`find ./pivnet-er-product -name srt*.pivotal`
@@ -20,9 +21,19 @@ $PIVNET_CLI login --api-token="$PIVNET_API_TOKEN"
 
 SC_FILE_PATH=`find ./ -name *.tgz`
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k upload-product -p $FILE_PATH
+om-linux \
+	-t https://$OPS_MGR_HOST \
+	-k -u $OPS_MGR_USR \
+	-p $OPS_MGR_PWD \
+	-k upload-product \
+	-p $FILE_PATH
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k upload-stemcell -s $SC_FILE_PATH
+om-linux \
+	-t https://$OPS_MGR_HOST \
+	-k -u $OPS_MGR_USR \
+	-p $OPS_MGR_PWD \
+	-k upload-stemcell \
+	-s $SC_FILE_PATH
 
 if [ ! -f "$SC_FILE_PATH" ]; then
     echo "Stemcell file not found!"

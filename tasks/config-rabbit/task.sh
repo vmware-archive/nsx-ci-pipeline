@@ -3,6 +3,8 @@
 chmod +x om-cli/om-linux
 
 export ROOT_DIR=`pwd`
+export PATH=$PATH:$ROOT_DIR/om-cli
+
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -13,7 +15,7 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   # Read back associate array of jobs to lbr details
   # created by hte NSX_GEN_UTIL script
   source /tmp/jobs_lbr_map.out
-  IS_NSX_ENABLED=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+  IS_NSX_ENABLED=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
                curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
 
 else
@@ -22,7 +24,7 @@ else
 fi
 
 # Check if Bosh Director is v1.11 or higher
-export BOSH_PRODUCT_VERSION=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+export BOSH_PRODUCT_VERSION=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
            curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
 export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
 export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
@@ -37,14 +39,14 @@ else
   export IS_ERRAND_WHEN_CHANGED_ENABLED=true
 fi
 
-TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-rabbitmq`
+TILE_RELEASE=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-rabbitmq`
 
 export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
 export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
 export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
 export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
+om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
 
 function fn_get_azs {
      local azs_csv=$1
@@ -116,9 +118,9 @@ RESOURCES=$(cat <<-EOF
 EOF
 )
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
+om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
 
-PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+PRODUCT_GUID=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                      curl -p "/api/v0/staged/products" -x GET \
                      | jq '.[] | select(.installation_name | contains("p-rabbitmq-")) | .guid' | tr -d '"')
 
@@ -135,7 +137,7 @@ if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
 EOF
 )
 
-  ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+  om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                               curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
                               -x PUT -d "$RABBITMQ_ERRANDS"
 fi
@@ -157,7 +159,7 @@ JOBS_REQUIRING_LBR=$RABBITMQ_TILE_JOBS_REQUIRING_LBR
 JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 
 # Get job guids for deployment (from staged product)
-./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                               curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" 2>/dev/null \
                               | jq '.[] | .[] ' > /tmp/jobs_list.log
 
@@ -193,7 +195,7 @@ do
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
     LBR_DETAILS=${RABBITMQ_TILE_JOBS_LBR_MAP[$job_name]}
 
-    RESOURCE_CONFIG=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+    RESOURCE_CONFIG=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config" \
                       2>/dev/null)
     #echo "Resource config : $RESOURCE_CONFIG"
@@ -212,16 +214,8 @@ do
     # }
     # Strip the ending brace and also "nsx_security_group": null
 
-    # Strip last braces
-    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG | sed -e '$ s/}$//')
-    # Strip any empty nsx_security_groups
-    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG1 | sed -e 's/"nsx_security_groups": null//')
-    # Remove any empty parameters and strip any existing last commas
-    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG1 | sed -e 's/, ,/,/g' | sed -e '$ s/,$//' )
-    # Now add back a comma so we can add additional parameters
-    RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG ,")
-        
-    NSX_LBR_PAYLOAD=" \"nsx_lbs\": ["
+
+    nsx_lbr_payload_json='{ "nsx_lbs": [ ] }'
 
     index=1
     for variable in $(echo $LBR_DETAILS)
@@ -237,27 +231,82 @@ do
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
       #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
-      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
+      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
-      if [ "$index" == "1" ]; then          
-        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD $ENTRY ")
-      else
-        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD, $ENTRY ")
-      fi
-      index=$(expr $index + 1)
+      ENTRY=$(jq -n \
+                  --arg edge_name $edge_name \
+                  --arg pool_name $pool_name \
+                  --argjson port $port \
+                  --arg monitor_port $monitor_port \
+                  --arg security_group "$job_security_grp" \
+                  '{
+                     "edge_name": $edge_name,
+                     "pool_name": $pool_name,
+                     "port": $port,
+                     "security_group": $security_group
+                   }
+                   +
+                   if $monitor_port != null and $monitor_port != "None" then
+                   {
+                      "monitor_port": $monitor_port
+                   }
+                   else
+                    .
+                   end
+              ')
+
+      nsx_lbr_payload_json=$(echo $nsx_lbr_payload_json \
+                                | jq --argjson new_entry "$ENTRY" \
+                                '.[] += [$new_entry] ')
+      
+      #index=$(expr $index + 1)
     done
 
-    NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD ] ")
-    #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
+    nsx_security_group_json=$(jq -n \
+                              --argjson nsx_security_groups $SECURITY_GROUP \
+                              '{ "nsx_security_groups": [ $nsx_security_groups ] }')
 
-    UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
+    #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
+    echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
+    
+    #UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
+    UPDATED_RESOURCE_CONFIG=$( echo $RESOURCE_CONFIG \
+                              | jq  \
+                              --argjson nsx_lbr_payload "$nsx_lbr_payload_json" \
+                              --argjson nsx_security_groups "$nsx_security_group_json" \
+                              ' . |= . + $nsx_security_groups +  $nsx_lbr_payload ')
     echo "Job: $job_name with GUID: $job_guid and RESOURCE_CONFIG : $UPDATED_RESOURCE_CONFIG"
 
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
-    ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD  \
-            curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
-            -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
+    om-linux \
+        -t https://$OPS_MGR_HOST \
+        -k -u $OPS_MGR_USR \
+        -p $OPS_MGR_PWD  \
+        curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
+        -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
+
+    # final structure
+    # {
+    #   "instance_type": {
+    #     "id": "automatic"
+    #   },
+    #   "instances": 1,
+    #   "persistent_disk": {
+    #     "size_mb": "automatic"
+    #   },
+    #   "nsx_security_groups": [
+    #     "cf-a7e3e3f819a68a3ee869"
+    #   ],
+    #   "nsx_lbs": [
+    #     {
+    #       "edge_name": "esg-sabha-test",
+    #       "pool_name": "tcp-router31-Pool",
+    #       "security_group": "cf-a7e3e3f819a68a3ee869-tcp_router",
+    #       "port": "5000"
+    #     }
+    #   ]
+    # }
 
   fi
 done
