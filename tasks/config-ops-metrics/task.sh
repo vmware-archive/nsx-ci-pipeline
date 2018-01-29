@@ -1,15 +1,13 @@
 #!/bin/bash
 
-chmod +x om-cli/om-linux
-
 export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
 source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
 
 check_bosh_version
 check_product_version "p-metrics"
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD  \
@@ -66,7 +64,7 @@ RESOURCES=$(cat <<-EOF
 EOF
 )
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \

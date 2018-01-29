@@ -10,7 +10,7 @@ function upload_stemcells() (
 
     if [ -n "$stemcell_version_reqd" ]; then
       diagnostic_report=$(
-        om-linux \
+        om \
           -t "https://${OPS_MGR_HOST}" \
           -u "$OPS_MGR_USR" \
           -p "$OPS_MGR_PWD" \
@@ -64,7 +64,7 @@ function upload_stemcells() (
           exit 1
         fi
 
-        om-linux -t "https://${OPS_MGR_HOST}" \
+        om -t "https://${OPS_MGR_HOST}" \
                 -u "$OPS_MGR_USR" \
                 -p "$OPS_MGR_PWD" \
                 -k upload-stemcell -s $SC_FILE_PATH

@@ -2,10 +2,8 @@
 
 set -eu
 
-chmod +x om-cli/om-linux
-
 export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
 source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
 
 
@@ -320,7 +318,7 @@ jq -n \
 
 echo "Configuring IaaS and Director..."
 
-# om-linux has issues with handling boolean types 
+# om has issues with handling boolean types 
 # wrapped as string for uknown flags like nsx_networking_enabled
 # Error: configuring iaas specific options for bosh tile
 # could not execute "configure-bosh": 
@@ -342,7 +340,7 @@ EOF
 )
 
 # So split the configure steps into iaas that uses curl to PUT and normal path for director config
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -354,7 +352,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -366,7 +364,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -378,7 +376,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -390,7 +388,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -405,7 +403,7 @@ fi
 
 # Having trouble with om-cli with new network_assignment structure 
 # that wraps single_az and network inside json structure instead of string
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \

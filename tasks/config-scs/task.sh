@@ -1,9 +1,7 @@
 #!/bin/bash -e
 
-chmod +x om-cli/om-linux
-
 export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
 source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
 
 
@@ -20,7 +18,7 @@ else
   export IS_ERRAND_WHEN_CHANGED_ENABLED=true
 fi
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD  \
@@ -65,7 +63,7 @@ PROPERTIES=$(cat <<-EOF
 EOF
 )
 
-om-linux \
+om \
   -t https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   -u $OPS_MGR_USR \
@@ -90,7 +88,7 @@ if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
 EOF
 )
 
-  om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+  om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                               curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
                               -x PUT -d "$SCS_ERRANDS"
 fi

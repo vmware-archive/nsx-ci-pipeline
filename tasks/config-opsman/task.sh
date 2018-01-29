@@ -1,8 +1,7 @@
 #!/bin/bash -e
-chmod +x om-cli/om-linux
 
 export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
 source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
 
 
@@ -11,7 +10,7 @@ until $(curl --output /dev/null -k --silent --head --fail https://$OPS_MGR_HOST/
     sleep 5
 done
 
-om-linux \
+om \
 	-t https://$OPS_MGR_HOST \
 	-k configure-authentication \
 	-u $OPS_MGR_USR \

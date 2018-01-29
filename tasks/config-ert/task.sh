@@ -1,11 +1,9 @@
 #!/bin/bash -e
 
-chmod +x om-cli/om-linux
+
 
 export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli
-source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
-
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
 source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
 
 export SCRIPT_DIR=$(dirname $0)
@@ -22,7 +20,7 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   # created by hte NSX_GEN_UTIL script
   source /tmp/jobs_lbr_map.out
 
-  IS_NSX_ENABLED=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+  IS_NSX_ENABLED=$(om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
                curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
 
 else
@@ -41,7 +39,7 @@ fi
 check_bosh_version
 check_available_product_version "cf"
 
-om-linux \
+om \
   -t https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   -u $OPS_MGR_USR \
@@ -101,7 +99,7 @@ DOMAINS=$(cat <<-EOF
 EOF
 )
 
-  CERTIFICATES=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$DOMAINS"`
+  CERTIFICATES=`om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$DOMAINS"`
 
   export SSL_CERT=`echo $CERTIFICATES | jq '.certificate'`
   export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key'`
@@ -115,7 +113,7 @@ fi
 
 
 # API calls using OM Cli
-# om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  available-products -n cf
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  available-products -n cf
 # output:
 # +------+---------+
 # | NAME | VERSION |
@@ -123,22 +121,22 @@ fi
 # | cf   | 1.11.0  |
 # +------+---------+
 
-# om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/installation_settings"
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/installation_settings"
 # output:
 # full dump of all properties for all products
 
-# om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/v0/staged/products/{app-guid}/properties"
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/v0/staged/products/{app-guid}/properties"
 # output: dump of properties for a specific staged product
 
 # To get the bosh cloud config contianing networks and azs:
-# om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.networks```
-# om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.azs```
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.networks```
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.azs```
 
 # Just bosh director manifest
-# om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/director/manifest"
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/director/manifest"
 
 # Get the installation details
-# om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  curl -p "/api/installation_settings" | jq .infrastructure.networks
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  curl -p "/api/installation_settings" | jq .infrastructure.networks
 
 CF_PROPERTIES=$(cat <<-EOF
 {
@@ -427,7 +425,7 @@ CF_RESOURCES=$(cat <<-EOF
 EOF
 )
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -509,7 +507,7 @@ saml_cert_domains=$(cat <<-EOF
 EOF
 )
 
-saml_cert_response=`om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$saml_cert_domains"`
+saml_cert_response=`om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$saml_cert_domains"`
 
 saml_cert_pem=$(echo $saml_cert_response | jq --raw-output '.certificate')
 saml_key_pem=$(echo $saml_cert_response | jq --raw-output '.key')
@@ -527,7 +525,7 @@ CF_AUTH_WITH_SAML_CERTS=$(echo $CF_AUTH_PROPERTIES | jq \
   --from-file saml_auth_filters \
   --raw-output)
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -560,7 +558,7 @@ CF_SYSLOG_PROPERTIES=$(cat <<-EOF
 EOF
 )
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -601,7 +599,7 @@ CF_SMTP_PROPERTIES=$(cat <<-EOF
 EOF
 )
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -631,7 +629,7 @@ if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
 EOF
 )
 
-  om-linux \
+  om \
       -t https://$OPS_MGR_HOST \
       -u $OPS_MGR_USR \
       -p $OPS_MGR_PWD \
@@ -655,7 +653,7 @@ JOBS_REQUIRING_LBR=$ERT_TILE_JOBS_REQUIRING_LBR
 JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 
 # Get job guids for deployment (from staged product)
-om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                               curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" 2>/dev/null \
                               | jq '.[] | .[] ' > /tmp/jobs_list.log
 
@@ -689,7 +687,7 @@ do
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
     LBR_DETAILS=${ERT_TILE_JOBS_LBR_MAP[$job_name]}
 
-    RESOURCE_CONFIG=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+    RESOURCE_CONFIG=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config" \
                       2>/dev/null)
     #echo "Resource config : $RESOURCE_CONFIG"
@@ -760,7 +758,7 @@ do
     nsx_security_group_json=$(jq -n \
                               --arg nsx_security_groups $SECURITY_GROUP \
                               '{ "nsx_security_groups": [  ($nsx_security_groups | split(",") ) ] }')
-                              
+
     #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
     echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
     
@@ -773,12 +771,12 @@ do
     echo "Job: $job_name with GUID: $job_guid and RESOURCE_CONFIG : $UPDATED_RESOURCE_CONFIG"
 
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
-    om-linux \
+    om \
         -t https://$OPS_MGR_HOST \
         -k -u $OPS_MGR_USR \
         -p $OPS_MGR_PWD  \
         curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
-        -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
+        -x PUT  -d "${UPDATED_RESOURCE_CONFIG}" 2>/dev/null
 
     # final structure
     # {

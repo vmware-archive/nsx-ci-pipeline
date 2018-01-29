@@ -1,10 +1,9 @@
 #!/bin/bash
 set -e
 
-gunzip ./govc/govc_linux_amd64.gz
-chmod +x ./govc/govc_linux_amd64
-
 export ROOT_DIR=`pwd`
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
+
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -132,12 +131,12 @@ FILE_PATH=`find ./pivnet-opsman-product/ -name *.ova`
 
 echo $FILE_PATH
 
-./govc/govc_linux_amd64 import.spec $FILE_PATH | python -m json.tool > om-import.json
+govc import.spec $FILE_PATH | python -m json.tool > om-import.json
 
 mv om-import.json in.json
 
 update
 
-./govc/govc_linux_amd64 import.ova -options=out.json $FILE_PATH
+govc import.ova -options=out.json $FILE_PATH
 
 rm *.json

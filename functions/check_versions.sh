@@ -2,7 +2,7 @@
 
 function check_bosh_version {  
 
-  export BOSH_PRODUCT_VERSION=$(om-linux \
+  export BOSH_PRODUCT_VERSION=$(om \
                                   -t "https://${OPS_MGR_HOST}" \
                                   -u "$OPS_MGR_USR" \
                                   -p "$OPS_MGR_PWD" \
@@ -19,7 +19,7 @@ function check_bosh_version {
 function check_available_product_version {
 
   local product_code="$1"
-  TILE_RELEASE=$(om-linux \
+  TILE_RELEASE=$(om \
                     -t "https://${OPS_MGR_HOST}" \
                     -u "$OPS_MGR_USR" \
                     -p "$OPS_MGR_PWD" \
@@ -38,7 +38,7 @@ function check_staged_product_guid {
 
   local product_code="$1"
   # jq contains does not appear to be able to use env variable
-  # export PRODUCT_GUID=$(om-linux \
+  # export PRODUCT_GUID=$(om \
   #                 -t https://$OPS_MGR_HOST \
   #                 -u $OPS_MGR_USR \
   #                 -p $OPS_MGR_PWD \
@@ -47,7 +47,7 @@ function check_staged_product_guid {
   #                 | jq --arg product_code $product_code '.[] | select(.installation_name | contains("$product_code")) | .guid' \
   #                 | tr -d '"')
 
-  export PRODUCT_GUID=$(om-linux \
+  export PRODUCT_GUID=$(om \
                   -t https://$OPS_MGR_HOST \
                   -u $OPS_MGR_USR \
                   -p $OPS_MGR_PWD \
@@ -62,7 +62,7 @@ function check_staged_product_guid {
 
 function check_installed_cf_version {
 
-  export CF_PRODUCT_VERSION=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+  export CF_PRODUCT_VERSION=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/products" -x GET | jq '.[] | select(.installation_name | contains("cf-")) | .product_version' | tr -d '"')
 
   export CF_MAJOR_VERSION=$(echo $cf_product_version | awk -F '.' '{print $1}' )
@@ -74,7 +74,7 @@ function check_installed_cf_version {
 
 function check_installed_srt_version {
 
-  export SRT_PRODUCT_VERSION=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+  export SRT_PRODUCT_VERSION=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/products" -x GET | jq '.[] | select(.installation_name | contains("srt-")) | .product_version' | tr -d '"')
 
   export SRT_MAJOR_VERSION=$(echo $cf_product_version | awk -F '.' '{print $1}' )

@@ -5,7 +5,7 @@ function generate_cert () (
   local data=$(echo $domains | jq --raw-input -c '{"domains": (. | split(" "))}')
 
   local response=$(
-    om-linux \
+    om \
       -t "https://${OPS_MGR_HOST}" \
       -u "$OPS_MGR_USR" \
       -p "$OPS_MGR_PWD" \

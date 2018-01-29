@@ -1,12 +1,8 @@
 #!/bin/bash -e
 
-
-chmod +x om-cli/om-linux
-
 export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
 source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
-
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -18,7 +14,7 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   # Read back associate array of jobs to lbr details
   # created by hte NSX_GEN_UTIL script
   source /tmp/jobs_lbr_map.out
-  IS_NSX_ENABLED=$(om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+  IS_NSX_ENABLED=$(om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
                curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
 
 else
@@ -39,7 +35,7 @@ else
   export IS_ERRAND_WHEN_CHANGED_ENABLED=true
 fi
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD  \
@@ -101,7 +97,7 @@ fi
 # Check if the tile metadata supports syslog 
 if [ "$SUPPORTS_SYSLOG" == "true" ]; then
 
-  MYSQL_TILE_PROPERTIES=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+  MYSQL_TILE_PROPERTIES=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/properties" \
                       2>/dev/null)
   supports_syslog=$(echo $MYSQL_TILE_PROPERTIES | grep properties.syslog)
@@ -153,7 +149,7 @@ EOF
 )
 
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD  \
@@ -174,7 +170,7 @@ if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
 EOF
 )
 
-om-linux \
+om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD  \
@@ -201,7 +197,7 @@ JOBS_REQUIRING_LBR=$MYSQL_TILE_JOBS_REQUIRING_LBR
 JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 
 # Get job guids for deployment (from staged product)
-om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                               curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" 2>/dev/null \
                               | jq '.[] | .[] ' > /tmp/jobs_list.log
 
@@ -235,7 +231,7 @@ do
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
     LBR_DETAILS=${MYSQL_TILE_JOBS_LBR_MAP[$job_name]}
 
-    RESOURCE_CONFIG=$(om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+    RESOURCE_CONFIG=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config" \
                       2>/dev/null)
     #echo "Resource config : $RESOURCE_CONFIG"
@@ -320,12 +316,12 @@ do
     echo "Job: $job_name with GUID: $job_guid and RESOURCE_CONFIG : $UPDATED_RESOURCE_CONFIG"
 
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
-    om-linux \
+    om \
         -t https://$OPS_MGR_HOST \
         -k -u $OPS_MGR_USR \
         -p $OPS_MGR_PWD  \
         curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
-        -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
+        -x PUT  -d "${UPDATED_RESOURCE_CONFIG}" 2>/dev/null
 
     # final structure
     # {

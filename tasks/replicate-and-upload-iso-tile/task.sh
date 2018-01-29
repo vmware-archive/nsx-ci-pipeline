@@ -1,14 +1,12 @@
 #!/bin/bash -e
 
-PIVNET_CLI=`find ./pivnet-cli -name "*linux-amd64*"`
+export ROOT_DIR=`pwd`
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
+source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
 
 chmod +x replicator/replicator-linux
-chmod +x $PIVNET_CLI
-chmod +x om-cli/om-linux
 
-export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli:$ROOT_DIR/replicator
-source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+export PATH=$PATH:$ROOT_DIR/replicator
 
 
 INPUT_FILE_PATH=`find ./pivnet-iso-product -name "*.pivotal"`
@@ -23,7 +21,7 @@ if [[ ! -z "$REPLICATOR_NAME" ]]; then
     -path $INPUT_FILE_PATH \
     -output $OUTPUT_FILE_PATH
 
-  om-linux \
+  om \
     -t https://$OPS_MGR_HOST \
     -k -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -32,7 +30,7 @@ if [[ ! -z "$REPLICATOR_NAME" ]]; then
 else
   echo "Uploading tile without any replication"
   FILE_PATH=`find ./pivnet-product -name *.pivotal`
-  om-linux \
+  om \
     -t https://$OPS_MGR_HOST \
     -k -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD \
@@ -44,12 +42,12 @@ fi
 STEMCELL_VERSION=`cat ./pivnet-iso-product/metadata.json | jq '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Version'`
 echo "Downloading stemcell $STEMCELL_VERSION for $SERVICE_STRING product"
 
-$PIVNET_CLI login --api-token="$PIVNET_API_TOKEN"
-$PIVNET_CLI download-product-files -p stemcells -r $STEMCELL_VERSION -g "*vsphere*" --accept-eula
+pivnet-cli login --api-token="$PIVNET_API_TOKEN"
+pivnet-cli download-product-files -p stemcells -r $STEMCELL_VERSION -g "*vsphere*" --accept-eula
 
 SC_FILE_PATH=`find ./ -name *.tgz`
 
-om-linux \
+om \
   -t https://$OPS_MGR_HOST \
   --skip-ssl-validation \
   -u $OPS_MGR_USR \

@@ -1,11 +1,7 @@
 #!/bin/bash
 
-chmod +x om-cli/om-linux
-
 export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli
-source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
-
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
 
 ERT_ERRANDS=$(cat <<-EOF
 {"errands": [
@@ -20,7 +16,7 @@ ERT_ERRANDS=$(cat <<-EOF
 EOF
 )
 
-CF_GUID=`om-linux \
+CF_GUID=`om \
 	-t https://$OPS_MGR_HOST \
 	-k -u $OPS_MGR_USR \
 	-p $OPS_MGR_PWD \
@@ -28,10 +24,10 @@ CF_GUID=`om-linux \
 	-x GET \
 	| jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"'`
 
-om-linux \
+om \
 	-t https://$OPS_MGR_HOST \
 	-k -u $OPS_MGR_USR \
 	-p $OPS_MGR_PWD \
 	curl -p "/api/v0/staged/products/$CF_GUID/errands" \
 	-x PUT \
-	-d "$ERT_ERRANDS"
+	-d "$ERT_ERRANDS" 2>/dev/null

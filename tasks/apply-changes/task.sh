@@ -1,12 +1,11 @@
 #!/bin/bash -e
-chmod +x om-cli/om-linux
+
 
 export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli
-source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
 
 
-om-linux \
+om \
 	-t https://$OPS_MGR_HOST \
 	-k -u $OPS_MGR_USR \
 	-p $OPS_MGR_PWD \
@@ -14,7 +13,7 @@ om-linux \
 	-x POST \
 	-d '{ "ignore_warnings": "true" }'
 
-om-linux \
+om \
 	-t https://$OPS_MGR_HOST \
 	-k -u $OPS_MGR_USR \
 	-p $OPS_MGR_PWD \

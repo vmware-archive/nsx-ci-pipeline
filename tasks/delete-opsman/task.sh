@@ -1,4 +1,8 @@
 #!/bin/bash
+
+export ROOT_DIR=`pwd`
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
+
 export GOVC_INSECURE=1
 export GOVC_URL=$GOVC_URL
 export GOVC_USERNAME=$GOVC_USERNAME

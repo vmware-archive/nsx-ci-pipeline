@@ -1,11 +1,8 @@
 #!/bin/bash
 
-chmod +x om-cli/om-linux
 
 export ROOT_DIR=`pwd`
-export PATH=$PATH:$ROOT_DIR/om-cli
-source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
-
+source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
 
 METRICS_ERRANDS=$(cat <<-EOF
 {"errands": [
@@ -14,7 +11,7 @@ METRICS_ERRANDS=$(cat <<-EOF
 EOF
 )
 
-METRICS_GUID=`om-linux \
+METRICS_GUID=`om \
 			-t https://$OPS_MGR_HOST \
 			-k -u $OPS_MGR_USR \
 			-p $OPS_MGR_PWD \
@@ -22,7 +19,7 @@ METRICS_GUID=`om-linux \
 			-x GET \
 			| jq '.[] | select(.type | contains("p-metrics")) | .installation_name' | tr -d '"'`
 
-om-linux \
+om \
 	-t https://$OPS_MGR_HOST \
 	-k -u $OPS_MGR_USR \
 	-p $OPS_MGR_PWD \
