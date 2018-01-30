@@ -34,7 +34,10 @@ function handle_govc {
 		govc_gz=$(find . -name govc_linux_amd64.gz)
 		if [ "$govc_gz" != "" ]; then
 			gunzip $govc_gz
-			$govc=$(find . -name govc_linux_amd64)
+		fi
+		
+		govc=$(find . -name govc_linux_amd64)
+		if [ "$govc" != "" ]; then			
 			chmod +x $govc
 			cp $govc /usr/bin/govc
 		fi
