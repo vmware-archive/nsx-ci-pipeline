@@ -962,7 +962,7 @@ jobs:
         globs: [om-linux]
       passed: [configure-ops-director]
   - task: delete-installation
-    file: nsx-ci-pipeline/tasks/delete-installation/task.yml
+    file: nsx-ci-pipeline/tasks/destroy-installation/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
