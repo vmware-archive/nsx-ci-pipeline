@@ -17,6 +17,11 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   IS_NSX_ENABLED=$(om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
                curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
 
+  # if nsx is enabled
+  if [ "$IS_NSX_ENABLED" != "null" -a "$IS_NSX_ENABLED" != "" ]; then
+    IS_NSX_ENABLED=true
+  fi
+
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
@@ -170,15 +175,16 @@ if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
 EOF
 )
 
+
 om \
     -t https://$OPS_MGR_HOST \
     -u $OPS_MGR_USR \
     -p $OPS_MGR_PWD  \
-    -n $PRODUCT_NAME \
     -k curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
     -x PUT -d "$MYSQL_ERRANDS"
 
 fi
+
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then

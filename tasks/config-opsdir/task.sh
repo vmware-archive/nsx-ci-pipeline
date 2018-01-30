@@ -13,6 +13,7 @@ export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
 
 if [ -e "${NSX_GEN_OUTPUT}" ]; then
   source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
