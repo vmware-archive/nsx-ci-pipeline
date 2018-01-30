@@ -28,7 +28,7 @@ resources:
     branch: master
     private_key: {{github_private_key}}
 
-- name: pivnet-er-product
+- name: pivnet-ert-product
   type: pivnet
   source:
     api_token: {{pivnet_token}}
@@ -40,10 +40,10 @@ jobs:
   plan:
   - aggregate:
     - get: nsx-ci-pipeline
-    - get: pivnet-er-product
+    - get: pivnet-ert-product
       params:
         globs:
-        - "*.pivotal"
+        - "cf*.pivotal"
       trigger: true
     - get: om-cli
       globs: [om-linux]
@@ -52,7 +52,7 @@ jobs:
         globs:
         - "*linux-amd64*"
 
-  - task: upload-er-tile
+  - task: upload-ert-tile
     file: nsx-ci-pipeline/tasks/upload-er-tile/task.yml
     params:
       OPS_MGR_HOST: {{ops_mgr_host}}

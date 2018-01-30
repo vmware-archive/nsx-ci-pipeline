@@ -29,7 +29,7 @@ resources:
     bucket: {{s3_bucket}}
     regexp: "staging/ops-manager/ops-manager-(.*).tar"
 
-- name: pivnet-er-product
+- name: pivnet-ert-product
   type: pivnet
   source:
     api_token: {{pivnet_token}}
@@ -45,7 +45,7 @@ resources:
     product_version: {{iso_product_version}} #'1\.11\.*'
     sort_by: semver
 
-- name: pivnet-er-tarball
+- name: pivnet-ert-tarball
   type: s3
   source:
     access_key_id: {{s3_access_key_id}}

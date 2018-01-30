@@ -142,7 +142,7 @@ resources:
     product_version: {{opsman_product_version}} #'1\.11\..*'
     sort_by: semver
 
-- name: pivnet-er-product
+- name: pivnet-ert-product
   type: pivnet
   source:
     api_token: {{pivnet_token}}
@@ -347,26 +347,25 @@ jobs:
     - get: nsx-ci-pipeline
       trigger: true
       passed: [opsman-apply-changes]
-    - get: pivnet-er-product
-      params:
-        globs:
-        - "*.pivotal"
+    - get: pivnet-product
+      resource: pivnet-ert-product
+      params: { globs: ["cf*.pivotal"]}
     - get: om-cli
-      params:
-        globs: [om-linux]
+      params: { globs: [om-linux]}
       passed: [opsman-apply-changes]
     - get: pivnet-cli
-      params:
-        globs:
-        - "*linux-amd64*"
+      params: { globs: ["*linux-amd64*"]}
 
-  - task: upload-er-tile
-    file: nsx-ci-pipeline/tasks/upload-er-tile/task.yml
+  - task: upload-tile
+    file: nsx-ci-pipeline/tasks/upload-product-and-stemcell/task.yml
     params:
+      IAAS: "vsphere"
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
       PIVNET_API_TOKEN: {{pivnet_token}}
+      NO_PROXY: {{company_proxy_domain}}
+      OM_IP: {{om_ip}}
 
 - name: config-elastic-runtime-tile
   plan:

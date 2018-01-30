@@ -172,7 +172,7 @@ resources:
     product_version: {{opsman_product_version}} #'1\.11\..*'
     sort_by: semver
 
-- name: pivnet-er-product
+- name: pivnet-ert-product
   type: pivnet
   source:
     api_token: {{pivnet_token}}
@@ -397,26 +397,25 @@ jobs:
     - get: nsx-ci-pipeline
       trigger: true
       passed: [opsman-apply-changes]
-    - get: pivnet-er-product
-      params:
-        globs:
-        - "*.pivotal"
+    - get: pivnet-product
+      resource: pivnet-ert-product
+      params: { globs: ["cf*.pivotal"]}
     - get: om-cli
-      params:
-        globs: [om-linux]
+      params: { globs: [om-linux]}
       passed: [opsman-apply-changes]
     - get: pivnet-cli
-      params:
-        globs:
-        - "*linux-amd64*"
+      params: { globs: ["*linux-amd64*"]}  
 
-  - task: upload-er-tile
-    file: nsx-ci-pipeline/tasks/upload-er-tile/task.yml
+  - task: upload-tile
+    file: nsx-ci-pipeline/tasks/upload-product-and-stemcell/task.yml
     params:
+      IAAS: "vsphere"
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
       PIVNET_API_TOKEN: {{pivnet_token}}
+      NO_PROXY: {{company_proxy_domain}}
+      OM_IP: {{om_ip}}
 
 - name: config-elastic-runtime-tile
   plan:
@@ -518,7 +517,7 @@ jobs:
       TILE_ERT_DIEGO_CELL_SECURITY_GROUP: {{ert_diego_cell_security_group}}
       COMPANY_NAME: {{company_name}}
       GARDEN_NETWORK_MTU: 1454
-      
+
 - name: product-apply-changes-ert
   plan:
   - aggregate:
@@ -547,38 +546,24 @@ jobs:
     - get: nsx-ci-pipeline
       trigger: true
       passed: [product-apply-changes-ert]
-    - get: pivnet-mysql-product
-      params:
-        globs:
-        - "*.pivotal"
+    - get: pivnet-product
+      resource: pivnet-mysql-product
+      params: { globs: ["*.pivotal"]}
     - get: om-cli
-      params:
-        globs: [om-linux]
-      passed: [product-apply-changes-ert]
+      params: { globs: [om-linux]}
     - get: pivnet-cli
-      params:
-        globs:
-        - "*linux-amd64*"
+      params: { globs: ["*linux-amd64*"]}  
 
-  - task: upload-mysql-tile
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source: {repository: nsxedgegen/nsx-edge-gen-worker}
-      inputs:
-        - name: pivnet-mysql-product
-        - name: nsx-ci-pipeline
-        - name: om-cli
-        - name: pivnet-cli
-      run:
-        path: nsx-ci-pipeline/tasks/upload-pcf-service-tile/task.sh
-      params:
-        OPS_MGR_HOST: {{om_host}}
-        OPS_MGR_USR: {{om_usr}}
-        OPS_MGR_PWD: {{om_pwd}}
-        PIVNET_API_TOKEN: {{pivnet_token}}
-        SERVICE_STRING: "mysql"
+  - task: upload-tile
+    file: nsx-ci-pipeline/tasks/upload-product-and-stemcell/task.yml
+    params:
+      IAAS: "vsphere"
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+      PIVNET_API_TOKEN: {{pivnet_token}}
+      NO_PROXY: {{company_proxy_domain}}
+      OM_IP: {{om_ip}}
 
 - name: config-mysql-tile
   plan:
@@ -642,38 +627,24 @@ jobs:
     - get: nsx-ci-pipeline
       trigger: true
       passed: [product-apply-changes-mysql]
-    - get: pivnet-rabbit-product
-      params:
-        globs:
-        - "*.pivotal"
+    - get: pivnet-product
+      resource: pivnet-rabbit-product
+      params: { globs: ["*.pivotal"]}
     - get: om-cli
-      params:
-        globs: [om-linux]
-      passed: [product-apply-changes-mysql]
+      params: { globs: [om-linux]}
     - get: pivnet-cli
-      params:
-        globs:
-        - "*linux-amd64*"
+      params: { globs: ["*linux-amd64*"]}  
 
-  - task: upload-rabbit-tile
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source: {repository: nsxedgegen/nsx-edge-gen-worker}
-      inputs:
-        - name: pivnet-rabbit-product
-        - name: nsx-ci-pipeline
-        - name: om-cli
-        - name: pivnet-cli
-      run:
-        path: nsx-ci-pipeline/tasks/upload-pcf-service-tile/task.sh
-      params:
-        OPS_MGR_HOST: {{om_host}}
-        OPS_MGR_USR: {{om_usr}}
-        OPS_MGR_PWD: {{om_pwd}}
-        PIVNET_API_TOKEN: {{pivnet_token}}
-        SERVICE_STRING: "rabbit"
+  - task: upload-tile
+    file: nsx-ci-pipeline/tasks/upload-product-and-stemcell/task.yml
+    params:
+      IAAS: "vsphere"
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+      PIVNET_API_TOKEN: {{pivnet_token}}
+      NO_PROXY: {{company_proxy_domain}}
+      OM_IP: {{om_ip}}
 
 - name: config-rabbit-tile
   plan:
@@ -737,38 +708,24 @@ jobs:
     - get: nsx-ci-pipeline
       trigger: true
       passed: [product-apply-changes-rabbit]
-    - get: pivnet-scs-product
-      params:
-        globs:
-        - "*.pivotal"
+    - get: pivnet-product
+      resource: pivnet-scs-product
+      params: { globs: ["*.pivotal"]}
     - get: om-cli
-      params:
-        globs: [om-linux]
-      passed: [product-apply-changes-rabbit]
+      params: { globs: [om-linux]}
     - get: pivnet-cli
-      params:
-        globs:
-        - "*linux-amd64*"
+      params: { globs: ["*linux-amd64*"]}  
 
-  - task: upload-scs-tile
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source: {repository: nsxedgegen/nsx-edge-gen-worker}
-      inputs:
-        - name: pivnet-scs-product
-        - name: nsx-ci-pipeline
-        - name: om-cli
-        - name: pivnet-cli
-      run:
-        path: nsx-ci-pipeline/tasks/upload-pcf-service-tile/task.sh
-      params:
-        OPS_MGR_HOST: {{om_host}}
-        OPS_MGR_USR: {{om_usr}}
-        OPS_MGR_PWD: {{om_pwd}}
-        PIVNET_API_TOKEN: {{pivnet_token}}
-        SERVICE_STRING: "scs"
+  - task: upload-tile
+    file: nsx-ci-pipeline/tasks/upload-product-and-stemcell/task.yml
+    params:
+      IAAS: "vsphere"
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+      PIVNET_API_TOKEN: {{pivnet_token}}
+      NO_PROXY: {{company_proxy_domain}}
+      OM_IP: {{om_ip}}
 
 - name: config-scs-tile
   plan:
@@ -820,38 +777,24 @@ jobs:
     - get: nsx-ci-pipeline
       trigger: true
       passed: [product-apply-changes-scs]
-    - get: pivnet-iso-product
-      params:
-        globs:
-        - "*.pivotal"
+    - get: pivnet-product
+      resource: pivnet-iso-product
+      params: { globs: ["*.pivotal"]}
     - get: om-cli
-      params:
-        globs: [om-linux]
-      passed: [product-apply-changes-scs]
+      params: { globs: [om-linux]}
     - get: pivnet-cli
-      params:
-        globs:
-        - "*linux-amd64*"
+      params: { globs: ["*linux-amd64*"]}  
 
-  - task: upload-iso-tile
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source: {repository: nsxedgegen/nsx-edge-gen-worker}
-      inputs:
-        - name: pivnet-iso-product
-        - name: nsx-ci-pipeline
-        - name: om-cli
-        - name: pivnet-cli
-      run:
-        path: nsx-ci-pipeline/tasks/upload-pcf-service-tile/task.sh
-      params:
-        OPS_MGR_HOST: {{om_host}}
-        OPS_MGR_USR: {{om_usr}}
-        OPS_MGR_PWD: {{om_pwd}}
-        PIVNET_API_TOKEN: {{pivnet_token}}
-        SERVICE_STRING: "iso"
+  - task: upload-tile
+    file: nsx-ci-pipeline/tasks/upload-product-and-stemcell/task.yml
+    params:
+      IAAS: "vsphere"
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+      PIVNET_API_TOKEN: {{pivnet_token}}
+      NO_PROXY: {{company_proxy_domain}}
+      OM_IP: {{om_ip}}
 
 - name: config-iso-tile
   plan:
