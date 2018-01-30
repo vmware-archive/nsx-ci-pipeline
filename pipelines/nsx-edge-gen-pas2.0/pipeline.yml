@@ -688,6 +688,9 @@ jobs:
   plan:
   - aggregate:
     - get: nsx-ci-pipeline
+    - get: govc
+      params:
+        globs: ["*linux_amd64*"]
     - get: om-cli
       params:
         globs: [om-linux]

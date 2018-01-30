@@ -179,7 +179,6 @@ cf_properties=$(
     --arg ert_tcprouter_static_ips "$ERT_TCPROUTER_STATIC_IPS" \
     --arg ert_mysql_static_ips "$ERT_MYSQL_STATIC_IPS" \
     --arg company_name "$COMPANY_NAME" \
-    --arg garden_network_mtu "$GARDEN_NETWORK_MTU" \
     --arg ssh_static_ips "$SSH_STATIC_IPS" \
     --arg cert_pem "$SSL_CERT" \
     --arg private_key_pem "$SSL_PRIVATE_KEY" \
@@ -272,9 +271,6 @@ cf_properties=$(
       },
       ".properties.push_apps_manager_company_name": {
         "value": $company_name
-      },
-      ".diego_cell.garden_network_mtu": {
-        "value": $garden_network_mtu
       }
     }
 

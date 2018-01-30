@@ -686,8 +686,7 @@ jobs:
       trigger: true
     - get: govc
       params:
-        globs:
-        - "*linux_amd64*"
+        globs: ["*linux_amd64*"]
     - get: nsx-edge-gen
 
   - task: delete-opsman
