@@ -86,11 +86,11 @@ params:
   ESG_GO_ROUTER_ISOZONE_3_SSL_TERM_1:
   
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: nsx-edge-gen
 
 outputs:
   - name: nsx-gen-output
   
 run:
-  path: concourse-vsphere/tasks/nsx-edge-list/task.sh
+  path: nsx-ci-pipeline/tasks/nsx-edge-list/task.sh

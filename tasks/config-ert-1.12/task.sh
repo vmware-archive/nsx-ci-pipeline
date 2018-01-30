@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/bin/bash -e
 
 
 
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
-
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -23,7 +22,6 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
 
   IS_NSX_ENABLED=$(om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
                curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
-
 
   # if nsx is enabled
   if [ "$IS_NSX_ENABLED" != "null" -a "$IS_NSX_ENABLED" != "" ]; then
@@ -47,13 +45,14 @@ check_bosh_version
 check_available_product_version "cf"
 
 om \
-    -t https://$OPS_MGR_HOST \
-    -u $OPS_MGR_USR \
-    -p $OPS_MGR_PWD  \
-    -k stage-product \
-    -p $PRODUCT_NAME \
-    -v $PRODUCT_VERSION
-  
+  -t https://$OPS_MGR_HOST \
+  --skip-ssl-validation \
+  -u $OPS_MGR_USR \
+  -p $OPS_MGR_PWD \
+  -k stage-product \
+  -p $PRODUCT_NAME \
+  -v $PRODUCT_VERSION
+
 check_staged_product_guid "cf-"
 
 # when-changed option for errands is only applicable from Ops Mgr 1.10+
@@ -83,35 +82,24 @@ function fn_get_azs {
      echo $azs_csv | awk -F "," -v braceopen='{' -v braceclose='}' -v name='"name":' -v quote='"' -v OFS='"},{"name":"' '$1=$1 {print braceopen name quote $0 quote braceclose}'
 }
 
-OTHER_AVAILABILITY_ZONES=$(fn_get_azs $AZS_ERT)
-
-
-# if [[ -z "$SSL_CERT" ]]; then
-# DOMAINS=$(cat <<-EOF
-#   {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
-# EOF
-# )
-
-#   CERTIFICATES=`om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$DOMAINS"`
-
-#   export SSL_CERT=`echo $CERTIFICATES | jq '.certificate'`
-#   export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key'`
-#   # echo "SSL_CERT is" $SSL_CERT
-#   # echo "SSL_PRIVATE_KEY is" $SSL_PRIVATE_KEY
-# else
-#   echo "Using certs passed in YML"
-# fi
-
-
-# saml_cert_domains=$(cat <<-EOF
-#   {"domains": ["*.$SYSTEM_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
-# EOF
-# )
-
-# saml_cert_response=`om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$saml_cert_domains"`
-
-# SAML_SSL_CERT=$(echo $saml_cert_response | jq --raw-output '.certificate')
-# SAML_SSL_PRIVATE_KEY=$(echo $saml_cert_response | jq --raw-output '.key')
+cf_network=$(
+  jq -n \
+    --arg network_name "$NETWORK_NAME" \
+    --arg other_azs "$AZS_ERT" \
+    --arg singleton_az "$AZ_ERT_SINGLETON" \
+    '
+    {
+      "network": {
+        "name": $network_name
+      },
+      "other_availability_zones": ($other_azs | split(",") | map({name: .})),
+      "singleton_availability_zone": {
+        "name": $singleton_az
+      }
+    }
+    '    
+    
+)
 
 
 set -eu
@@ -144,17 +132,45 @@ if [[ -z "$SAML_SSL_CERT" ]]; then
   SAML_SSL_PRIVATE_KEY=$(echo $saml_certificates | jq --raw-output '.key')
 fi
 
-# SABHA 
-# Change in ERT 2.0 
-# from: ".push-apps-manager.company_name"
-# to: ".properties.push_apps_manager_company_name"
 
-# Generate CredHub passwd
-if [ "$CREDHUB_PASSWORD" == "" ]; then
-  CREDHUB_PASSWORD=$(echo $OPSMAN_PASSWORD{,,,,} | sed -e 's/ //g' | cut -c1-25)
+# API calls using OM Cli
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  available-products -n cf
+# output:
+# +------+---------+
+# | NAME | VERSION |
+# +------+---------+
+# | cf   | 1.11.0  |
+# +------+---------+
+
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/installation_settings"
+# output:
+# full dump of all properties for all products
+
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p  "/api/v0/staged/products/{app-guid}/properties"
+# output: dump of properties for a specific staged product
+
+# To get the bosh cloud config contianing networks and azs:
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.networks```
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/cloud_config" | jq .cloud_config.azs```
+
+# Just bosh director manifest
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/deployed/director/manifest"
+
+# Get the installation details
+# om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  curl -p "/api/installation_settings" | jq .infrastructure.networks
+
+has_c2c_enable_network=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.container_networking\.enable" | wc -l || true)
+has_c2c_disable_network=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.container_networking\.disable" | wc -l || true)
+has_garden_network_pool=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.garden_network_pool" | wc -l || true)
+has_mysql_backup=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.mysql_backups" | wc -l || true)
+has_credhub=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.credhub_key_encryption_passwords" | wc -l || true)
+has_cni_selection=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.container_networking_interface_plugin" | wc -l || true)
+
+
+if [[ -z "$CREDHUB_PASSWORD" ]]; then
+  CREDHUB_PASSWORD=$(echo $OPS_MGR_PWD{,,,,} | sed -e 's/ //g' | cut -c1-25)
 fi
-
-
+    
 
 cf_properties=$(
   jq -n \
@@ -179,7 +195,6 @@ cf_properties=$(
     --arg ert_tcprouter_static_ips "$ERT_TCPROUTER_STATIC_IPS" \
     --arg ert_mysql_static_ips "$ERT_MYSQL_STATIC_IPS" \
     --arg company_name "$COMPANY_NAME" \
-    --arg garden_network_mtu "$GARDEN_NETWORK_MTU" \
     --arg ssh_static_ips "$SSH_STATIC_IPS" \
     --arg cert_pem "$SSL_CERT" \
     --arg private_key_pem "$SSL_PRIVATE_KEY" \
@@ -226,9 +241,20 @@ cf_properties=$(
     --arg mysql_backups_scp_key "$MYSQL_BACKUPS_SCP_KEY" \
     --arg mysql_backups_scp_destination "$MYSQL_BACKUPS_SCP_DESTINATION" \
     --arg mysql_backups_scp_cron_schedule "$MYSQL_BACKUPS_SCP_CRON_SCHEDULE" \
-    --arg container_networking_nw_cidr "$CONTAINER_NETWORKING_NW_CIDR" \
     --arg credhub_password "$CREDHUB_PASSWORD" \
+    --arg garden_network_mtu "$GARDEN_NETWORK_MTU" \
     --arg container_networking_interface_plugin "$CONTAINER_NETWORKING_INTERFACE_PLUGIN" \
+    --arg container_networking_nw_cidr "$CONTAINER_NETWORKING_NW_CIDR" \
+    --arg has_mysql_backup "$has_mysql_backup" \
+    --arg has_credhub "$has_credhub" \
+    --arg has_c2c_enable_network "$has_c2c_enable_network" \
+    --arg has_c2c_disable_network "$has_c2c_disable_network" \
+    --arg has_garden_network_pool "$has_garden_network_pool" \
+    --arg supports_c2c  "$SUPPORTS_C2C" \
+    --arg has_cni_selection "$has_cni_selection" \
+    --arg tile_ert_enable_c2c "$TILE_ERT_ENABLE_C2C" \
+    --arg tile_ert_c2c_network_cidr "$TILE_ERT_C2C_NETWORK_CIDR" \
+    --arg tile_ert_c2c_vtep_port "$TILE_ERT_C2C_VTEP_PORT" \
     '
     {
       ".properties.system_blobstore": {
@@ -236,9 +262,6 @@ cf_properties=$(
       },
       ".properties.logger_endpoint_port": {
         "value": $loggregator_endpoint_port
-      },
-      ".properties.security_acknowledgement": {
-        "value": $security_acknowledgement
       },
       ".cloud_controller.system_domain": {
         "value": $system_domain
@@ -270,18 +293,20 @@ cf_properties=$(
       ".mysql_monitor.recipient_email": {
         "value": $mysql_monitor_email
       },
-      ".properties.push_apps_manager_company_name": {
+      ".push-apps-manager.company_name": {
         "value": $company_name
+      },
+      ".properties.security_acknowledgement": {
+        "value": $security_acknowledgement
       },
       ".diego_cell.garden_network_mtu": {
         "value": $garden_network_mtu
       }
     }
-
     +
 
     # Route Services
-    if $route_services == "enable" then
+    if "$route_services" == "enable" then
      {
        ".properties.route_services": {
          "value": "enable"
@@ -323,44 +348,27 @@ cf_properties=$(
     # SSL Termination
     # SABHA - Change structure to take multiple certs.. for PCF 2.0
     {
-      ".properties.networking_poe_ssl_certs": {
-        "value": [ 
-          {
-            "name": "certificate",
-            "certificate": {
-              "cert_pem": $cert_pem,
-              "private_key_pem": $private_key_pem
-            }
-          } 
-        ]
+      ".properties.networking_poe_ssl_cert": {
+        "value": {            
+            "cert_pem": $cert_pem,
+            "private_key_pem": $private_key_pem
+        }
       }
     }
 
     +
-
-    # SABHA - Credhub integration
-    {
-     ".properties.credhub_key_encryption_passwords": {
-        "value": [
-          {                  
-            "name": "primary-encryption-key",
-            "key": { "secret": $credhub_password },
-            "primary": true      
-          }
-        ]
-      }
-    }
-
-    +
-
 
     # SABHA - NSX-V only
+    if $has_cni_selection != "0" then
     {
       ".properties.container_networking_interface_plugin": {
         "value": "silk"
       }
     }
-  
+    else
+    .
+    end
+
     +
 
     # IF NSX-V Enabled
@@ -544,10 +552,50 @@ cf_properties=$(
       }
     }
 
-    +
+   +
 
+  if $supports_c2c == "true" then
+    if $tile_ert_enable_c2c == "enable" then
+      if $has_c2c_enable_network != "0" then
+       {
+          ".properties.container_networking.enable.network_cidr": {
+              "value": "$tile_ert_c2c_network_cidr"
+          },
+          ".properties.container_networking.enable.vtep_port": {
+            "value": "$tile_ert_c2c_vtep_port"
+          }
+       }
+      else
+      .
+      end
+    else
+      if $has_c2c_disable_network != "0" then
+      {
+        ".properties.container_networking.disable.garden_network_pool": {
+            "value": "10.254.0.0/22"
+        }
+      }
+      else
+      .
+      end
+    end
+
+  else
+    if $has_garden_network_pool != "0" then
+      {
+        ".diego_cell.garden_network_pool": {
+          "value": "10.254.0.0/22"
+        }
+      }
+    else
+    .
+    end
+  end
+
+
+   +
     # MySQL Backups
-    if $mysql_backups == "s3" then
+    if $has_mysql_backup != "0" and $mysql_backups == "s3" then
       {
         ".properties.mysql_backups": {
           "value": "s3"
@@ -571,7 +619,7 @@ cf_properties=$(
           "value": $mysql_backups_s3_cron_schedule
         }
       }
-    elif $mysql_backups == "scp" then
+    elif $has_mysql_backup != "0" and $mysql_backups == "scp" then
       {
         ".properties.mysql_backups": {
           "value": "scp"
@@ -595,36 +643,90 @@ cf_properties=$(
           "value": $mysql_backups_scp_cron_schedule
         }
       }
-    else
-      .
-    end
-    '
-)
-
-## SABHA - removed cidr
-# ".properties.container_networking_network_cidr": {
-#         "value": $container_networking_nw_cidr
-#       },
-      
-
-cf_network=$(
-  jq -n \
-    --arg network_name "$NETWORK_NAME" \
-    --arg other_azs "$AZS_ERT" \
-    --arg singleton_az "$AZ_ERT_SINGLETON" \
-    '
+    elif $has_mysql_backup != "0"  then 
     {
-      "network": {
-        "name": $network_name
-      },
-      "other_availability_zones": ($other_azs | split(",") | map({name: .})),
-      "singleton_availability_zone": {
-        "name": $singleton_az
+      ".properties.mysql_backups": {
+        "value": "disable"
       }
     }
-    '    
-    
+    else
+      .
+    end    
+
+    + 
+
+    # SABHA - Credhub integration
+    if $has_credhub != "0"  then 
+    {
+     ".properties.credhub_key_encryption_passwords": {
+        "value": [
+          {                  
+            "name": "primary-encryption-key",
+            "key": { "secret": $credhub_password },
+            "primary": true      
+          }
+        ]
+      }
+    }
+    else
+      .
+    end 
+'
 )
+
+
+# Not getting used in PCF1.12
+# if [[ "$SSL_TERMINATION" == "haproxy" ]]; then
+
+# echo "Terminating SSL on HAProxy"
+# CF_PROPERTIES=$(cat <<-EOF
+# $CF_PROPERTIES
+#   ".properties.networking_point_of_entry": {
+#     "value": "haproxy"
+#   },
+#   ".properties.networking_point_of_entry.haproxy.ssl_rsa_certificate": {
+#     "value": {
+#       "cert_pem": $SSL_CERT,
+#       "private_key_pem": $SSL_PRIVATE_KEY
+#     }
+#   },
+# EOF
+# )
+
+# elif [[ "$SSL_TERMINATION" == "external_ssl" ]]; then
+# echo "Terminating SSL on GoRouters"
+
+# CF_PROPERTIES=$(cat <<-EOF
+# $CF_PROPERTIES
+#   ".properties.networking_point_of_entry": {
+#     "value": "external_ssl"
+#   },
+#   ".properties.networking_point_of_entry.external_ssl.ssl_rsa_certificate": {
+#     "value": {
+#       "cert_pem": $SSL_CERT,
+#       "private_key_pem": $SSL_PRIVATE_KEY
+#     }
+#   },
+# EOF
+# )
+
+# elif [[ "$SSL_TERMINATION" == "external_non_ssl" ]]; then
+# echo "Terminating SSL on Load Balancers"
+# CF_PROPERTIES=$(cat <<-EOF
+# $CF_PROPERTIES
+#   ".properties.networking_point_of_entry": {
+#     "value": "external_non_ssl"
+#   },
+
+# EOF
+# )
+# fi
+
+
+
+
+
+# End of PROPERTIES block
 
 cf_resources=$(
   jq -n \
@@ -687,21 +789,20 @@ om \
     -pr "$cf_resources"
 
 
-
 # Set Errands to on Demand for 1.10
 if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
   echo "applying errand configuration"
   sleep 6
   ERT_ERRANDS=$(cat <<-EOF
 {"errands":[
-  {"name":"smoke_tests","post_deploy":"when-changed"},
+  {"name":"smoke-tests","post_deploy":"when-changed"},
   {"name":"push-usage-service","post_deploy":"when-changed"},
   {"name":"push-apps-manager","post_deploy":"when-changed"},
-  {"name":"deploy-notifications","post_deploy":"when-changed"},
-  {"name":"deploy-notifications-ui","post_deploy":"when-changed"},
+  {"name":"notifications","post_deploy":"when-changed"},
+  {"name":"notifications-ui","post_deploy":"when-changed"},
   {"name":"push-pivotal-account","post_deploy":"when-changed"},
-  {"name":"deploy-autoscaling","post_deploy":"when-changed"},
-  {"name":"register-broker","post_deploy":"when-changed"},
+  {"name":"autoscaling","post_deploy":"when-changed"},
+  {"name":"autoscaling-register-broker","post_deploy":"when-changed"},
   {"name":"nfsbrokerpush","post_deploy":"when-changed"}
 ]}
 EOF
@@ -713,7 +814,6 @@ EOF
       -p $OPS_MGR_PWD \
       -k curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
       -x PUT -d "$ERT_ERRANDS"
-
 fi
 
 # if nsx is not enabled, skip remaining steps
@@ -881,3 +981,5 @@ do
 
   fi
 done
+
+

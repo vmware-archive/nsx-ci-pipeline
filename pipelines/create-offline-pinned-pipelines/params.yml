@@ -1,0 +1,10 @@
+s3_endpoint:
+s3_bucket:
+s3_access_key_id:
+s3_secret_access_key:
+pivnet_token:
+operations_manager_regex:
+elastic_runtime_regex:
+atc_external_url:
+gpg_public_key_contents:
+gpg_public_key_email:

@@ -16,10 +16,10 @@ params:
 
 inputs:
   - name: pivnet-er-product
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: pivnet-cli
   - name: replicator
 
 run:
-  path: concourse-vsphere/tasks/replicate-and-upload-iso-tile/task.sh
+  path: nsx-ci-pipeline/tasks/replicate-and-upload-iso-tile/task.sh

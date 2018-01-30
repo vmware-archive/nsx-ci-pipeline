@@ -2,7 +2,7 @@
 set -e
 
 export ROOT_DIR=`pwd`
-source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output

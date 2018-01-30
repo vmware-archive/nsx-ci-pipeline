@@ -22,9 +22,9 @@ params:
   TILE_RABBIT_RABBITMQ_HAPROXY_SECURITY_GROUP:
   
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: nsx-gen-output
 
 run:
-  path: concourse-vsphere/tasks/config-rabbit/task.sh
+  path: nsx-ci-pipeline/tasks/config-rabbit/task.sh

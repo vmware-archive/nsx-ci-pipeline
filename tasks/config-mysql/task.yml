@@ -23,9 +23,9 @@ params:
   TILE_MYSQL_PROXY_SECURITY_GROUP: 
 
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: nsx-gen-output
 
 run:
-  path: concourse-vsphere/tasks/config-mysql/task.sh
+  path: nsx-ci-pipeline/tasks/config-mysql/task.sh

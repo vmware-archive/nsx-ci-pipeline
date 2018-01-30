@@ -23,7 +23,8 @@ params:
   GOVC_RESOURCE_POOL:
 
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
+  - name: govc
 
 run:
-  path: concourse-vsphere/tasks/delete-opsman/task.sh
+  path: nsx-ci-pipeline/tasks/delete-opsman/task.sh

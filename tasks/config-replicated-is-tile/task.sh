@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
 export ROOT_DIR=`pwd`
-source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
-source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
 
 
 export SCRIPT_DIR=$(dirname $0)
@@ -297,7 +297,7 @@ do
 
   match=$(echo $job_name | grep -e $JOBS_REQUIRING_LBR_PATTERN  || true)
   if [ "$match" != "" -o $SECURITY_GROUP != "" ]; then
-    echo "$job requires Loadbalancer or security group..."
+    echo "$job_name requires Loadbalancer or security group..."
 
     # Check if User has specified their own security group
     # Club that with an auto-security group based on product guid by Bosh 

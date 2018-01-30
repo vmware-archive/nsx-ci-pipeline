@@ -37,4 +37,4 @@ inputs:
   - name: nsx-gen-output
 
 run:
-  path: concourse-vsphere/tasks/config-rabbitmq/task.sh
+  path: nsx-ci-pipeline/tasks/config-rabbitmq/task.sh

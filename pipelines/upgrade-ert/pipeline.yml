@@ -21,10 +21,10 @@ resources:
     repository: pivnet-cli
     access_token: {{github_token}}
 
-- name: concourse-vsphere
+- name: nsx-ci-pipeline
   type: git
   source:
-    uri: git@github.com:rahul-kj/concourse-vsphere
+    uri: git@github.com:rahul-kj/nsx-ci-pipeline
     branch: master
     private_key: {{github_private_key}}
 
@@ -39,7 +39,7 @@ jobs:
 - name: upgrade-elastic-runtime-tile
   plan:
   - aggregate:
-    - get: concourse-vsphere
+    - get: nsx-ci-pipeline
     - get: pivnet-er-product
       params:
         globs:
@@ -53,7 +53,7 @@ jobs:
         - "*linux-amd64*"
 
   - task: upload-er-tile
-    file: concourse-vsphere/tasks/upload-er-tile/task.yml
+    file: nsx-ci-pipeline/tasks/upload-er-tile/task.yml
     params:
       OPS_MGR_HOST: {{ops_mgr_host}}
       OPS_MGR_USR: {{ops_mgr_usr}}
@@ -63,7 +63,7 @@ jobs:
 - name: config-elastic-runtime-tile
   plan:
   - aggregate:
-    - get: concourse-vsphere
+    - get: nsx-ci-pipeline
       trigger: true
       # passed: [upgrade-elastic-runtime-tile]
     - get: om-cli
@@ -71,7 +71,7 @@ jobs:
       passed: [upgrade-elastic-runtime-tile]
 
   - task: config-er-tile
-    file: concourse-vsphere/tasks/config-ert/task.yml
+    file: nsx-ci-pipeline/tasks/config-ert/task.yml
     params:
       OPS_MGR_HOST: {{ops_mgr_host}}
       OPS_MGR_USR: {{ops_mgr_usr}}
@@ -118,7 +118,7 @@ jobs:
 - name: enable-errands
   plan:
   - aggregate:
-    - get: concourse-vsphere
+    - get: nsx-ci-pipeline
       trigger: true
       passed: [config-elastic-runtime-tile]
     - get: om-cli
@@ -126,7 +126,7 @@ jobs:
       passed: [config-elastic-runtime-tile]
 
   - task: enable-ert-errands
-    file: concourse-vsphere/tasks/enable-ert-errands/task.yml
+    file: nsx-ci-pipeline/tasks/enable-ert-errands/task.yml
     params:
       OPS_MGR_HOST: {{ops_mgr_host}}
       OPS_MGR_USR: {{ops_mgr_usr}}
@@ -135,7 +135,7 @@ jobs:
 - name: product-apply-changes
   plan:
   - aggregate:
-    - get: concourse-vsphere
+    - get: nsx-ci-pipeline
       trigger: true
       passed: [enable-errands]
     - get: om-cli
@@ -143,7 +143,7 @@ jobs:
       passed: [enable-errands]
 
   - task: apply-changes
-    file: concourse-vsphere/tasks/apply-changes/task.yml
+    file: nsx-ci-pipeline/tasks/apply-changes/task.yml
     params:
       OPS_MGR_HOST: {{ops_mgr_host}}
       OPS_MGR_USR: {{ops_mgr_usr}}
@@ -152,7 +152,7 @@ jobs:
 - name: disable-errands
   plan:
   - aggregate:
-    - get: concourse-vsphere
+    - get: nsx-ci-pipeline
       trigger: true
       passed: [product-apply-changes]
     - get: om-cli
@@ -160,7 +160,7 @@ jobs:
       passed: [product-apply-changes]
 
   - task: disable-ert-errands
-    file: concourse-vsphere/tasks/disable-ert-errands/task.yml
+    file: nsx-ci-pipeline/tasks/disable-ert-errands/task.yml
     params:
       OPS_MGR_HOST: {{ops_mgr_host}}
       OPS_MGR_USR: {{ops_mgr_usr}}
@@ -169,7 +169,7 @@ jobs:
 - name: final-apply-changes
   plan:
   - aggregate:
-    - get: concourse-vsphere
+    - get: nsx-ci-pipeline
       trigger: true
       passed: [disable-errands]
     - get: om-cli
@@ -177,7 +177,7 @@ jobs:
       passed: [disable-errands]
 
   - task: apply-changes
-    file: concourse-vsphere/tasks/apply-changes/task.yml
+    file: nsx-ci-pipeline/tasks/apply-changes/task.yml
     params:
       OPS_MGR_HOST: {{ops_mgr_host}}
       OPS_MGR_USR: {{ops_mgr_usr}}

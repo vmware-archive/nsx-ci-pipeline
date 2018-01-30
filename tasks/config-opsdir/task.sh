@@ -2,8 +2,8 @@
 
 
 export ROOT_DIR=`pwd`
-source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
-source $ROOT_DIR/concourse-vsphere/functions/check_versions.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
 
 
 export SCRIPT_DIR=$(dirname $0)

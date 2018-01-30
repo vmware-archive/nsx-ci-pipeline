@@ -56,6 +56,12 @@ function check_staged_product_guid {
                   | grep "guid" | grep "\"$product_code" \
                   | awk -F '"' '{print $4}' )
 
+   export STAGED_PRODUCT_PROPERTIES=$(om \
+                            -t https://$OPS_MGR_HOST \
+                            -k -u $OPS_MGR_USR \
+                            -p $OPS_MGR_PWD  \
+                            curl -p "/api/v0/staged/products/${PRODUCT_GUID}/properties" \
+                            2>/dev/null)
 
   echo "$PRODUCT_GUID"
 }

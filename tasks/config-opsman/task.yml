@@ -13,8 +13,8 @@ params:
   OM_DECRYPTION_PWD:
 
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
 
 run:
-  path: concourse-vsphere/tasks/config-opsman/task.sh
+  path: nsx-ci-pipeline/tasks/config-opsman/task.sh

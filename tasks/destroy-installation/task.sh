@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export ROOT_DIR=`pwd`
-source $ROOT_DIR/concourse-vsphere/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 
 om \
 	-t https://$OPS_MGR_HOST \

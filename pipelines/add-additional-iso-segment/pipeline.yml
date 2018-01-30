@@ -89,7 +89,7 @@ resources:
     repository: pivnet-cli
     access_token: {{github_token}}
 
-- name: concourse-vsphere
+- name: nsx-ci-pipeline
   type: git
   source:
     uri: https://github.com/cf-platform-eng/nsx-ci-pipeline.git
@@ -123,7 +123,7 @@ jobs:
 - name: replicate-and-upload-iso-tile
   plan:
   - aggregate:
-    - get: concourse-vsphere
+    - get: nsx-ci-pipeline
     - get: pivnet-iso-product
       params:
         globs:
@@ -150,12 +150,12 @@ jobs:
         source: {repository: nsxedgegen/nsx-edge-gen-worker}
       inputs:
         - name: pivnet-iso-product
-        - name: concourse-vsphere
+        - name: nsx-ci-pipeline
         - name: om-cli
         - name: pivnet-cli
         - name: replicator
       run:
-        path: concourse-vsphere/tasks/replicate-and-upload-iso-tile/task.sh
+        path: nsx-ci-pipeline/tasks/replicate-and-upload-iso-tile/task.sh
       params:
         OPS_MGR_HOST: {{om_host}}
         OPS_MGR_USR: {{om_usr}}
@@ -167,7 +167,7 @@ jobs:
 - name: config-iso-product
   plan:
   - aggregate:
-    - get: concourse-vsphere
+    - get: nsx-ci-pipeline
     - get: pivnet-iso-product
       params:
         globs:
@@ -182,11 +182,11 @@ jobs:
     - get: nsx-edge-gen
 
   - task: nsx-edge-list
-    file: concourse-vsphere/tasks/nsx-edge-list/task.yml
+    file: nsx-ci-pipeline/tasks/nsx-edge-list/task.yml
     params: *nsx-edge-params
 
   - task: config-iso-tile
-    file: concourse-vsphere/tasks/config-replicated-is-tile/task.yml
+    file: nsx-ci-pipeline/tasks/config-replicated-is-tile/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
@@ -225,7 +225,7 @@ jobs:
 - name: apply-changes
   plan:
   - aggregate:
-    - get: concourse-vsphere
+    - get: nsx-ci-pipeline
       trigger: true
       passed: [config-iso-product]
     - get: pivnet-iso-product
@@ -242,7 +242,7 @@ jobs:
       passed: [config-iso-product]
 
   - task: apply-changes
-    file: concourse-vsphere/tasks/apply-changes/task.yml
+    file: nsx-ci-pipeline/tasks/apply-changes/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}

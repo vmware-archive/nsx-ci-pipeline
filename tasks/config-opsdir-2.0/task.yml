@@ -81,9 +81,9 @@ params:
   
   
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: nsx-gen-output
   
 run:
-  path: concourse-vsphere/tasks/config-opsdir-2.0/task.sh
+  path: nsx-ci-pipeline/tasks/config-opsdir-2.0/task.sh
