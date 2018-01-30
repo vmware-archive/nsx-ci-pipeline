@@ -28,4 +28,5 @@ for opsman in ${possible_opsmans}; do
     set -e    
   fi
   govc vm.destroy -vm.ipath=${opsman}
+  echo "Done destroying Opsman: ${opsman}"
 done

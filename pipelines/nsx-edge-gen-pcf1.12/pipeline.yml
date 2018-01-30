@@ -693,12 +693,19 @@ jobs:
   - task: delete-opsman
     file: nsx-ci-pipeline/tasks/delete-opsman/task.yml
     params:
+      OPS_MGR_HOST: {{om_host}}
+      OPS_MGR_USR: {{om_usr}}
+      OPS_MGR_PWD: {{om_pwd}}
+      OM_VM_NAME: {{om_vm_name}}
       GOVC_INSECURE: 1
       GOVC_URL: {{vcenter_host}}
       GOVC_USERNAME: {{vcenter_usr}}
       GOVC_PASSWORD: {{vcenter_pwd}}
       GOVC_DATACENTER: {{vcenter_data_center}}
       OM_VM_NAME: {{om_vm_name}}
+      GOVC_NETWORK: {{om_vm_network}}
+      GOVC_RESOURCE_POOL: {{om_resource_pool}}
+      GOVC_HOST: {{om_ip}}
 
   - task: nsx-edge-destroy
     file: nsx-ci-pipeline/tasks/nsx-edge-destroy/task.yml
