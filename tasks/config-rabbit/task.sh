@@ -22,7 +22,6 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
     IS_NSX_ENABLED=true
   fi
 
-
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
@@ -30,7 +29,7 @@ fi
 
 # Check if Bosh Director is v1.11 or higher
 check_bosh_version
-check_product_version "p-rabbitmq-"
+check_available_product_version "p-rabbitmq"
 
 
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
@@ -50,7 +49,7 @@ om \
     -p $PRODUCT_NAME \
     -v $PRODUCT_VERSION
 
-check_staged_product_guid "p-rabbitmq-"
+check_staged_product_guid "p-rabbitmq"
 
 
 function fn_get_azs {

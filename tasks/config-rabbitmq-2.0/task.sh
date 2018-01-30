@@ -32,7 +32,7 @@ fi
 
 # Check if Bosh Director is v1.11 or higher
 check_bosh_version
-check_product_version "p-rabbitmq-"
+check_available_product_version "p-rabbitmq"
 
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
 if [ $BOSH_MAJOR_VERSION -le 1 ]; then
@@ -51,7 +51,7 @@ om \
     -p $PRODUCT_NAME \
     -v $PRODUCT_VERSION
 
-check_staged_product_guid "p-rabbitmq-"
+check_staged_product_guid "p-rabbitmq"
 
 
 function fn_get_azs {
@@ -100,12 +100,6 @@ $PROPERTIES
       "password": "$TILE_RABBIT_ADMIN_PASSWD"
     }
   },
-  ".rabbitmq-server.server_admin_credentials": {
-    "value": {
-      "identity": "$TILE_RABBIT_ADMIN_USER",
-      "password": "$TILE_RABBIT_ADMIN_PASSWD"
-    }
-  },
   ".properties.syslog_selector": {
     "value": "disabled"
   },
@@ -116,7 +110,7 @@ $PROPERTIES
     "value": $TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA
   },
   ".properties.on_demand_broker_plan_1_rabbitmq_az_placement": {
-    "value": ["$RABBITMQ_SINGLETON_JOB_AZ"]
+    "value": ["$TILE_AZ_RABBIT_SINGLETON"]
   },
   ".properties.on_demand_broker_plan_1_disk_limit_acknowledgement": {
     "value": ["acknowledge"]

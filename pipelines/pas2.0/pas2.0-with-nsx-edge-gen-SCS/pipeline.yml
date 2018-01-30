@@ -713,6 +713,7 @@ jobs:
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
       NETWORK_NAME: {{services_network_name}}
+      SERVICE_NETWORK_NAME: {{dynamic_services_network_name}}
       TILE_AZ_RABBIT_SINGLETON: {{tile_az_rabbit_singleton}}
       TILE_AZS_RABBIT: {{tile_azs_rabbit}}
       TILE_RABBIT_PROXY_IPS: {{tile_rabbit_proxy_ips}}
@@ -722,6 +723,7 @@ jobs:
       TILE_RABBIT_PROXY_INSTANCES: {{tile_rabbit_proxy_instances}}
       TILE_RABBIT_SERVER_INSTANCES: {{tile_rabbit_server_instances}}
       TILE_RABBIT_RABBITMQ_HAPROXY_SECURITY_GROUP: {{tile_rabbit_haproxy_security_group}}
+      TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA: {{tile_rabbit_on_demand_plan_1_instance_quota}}
 
 - name: product-apply-changes-rabbit
   plan:

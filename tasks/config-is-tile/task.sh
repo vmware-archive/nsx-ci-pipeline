@@ -33,6 +33,8 @@ fi
 # Check if Bosh Director is v1.11 or higher
 check_bosh_version
 check_installed_cf_version
+check_available_product_version "p-isolation"
+
 #check_installed_srt_version
 
 # Can only support one version of the default isolation segment tile
