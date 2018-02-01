@@ -936,7 +936,7 @@ do
 
     nsx_security_group_json=$(jq -n \
                               --arg nsx_security_groups $SECURITY_GROUP \
-                              '{ "nsx_security_groups": [  ($nsx_security_groups | split(",") ) ] }')
+                              '{ "nsx_security_groups": ($nsx_security_groups | split(",") ) }')
 
     #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
     echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
