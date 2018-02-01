@@ -287,7 +287,7 @@ director_config=$(cat <<-EOF
 {
   "ntp_servers_string": "$OM_NTP_SERVERS",
   "resurrector_enabled": true,
-  "max_threads": "$MAX_THREADS",
+  "max_threads": null,
   "database_type": "internal",
   "blobstore_type": "local",
   "director_hostname": "$OM_DIR_HOSTNAME"
@@ -313,14 +313,15 @@ jq -n \
   '
   if $singleton_az != "" then
   {
-    "singleton_availability_zone": $singleton_az,
+    "singleton_availability_zone": { "name": $singleton_az },
     "network": { "name": $network }
   }
-else 
+  else 
   {
     "singleton_availability_zone": { "name": ($infra_availability_zones | split(",") | .[0]) },
     "network": { "name": $network }
   }
+  end
   '
 )
 

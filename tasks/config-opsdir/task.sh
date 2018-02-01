@@ -303,7 +303,7 @@ DIRECTOR_CONFIG=$(cat <<-EOF
   "ntp_servers_string": "$OM_NTP_SERVERS",
   "metrics_ip": null,
   "resurrector_enabled": true,
-  "max_threads": "$MAX_THREADS",
+  "max_threads": null,
   "database_type": "internal",
   "blobstore_type": "local",
   "director_hostname": "$OM_DIR_HOSTNAME"

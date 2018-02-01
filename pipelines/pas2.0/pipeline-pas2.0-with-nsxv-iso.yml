@@ -101,10 +101,6 @@ groups:
   jobs:
   - nsx-edge-destroy
 
-- name: opsmgr-nsx-edge-destroy
-  jobs:
-  - wipe-opsmgr-nsx-edge
-
 resource_types:
 - name: pivnet
   type: docker-image
@@ -316,7 +312,6 @@ jobs:
       DYNAMIC_SERVICES_NW_DNS: {{dynamic_services_nw_dns}}
       DYNAMIC_SERVICES_NW_GATEWAY: {{dynamic_services_nw_gateway}}
       DYNAMIC_SERVICES_NW_AZ: {{dynamic_services_nw_az}}
-      MAX_THREADS: {{max_threads}}
       AZ_1: {{az_1_name}}
       AZ_1_CLUSTER_NAME: {{az_1_cluster_name}}
       AZ_1_RP_NAME: {{az_1_rp_name}}
@@ -327,7 +322,7 @@ jobs:
       AZ_3_CLUSTER_NAME: {{az_3_cluster_name}}
       AZ_3_RP_NAME: {{az_3_rp_name}}
       AZ_SINGLETON: {{az_singleton}}
-      OM_NTP_SERVERS: {{ntp_servers}}
+      OM_NTP_SERVERS: {{om_ntp_servers}}
       OM_DIR_HOSTNAME: {{ops_dir_hostname}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
       ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}

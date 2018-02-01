@@ -311,7 +311,7 @@ jobs:
       AZ_3_CUSTER_NAME: {{az_3_cluster_name}}
       AZ_3_RP_NAME: {{az_3_rp_name}}
       AZ_SINGLETON: {{az_singleton}}
-      OM_NTP_SERVERS: {{ntp_servers}}
+      OM_NTP_SERVERS: {{om_ntp_servers}}
       OM_DIR_HOSTNAME: {{ops_dir_hostname}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
       ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
