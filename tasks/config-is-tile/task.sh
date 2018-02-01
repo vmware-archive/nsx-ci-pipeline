@@ -53,7 +53,7 @@ om \
     -p $OPS_MGR_PWD  \
     -k stage-product \
     -p $PRODUCT_NAME \
-    -v $PRODUCT_VERSION
+    -v $PRODUCT_VERSION 2>/dev/null 
 
 check_staged_product_guid $PRODUCT_NAME
 
@@ -66,39 +66,52 @@ function fn_get_azs {
 TILE_AVAILABILITY_ZONES=$(fn_get_azs $TILE_AZS_ISO)
 
 
-NETWORK=$(cat <<-EOF
-{
-  "singleton_availability_zone": {
-    "name": "$TILE_AZ_ISO_SINGLETON"
-  },
-  "other_availability_zones": [
-    $TILE_AVAILABILITY_ZONES
-  ],
-  "network": {
-    "name": "$NETWORK_NAME"
-  }
-}
-EOF
-)
+# if [[ -z "$SSL_CERT" ]]; then
+# DOMAINS=$(cat <<-EOF
+#   {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
+# EOF
+# )
+
+#   CERTIFICATES=$(om \
+#                   -t https://$OPS_MGR_HOST \
+#                   -u $OPS_MGR_USR \
+#                   -p $OPS_MGR_PWD  \
+#                   -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" \
+#                   -x POST -d "$DOMAINS")
+
+#   export SSL_CERT=`echo $CERTIFICATES | jq '.certificate' | tr -d '"'`
+#   export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key' | tr -d '"'`
+
+#   echo "Using self signed certificates generated using Ops Manager..."
+
+# fi
+
+source $ROOT_DIR/nsx-ci-pipeline/functions/generate_cert.sh
 
 if [[ -z "$SSL_CERT" ]]; then
-DOMAINS=$(cat <<-EOF
-  {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
-EOF
-)
+  domains=(
+    "*.${SYSTEM_DOMAIN}"
+    "*.${APPS_DOMAIN}"
+    "*.login.${SYSTEM_DOMAIN}"
+    "*.uaa.${SYSTEM_DOMAIN}"
+  )
 
-  CERTIFICATES=$(om \
-                  -t https://$OPS_MGR_HOST \
-                  -u $OPS_MGR_USR \
-                  -p $OPS_MGR_PWD  \
-                  -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" \
-                  -x POST -d "$DOMAINS")
+  certificates=$(generate_cert "${domains[*]}")
+  SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
+  SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
+fi
 
-  export SSL_CERT=`echo $CERTIFICATES | jq '.certificate' | tr -d '"'`
-  export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key' | tr -d '"'`
 
-  echo "Using self signed certificates generated using Ops Manager..."
+if [[ -z "$SAML_SSL_CERT" ]]; then
+  saml_cert_domains=(
+    "*.${SYSTEM_DOMAIN}"
+    "*.login.${SYSTEM_DOMAIN}"
+    "*.uaa.${SYSTEM_DOMAIN}"
+  )
 
+  saml_certificates=$(generate_cert "${saml_cert_domains[*]}")
+  SAML_SSL_CERT=$(echo $saml_certificates | jq --raw-output '.certificate')
+  SAML_SSL_PRIVATE_KEY=$(echo $saml_certificates | jq --raw-output '.key')
 fi
 
 # Supporting atmost 3 isolation segments
@@ -117,39 +130,24 @@ case "$NETWORK_NAME" in
   ;;
 esac
 
-
-PROPERTIES=$(cat <<-EOF
-{
-  ".isolated_diego_cell.executor_disk_capacity": {
-    "value": "$CELL_DISK_CAPACITY"
-  },
-  ".isolated_diego_cell.executor_memory_capacity": {
-    "value": "$CELL_MEMORY_CAPACITY"
-  },
-  ".isolated_diego_cell.garden_network_mtu": {
-    "value": $APPLICATION_NETWORK_MTU
-  },
-  ".isolated_diego_cell.insecure_docker_registry_list": {
-    "value": "$INSECURE_DOCKER_REGISTRY_LIST"
-  },
-  ".isolated_diego_cell.placement_tag": {
-    "value": "$SEGMENT_NAME"
-  },
-EOF
+is_network=$(
+  jq -n \
+    --arg network_name "$NETWORK_NAME" \
+    --arg other_azs "$TILE_AZS_ISO" \
+    --arg singleton_az "$TILE_AZ_ISO_SINGLETON" \
+    '
+    {
+      "network": {
+        "name": $network_name
+      },
+      "other_availability_zones": ($other_azs | split(",") | map({name: .})),
+      "singleton_availability_zone": {
+        "name": $singleton_az
+      }
+    }
+    '    
+    
 )
-
-# Add the static ips to list above if nsx not enabled in Bosh director 
-# If nsx enabled, a security group would be dynamically created with vms 
-# and associated with the pool by Bosh
-if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
-  PROPERTIES=$(cat <<-EOF
-$PROPERTIES
-  ".isolated_router.static_ips": {
-    "value": "$ROUTER_STATIC_IPS"
-  },
-EOF
-)
-fi
 
 # No C2C support in PCF 1.9, 1.10 and older versions
 export SUPPORTS_C2C=false
@@ -161,66 +159,264 @@ else
   export SUPPORTS_C2C=true
 fi
 
-# PCF IsoSegment tile 1.11.1 had following properties
-# but not exposed in versions 1.11.2+:
-  # ".properties.container_networking.enable.network_cidr": {
-  #     "value": "$TILE_ISO_C2C_NETWORK_CIDR"
-  # },
-  # ".properties.container_networking.enable.vtep_port": {
-  #   "value": "$TILE_ISO_C2C_VTEP_PORT"
-  # }
 
-# PCF supports C2C
-if [ "$SUPPORTS_C2C" == "true" ]; then
+has_routing_disable_http=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.routing_disable_http" | wc -l || true)
+has_haproxy_forward_tls=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.haproxy_forward_tls" | wc -l || true)
+has_gorouter_ssl_ciphers=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.gorouter_ssl_ciphers" | wc -l || true)
+has_haproxy_ssl_ciphers=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.haproxy_ssl_ciphers" | wc -l || true)
 
-  # If user wants C2C enabled, then add additional properties
-  if [ "$TILE_ISO_ENABLE_C2C" == "enable" ]; then
-    PROPERTIES=$(cat <<-EOF
-$PROPERTIES
-  ".properties.container_networking": {
-      "value": "enable"
-  }
-}
-EOF
-)
-  else
-    # User does not want c2c
-    PROPERTIES=$(cat <<-EOF
-$PROPERTIES
-  ".properties.container_networking.disable.garden_network_pool": {
-    "value": "$APPLICATION_NETWORK_CIDR"
-  }
-}
-EOF
-)
-  fi
-  # End of SUPPORTS_C2C
-else  
-  # Older version, no C2C support
-  PROPERTIES=$(cat <<-EOF
-$PROPERTIES
-  ".isolated_diego_cell.garden_network_pool": {
-      "value": "$APPLICATION_NETWORK_CIDR"
+has_garden_network_mtu=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".isolated_diego_cell.garden_network_mtu" | wc -l || true)
+has_garden_network_pool=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".isolated_diego_cell.garden_network_pool" | wc -l || true)
+
+has_cni_vtep_port=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.container_networking.enable.vtep_port" | wc -l || true)
+has_cni_network_cidr=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".container_networking.enable.network_cidr" | wc -l || true)
+has_c2c_enable_network=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties\.container_networking\.enable" | wc -l || true)
+has_c2c_disable_network=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties\.container_networking\.disable" | wc -l || true)
+
+has_networking_poe_ssl_certs=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties.networking_poe_ssl_certs" | wc -l || true)
+has_networking_poe_ssl_single_cert=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.networking_poe_ssl_cert" | grep -v ".properties.networking_poe_ssl_certs" | wc -l || true)
+
+
+# following not yet used in Iso-segment tile
+# has_cni_selection=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties\.container_networking_interface_plugin" | wc -l || true)
+# --arg supports_c2c  "$SUPPORTS_C2C" \
+# --arg has_cni_selection "$has_cni_selection" \
+# --arg tile_ert_enable_c2c "$TILE_ERT_ENABLE_C2C" \
+# --arg tile_ert_c2c_network_cidr "$TILE_ERT_C2C_NETWORK_CIDR" \
+# --arg tile_ert_c2c_vtep_port "$TILE_ERT_C2C_VTEP_PORT" \
+
+is_properties=$(
+  jq -n \
+    --arg cell_disk_capacity "$CELL_DISK_CAPACITY" \
+    --arg cell_memory_capacity "$CELL_MEMORY_CAPACITY" \
+    --arg insecure_docker_registry_list "$INSECURE_DOCKER_REGISTRY_LIST" \
+    --arg segment_name "$SEGMENT_NAME" \
+    --arg haproxy_forward_tls "$HAPROXY_FORWARD_TLS" \
+    --arg haproxy_backend_ca "$HAPROXY_BACKEND_CA" \
+    --arg router_tls_ciphers "$ROUTER_TLS_CIPHERS" \
+    --arg haproxy_tls_ciphers "$HAPROXY_TLS_CIPHERS" \
+    --arg disable_http_proxy "$DISABLE_HTTP_PROXY" \
+    --arg has_routing_disable_http "$has_routing_disable_http" \
+    --arg has_haproxy_forward_tls "$has_haproxy_forward_tls" \
+    --arg has_gorouter_ssl_ciphers "$has_gorouter_ssl_ciphers" \
+    --arg has_haproxy_ssl_ciphers "$has_haproxy_ssl_ciphers" \
+    --arg has_garden_network_mtu "$has_garden_network_mtu" \
+    --arg application_network_mtu "$APPLICATION_NETWORK_MTU" \
+    --arg has_garden_network_mtu "$has_garden_network_mtu" \
+    --arg has_cni_vtep_port "$has_c2c_enable_network" \
+    --arg has_cni_network_cidr "$has_c2c_enable_network" \
+    --arg tile_iso_c2c_vtep_port "$TILE_ISO_C2C_VTEP_PORT" \
+    --arg tile_iso_c2c_network_cidr "$TILE_ISO_C2C_NETWORK_CIDR" \
+    --arg supports_c2c  "$SUPPORTS_C2C" \
+    --arg tile_iso_enable_c2c "$TILE_ISO_ENABLE_C2C" \
+    --arg has_c2c_enable_network "$has_c2c_enable_network" \
+    --arg has_c2c_disable_network "$has_c2c_disable_network" \
+    --arg has_networking_poe_ssl_certs "$has_networking_poe_ssl_certs" \
+    --arg has_networking_poe_ssl_single_cert "$has_networking_poe_ssl_single_cert" \
+    --arg cert_pem "$SSL_CERT" \
+    --arg private_key_pem "$SSL_PRIVATE_KEY" \
+    --arg has_garden_network_pool "$has_garden_network_pool" \
+    --arg application_network_cidr "$APPLICATION_NETWORK_CIDR" \
+    --arg is_nsx_enabled "$IS_NSX_ENABLED" \
+    --arg router_static_ips "$ROUTER_STATIC_IPS" \
+'
+    {
+      ".isolated_diego_cell.executor_disk_capacity": {
+        "value": $cell_disk_capacity
+      },
+      ".isolated_diego_cell.executor_memory_capacity": {
+        "value": $cell_memory_capacity
+      },
+      ".isolated_diego_cell.insecure_docker_registry_list": {
+        "value": $insecure_docker_registry_list
+      },
+      ".isolated_diego_cell.placement_tag": {
+        "value": $segment_name
+      }
     }
-}
-EOF
+    +
+
+    # HAProxy Forward TLS
+    if $has_haproxy_forward_tls != "0" then
+      if $haproxy_forward_tls == "enable" then
+      {
+        ".properties.haproxy_forward_tls": {
+          "value": "enable"
+        },
+        ".properties.haproxy_forward_tls.enable.backend_ca": {
+          "value": $haproxy_backend_ca
+        }
+      }
+      else
+        {
+          ".properties.haproxy_forward_tls": {
+            "value": "disable"
+          }
+        }
+      end
+    else
+    .
+    end
+
+    +
+
+    if $has_routing_disable_http != "0" then
+    {
+      ".properties.routing_disable_http": {
+        "value": $disable_http_proxy
+      }
+    }
+    else
+    .
+    end
+
+    +
+
+    # TLS Cipher Suites
+    if $has_gorouter_ssl_ciphers != "0" then
+    {
+      ".properties.gorouter_ssl_ciphers": {
+        "value": $router_tls_ciphers
+      },
+      ".properties.haproxy_ssl_ciphers": {
+        "value": $haproxy_tls_ciphers
+      }
+    }
+    else
+    .
+    end
+
+    +
+
+    if $has_garden_network_mtu != "0" then {
+        ".isolated_diego_cell.garden_network_mtu": {
+        "value": $application_network_mtu
+      }
+    }
+    else
+    .
+    end  
+
+    +
+    if $is_nsx_enabled == "" or $is_nsx_enabled == "None" then {
+        ".isolated_router.static_ips": {
+        "value": $router_static_ips
+      }
+    }
+    else
+    .
+    end
+
+    +
+    if $has_cni_vtep_port != "0" then {
+        ".properties.container_networking.enable.vtep_port": {
+        "value": $tile_iso_c2c_vtep_port
+      }
+    }
+    else
+    .
+    end
+
+    +
+    if $has_cni_network_cidr != "0" then {
+        ".properties.container_networking.enable.network_cidr": {
+        "value": $tile_iso_c2c_network_cidr
+      }
+    }
+    else
+    .
+    end 
+
+    +
+
+    if $supports_c2c == "true" then 
+      if $tile_iso_enable_c2c == "enable" and $has_c2c_enable_network != "0" then
+       {
+          ".properties.container_networking": {
+              "value": "enable"
+          },
+          ".properties.container_networking.enable.network_cidr": {
+              "value": $tile_iso_c2c_network_cidr
+          },
+          ".properties.container_networking.enable.vtep_port": {
+            "value": $tile_iso_c2c_vtep_port
+          }
+       }
+      elif $tile_iso_enable_c2c == "disable" and $has_c2c_disable_network != "0" then
+      {
+        ".properties.container_networking": {
+            "value": "disable"
+        },
+        ".properties.container_networking.disable.garden_network_pool": {
+            "value": "10.254.0.0/22"
+        }
+      }
+      else
+      .
+      end
+
+    else
+      if $has_garden_network_pool != "0" then
+        {
+          ".isolated_diego_cell.garden_network_pool": {
+            "value": $application_network_cidr
+          }
+        }
+      else
+      .
+      end
+    end
+
+    + if $has_networking_poe_ssl_certs != "0" then
+    {
+      ".properties.networking_poe_ssl_certs": {
+        "value": [ 
+          {
+            "name": "certificate",
+            "certificate": {
+              "cert_pem": $cert_pem,
+              "private_key_pem": $private_key_pem
+            }
+          } 
+        ]
+      }
+    }
+    elif $has_networking_poe_ssl_single_cert != "0" then
+    {
+      ".properties.networking_poe_ssl_cert": {
+        "value": {
+          "cert_pem": $cert_pem,
+          "private_key_pem": $private_key_pem
+        }
+      }
+    }
+    else
+    .
+    end
+
+
+'
 )
-fi
+
+
 # End of PROPERTIES block
 
-
-RESOURCES=$(cat <<-EOF
+is_resources=$(
+  jq -n \
+   --argjson is_router_instances $IS_ROUTER_INSTANCES \
+   --argjson is_diego_cell_instances $IS_DIEGO_CELL_INSTANCES \
+'
 {
   "isolated_router": {
     "instance_type": {"id": "automatic"},
-    "instances" : $IS_ROUTER_INSTANCES
+    "instances" : $is_router_instances
   },
   "isolated_diego_cell": {
     "instance_type": {"id": "automatic"},
-    "instances" : $IS_DIEGO_CELL_INSTANCES
+    "instances" : $is_diego_cell_instances
   }
 }
-EOF
+'
 )
 
 om \
@@ -229,53 +425,48 @@ om \
     -p $OPS_MGR_PWD  \
     -k configure-product \
     -n $PRODUCT_NAME \
-    -p "$PROPERTIES" \
-    -pn "$NETWORK" \
-    -pr "$RESOURCES"
+    -p "$is_properties" \
+    -pn "$is_network" \
+    -pr "$is_resources"
 
-if [[ "$SSL_TERMINATION_POINT" == "terminate_at_router" ]]; then
-echo "Terminating SSL at the goRouters and using self signed/provided certs..."
-SSL_PROPERTIES=$(cat <<-EOF
-{
-  ".properties.networking_point_of_entry": {
-    "value": "$SSL_TERMINATION_POINT"
-  },
-  ".properties.networking_point_of_entry.terminate_at_router.ssl_rsa_certificate": {
-    "value": {
-      "cert_pem": "$SSL_CERT",
-      "private_key_pem": "$SSL_PRIVATE_KEY"
+has_networking_poe_terminate=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties.networking_point_of_entry.terminate" | wc -l || true)
+
+ssl_properties=$( jq -n \
+    --arg has_networking_poe_terminate "$has_networking_poe_terminate" \
+    --arg ssl_termination_point "$SSL_TERMINATION_POINT" \
+    --arg ssl_cert "$SSL_CERT" \
+    --arg ssl_private_key "$SSL_PRIVATE_KEY" \
+    --arg router_ssl_ciphers "$ROUTER_SSL_CIPHERS" \
+'
+  {
+      ".properties.networking_point_of_entry": {
+        "value": $ssl_termination_point
+      }
+  }
+  +
+  if $has_networking_poe_terminate != "0" then
+    if $ssl_termination_point == "terminate_at_router" then
+    # Terminating SSL at the goRouters and using self signed/provided certs... 
+    {
+      ".properties.networking_point_of_entry.terminate_at_router.ssl_rsa_certificate": {
+        "value": {
+          "cert_pem": $ssl_cert,
+          "private_key_pem": $ssl_private_key
+        }
+      },
+      ".properties.networking_point_of_entry.terminate_at_router.ssl_ciphers": {
+        "value": $router_ssl_ciphers
+      }
     }
-  },
-  ".properties.networking_point_of_entry.terminate_at_router.ssl_ciphers": {
-    "value": "$ROUTER_SSL_CIPHERS"
-  }
-}
-EOF
-)
+    else
+    .
+    end
+  else
+    .
+  end
 
-elif [[ "$SSL_TERMINATION_POINT" == "terminate_at_router_ert_cert" ]]; then
-echo "Terminating SSL at the goRouters and reusing self signed/provided certs from ERT tile..."
-SSL_PROPERTIES=$(cat <<-EOF
-{
-  ".properties.networking_point_of_entry": {
-    "value": "$SSL_TERMINATION_POINT"
-  }
-}
-EOF
+'
 )
-
-elif [[ "$SSL_TERMINATION_POINT" == "terminate_before_router" ]]; then
-echo "Unencrypted traffic to goRouters as SSL terminated at load balancer..."
-SSL_PROPERTIES=$(cat <<-EOF
-{
-  ".properties.networking_point_of_entry": {
-    "value": "$SSL_TERMINATION_POINT"
-  }
-}
-EOF
-)
-
-fi
 
 om \
     -t https://$OPS_MGR_HOST \
@@ -283,7 +474,7 @@ om \
     -p $OPS_MGR_PWD  \
     -k configure-product \
     -n $PRODUCT_NAME \
-    -p "$SSL_PROPERTIES"
+    -p "$ssl_properties"
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then

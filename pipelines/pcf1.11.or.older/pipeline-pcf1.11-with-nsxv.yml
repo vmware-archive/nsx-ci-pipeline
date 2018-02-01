@@ -68,9 +68,7 @@ groups:
   - upload-elastic-runtime-tile
   - config-elastic-runtime-tile
   - product-apply-changes-ert
-  # - upload-iso-tile
-  # - config-iso-tile
-  # - product-apply-changes-iso
+
 
 - name: cleanup
   jobs:
@@ -84,12 +82,6 @@ groups:
 - name: nsx-edge-destroy
   jobs:
   - nsx-edge-destroy
-
-# - name: iso
-#   jobs:
-#   - upload-iso-tile
-#   - config-iso-tile
-#   - product-apply-changes-iso
 
 resource_types:
 - name: pivnet
@@ -149,14 +141,6 @@ resources:
     product_slug: elastic-runtime
     product_version: {{ert_product_version}} #'1\.11\.*'
     sort_by: semver
-
-# - name: pivnet-iso-product
-#   type: pivnet
-#   source:
-#     api_token: {{pivnet_token}}
-#     product_slug: isolation-segment
-#     product_version: {{iso_product_version}} #'1\.11\.*'
-#     sort_by: semver
 
 jobs:
 
@@ -311,8 +295,8 @@ jobs:
       AZ_3_CUSTER_NAME: {{az_3_cluster_name}}
       AZ_3_RP_NAME: {{az_3_rp_name}}
       AZ_SINGLETON: {{az_singleton}}
-      NTP_SERVER_IPS: {{ntp_servers}}
-      OPS_DIR_HOSTNAME: {{ops_dir_hostname}}
+      OM_NTP_SERVERS: {{ntp_servers}}
+      OM_DIR_HOSTNAME: {{ops_dir_hostname}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
       ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
       ISOZONE_SWITCH_CIDR_1: {{isozone_switch_cidr_1}}
@@ -352,9 +336,8 @@ jobs:
       params: { globs: ["cf*.pivotal"]}
     - get: om-cli
       params: { globs: [om-linux]}
-      passed: [opsman-apply-changes]
     - get: pivnet-cli
-      params: { globs: ["*linux-amd64*"]}
+      params: { globs: ["*linux-amd64*"]}  
 
   - task: upload-tile
     file: nsx-ci-pipeline/tasks/upload-product-and-stemcell/task.yml
@@ -384,7 +367,7 @@ jobs:
     params: *nsx-edge-params
 
   - task: config-er-tile
-    file: nsx-ci-pipeline/tasks/config-ert-1.12/task.yml
+    file: nsx-ci-pipeline/tasks/config-ert/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
@@ -399,15 +382,9 @@ jobs:
       ENABLE_SECURITY_EVENT_LOGGING: {{enable_security_event_logging}}
       LOGGREGATOR_ENDPOINT_PORT: {{loggregator_endpoint_port}}
       SSL_TERMINATION: {{ssl_termination}}
-      OPS_MGR_GENERATE_SSL_ENDPOINT: {{om_generate_ssl_endpoint}}
       SSL_CERT: {{ssl_cert}}
+      OPS_MGR_GENERATE_SSL_ENDPOINT: {{om_generate_ssl_endpoint}}
       SSL_PRIVATE_KEY: {{ssl_private_key}}
-      SAML_SSL_CERT: {{saml_ssl_cert}}
-      SAML_SSL_PRIVATE_KEY: {{saml_ssl_private_key}}
-      HAPROXY_FORWARD_TLS: {{haproxy_forward_tls}}
-      HAPROXY_BACKEND_CA: {{haproxy_backend_ca}}
-      ROUTER_TLS_CIPHERS: {{router_tls_ciphers}}
-      HAPROXY_TLS_CIPHERS: {{haproxy_tls_ciphers}}
       DISABLE_HTTP_PROXY: {{disable_http_proxy}}
       TCP_ROUTING: {{tcp_routing}}
       TCP_ROUTING_PORTS: {{tcp_routing_ports}}
@@ -430,17 +407,11 @@ jobs:
       MAIL_ATTR_NAME: {{mail_attribute_name}}
       FIRST_NAME_ATTR: {{first_name_attribute}}
       LAST_NAME_ATTR: {{last_name_attribute}}
-      SECURITY_ACKNOWLEDGEMENT: {{security_acknowledgement}}
-      ENABLE_SECURITY_EVENT_LOGGING: {{enable_security_event_logging}}
       SYSTEM_DOMAIN: {{system_domain}}
       APPS_DOMAIN: {{apps_domain}}
-      DEFAULT_QUOTA_MEMORY_LIMIT_IN_MB: {{default_quota_memory_limit_mb}}
-      DEFAULT_QUOTA_MAX_SERVICES_COUNT: {{default_quota_max_number_services}}     
       HA_PROXY_IPS: {{ha_proxy_ips}}
       SKIP_CERT_VERIFY: {{skip_cert_verify}}
-      DISABLE_INSECURE_COOKIES: {{disable_insecure_cookies}}
       ROUTER_STATIC_IPS: {{router_static_ips}}
-      ROUTER_REQUEST_TIMEOUT_IN_SEC: {{router_request_timeout_in_seconds}}
       MYSQL_MONITOR_EMAIL: {{mysql_monitor_email}}
       TCP_ROUTER_STATIC_IPS: {{tcp_router_static_ips}}
       SSH_STATIC_IPS: {{ssh_static_ips}}
@@ -449,10 +420,6 @@ jobs:
       NATS_INSTANCES: {{nats_instances}}
       ETCD_TLS_SERVER_INSTANCES: {{etcd_tls_server_instances}}
       NFS_SERVER_INSTANCES: {{nfs_server_instances}}
-      SYSLOG_ADAPTER_INSTANCES: {{syslog_adapter_instances}}
-      INTERNET_CONNECTED: {{internet_connected}}
-      CONTAINER_NETWORKING_NW_CIDR: {{container_networking_nw_cidr}}
-      CONTAINER_NETWORKING_INTERFACE_PLUGIN: {{container_networking_interface_plugin}}
       MYSQL_PROXY_INSTANCES: {{mysql_proxy_instances}}
       MYSQL_INSTANCES: {{mysql_instances}}
       BACKUP_PREPARE_INSTANCES: {{backup_prepare_instances}}
@@ -473,20 +440,6 @@ jobs:
       TCP_ROUTER_INSTANCES: {{tcp_router_instances}}
       DEPLOYMENT_NW_CIDR: {{deployment_nw_cidr}}
       NSX_APPS_MGR_NAME: {{nsx_apps_mgr_name}}
-      MYSQL_BACKUPS: {{mysql_backups}}
-      MYSQL_BACKUPS_SCP_SERVER: {{mysql_backups_scp_server}}
-      MYSQL_BACKUPS_SCP_PORT: {{mysql_backups_scp_port}}
-      MYSQL_BACKUPS_SCP_USER: {{mysql_backups_scp_user}}
-      MYSQL_BACKUPS_SCP_KEY: {{mysql_backups_scp_key}}
-      MYSQL_BACKUPS_SCP_DESTINATION: {{mysql_backups_scp_destination}}
-      MYSQL_BACKUPS_SCP_CRON_SCHEDULE: {{mysql_backups_scp_cron_schedule}}
-      MYSQL_BACKUPS_S3_ENDPOINT_URL: {{mysql_backups_s3_endpoint_url}}
-      MYSQL_BACKUPS_S3_BUCKET_NAME: {{mysql_backups_s3_bucket_name}}
-      MYSQL_BACKUPS_S3_BUCKET_PATH: {{mysql_backups_s3_bucket_path}}
-      MYSQL_BACKUPS_S3_ACCESS_KEY_ID: {{mysql_backups_s3_access_key_id}}
-      MYSQL_BACKUPS_S3_SECRET_ACCESS_KEY: {{mysql_backups_s3_secret_access_key}}
-      MYSQL_BACKUPS_S3_CRON_SCHEDULE: {{mysql_backups_s3_cron_schedule}}
-      ALLOW_APP_SSH_ACCESS: {{allow_app_ssh_access}}
       TILE_ERT_ENABLE_C2C: {{ert_enable_c2c}}
       TILE_ERT_C2C_NETWORK_CIDR: {{ert_c2c_network_cidr}}
       TILE_ERT_C2C_VTEP_PORT: {{ert_c2c_vtep_port}}
@@ -495,7 +448,6 @@ jobs:
       TILE_ERT_DIEGO_BRAIN_SECURITY_GROUP: {{ert_diego_brain_security_group}}
       TILE_ERT_MYSQL_PROXY_SECURITY_GROUP: {{ert_mysql_proxy_security_group}}
       TILE_ERT_DIEGO_CELL_SECURITY_GROUP: {{ert_diego_cell_security_group}}
-      CREDHUB_PASSWORD: {{credhub_password}}
       COMPANY_NAME: {{company_name}}
       GARDEN_NETWORK_MTU: 1454
 
@@ -517,118 +469,6 @@ jobs:
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
 
-#######################
-## Isolation Segment ##
-#######################
-
-# - name: upload-iso-tile
-#   plan:
-#   - aggregate:
-#     - get: nsx-ci-pipeline
-#       trigger: true
-#       passed: [product-apply-changes-ert]
-#     - get: pivnet-iso-product
-#       params:
-#         globs:
-#         - "*.pivotal"
-#     - get: om-cli
-#       params:
-#         globs: [om-linux]
-#       passed: [product-apply-changes-ert]
-#     - get: pivnet-cli
-#       params:
-#         globs:
-#         - "*linux-amd64*"
-
-#   - task: upload-iso-tile
-#     config:
-#       platform: linux
-#       image_resource:
-#         type: docker-image
-#         source: {repository: nsxedgegen/nsx-edge-gen-worker}
-#       inputs:
-#         - name: pivnet-iso-product
-#         - name: nsx-ci-pipeline
-#         - name: om-cli
-#         - name: pivnet-cli
-#       run:
-#         path: nsx-ci-pipeline/tasks/upload-pcf-service-tile/task.sh
-#       params:
-#         OPS_MGR_HOST: {{om_host}}
-#         OPS_MGR_USR: {{om_usr}}
-#         OPS_MGR_PWD: {{om_pwd}}
-#         PIVNET_API_TOKEN: {{pivnet_token}}
-#         SERVICE_STRING: "iso"
-
-# - name: config-iso-tile
-#   plan:
-#   - aggregate:
-#     - get: nsx-ci-pipeline
-#       trigger: true
-#       passed: [upload-iso-tile]
-#     - get: om-cli
-#       params:
-#         globs: [om-linux]
-#       passed: [upload-iso-tile]
-#     - get: nsx-edge-gen
-
-#   - task: nsx-edge-list
-#     file: nsx-ci-pipeline/tasks/nsx-edge-list/task.yml
-#     params: *nsx-edge-params
-
-#   - task: config-iso-tile
-#     file: nsx-ci-pipeline/tasks/config-is-tile/task.yml
-#     params:
-#       OPS_MGR_HOST: {{om_host}}
-#       OPS_MGR_USR: {{om_usr}}
-#       OPS_MGR_PWD: {{om_pwd}}
-#       OPS_MGR_GENERATE_SSL_ENDPOINT: {{om_generate_ssl_endpoint}}
-#       NETWORK_NAME: {{tile_iso_network_name_1}}
-#       PRODUCT_NAME: {{tile_iso_product_name_1}}
-#       TILE_AZS_ISO: {{tile_azs_iso_1}}
-#       TILE_AZ_ISO_SINGLETON: {{tile_az_iso_singleton_1}}
-#       NETWORK_NAME: {{tile_iso_network_name_1}}
-#       SYSTEM_DOMAIN: {{system_domain}}
-#       APPS_DOMAIN: {{apps_domain}}
-#       SSL_TERMINATION_POINT: {{tile_iso_ssl_termination_point_1}}
-#       SSL_CERT: {{tile_iso_ssl_cert_1}}
-#       SSL_PRIVATE_KEY: {{tile_iso_ssl_private_key_1}}
-#       ROUTER_SSL_CIPHERS: {{tile_iso_router_ssl_ciphers_1}}
-#       ROUTER_STATIC_IPS: {{tile_iso_router_static_ips_1}}
-#       CELL_DISK_CAPACITY: {{tile_iso_cell_disk_capacity_1}}
-#       CELL_MEMORY_CAPACITY: {{tile_iso_cell_memory_capacity_1}}
-#       APPLICATION_NETWORK_CIDR: {{tile_iso_application_network_cidr_1}}
-#       APPLICATION_NETWORK_MTU: {{tile_iso_application_network_mtu_1}}
-#       INSECURE_DOCKER_REGISTRY_LIST: {{tile_iso_insecure_docker_registry_list_1}}
-#       SEGMENT_NAME: {{tile_iso_segment_name_1}}
-#       IS_ROUTER_INSTANCES: {{esg_go_router_isozone_1_inst_1}} # Use the instance count provided for nsx
-#       IS_TCP_ROUTER_INSTANCES: {{esg_tcp_router_isozone_1_inst_1}}
-#       IS_DIEGO_CELL_INSTANCES: {{tile_iso_diego_cell_instances_1}}
-#       TILE_ISO_ISOLATED_ROUTER_SECURITY_GROUP: {{tile_iso_router_security_group_1}}
-#       TILE_ISO_ISOLATED_TCP_ROUTER_SECURITY_GROUP: {{tile_iso_tcp_router_security_group_1}}
-#       TILE_ISO_ISOLATED_DIEGO_CELL_SECURITY_GROUP: {{tile_iso_diego_cell_security_group_1}}
-#       TILE_ISO_ENABLE_C2C: {{tile_iso_enable_c2c_1}}
-#       TILE_ISO_C2C_NETWORK_CIDR: {{tile_iso_c2c_network_cidr_1}}
-#       TILE_ISO_C2C_VTEP_PORT: {{tile_iso_c2c_vtep_port_1}}
-      
-# - name: product-apply-changes-iso
-#   plan:
-#   - aggregate:
-#     - get: nsx-ci-pipeline
-#       passed: [config-iso-tile]
-#       trigger: true
-#     - get: om-cli
-#       params:
-#         globs: [om-linux]
-#       passed: [config-iso-tile]
-
-#   - task: apply-changes
-#     file: nsx-ci-pipeline/tasks/apply-changes/task.yml
-#     params:
-#       OPS_MGR_HOST: {{om_host}}
-#       OPS_MGR_USR: {{om_usr}}
-#       OPS_MGR_PWD: {{om_pwd}}
-
 #############
 ## Cleanup ##
 #############
@@ -642,8 +482,15 @@ jobs:
 #       params:
 #         globs:
 #         - "*linux_amd64*"
-#   - task: delete-installation
-#     file: nsx-ci-pipeline/tasks/delete-installation/task.yml
+#   - task: delete-products
+#     file: nsx-ci-pipeline/tasks/destroy-installation/task.yml
+#     params:
+#       OPS_MGR_HOST: {{om_host}}
+#       OPS_MGR_USR: {{om_usr}}
+#       OPS_MGR_PWD: {{om_pwd}}
+
+#   - task: apply-changes
+#     file: nsx-ci-pipeline/tasks/apply-changes/task.yml
 #     params:
 #       OPS_MGR_HOST: {{om_host}}
 #       OPS_MGR_USR: {{om_usr}}
@@ -685,7 +532,8 @@ jobs:
       trigger: true
     - get: govc
       params:
-        globs: ["*linux_amd64*"]
+        globs:
+        - "*linux_amd64*"
     - get: nsx-edge-gen
 
   - task: delete-opsman

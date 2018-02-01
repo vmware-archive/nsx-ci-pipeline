@@ -159,12 +159,12 @@ fi
 # Get the installation details
 # om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k  curl -p "/api/installation_settings" | jq .infrastructure.networks
 
-has_c2c_enable_network=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.container_networking\.enable" | wc -l || true)
-has_c2c_disable_network=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.container_networking\.disable" | wc -l || true)
-has_garden_network_pool=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.garden_network_pool" | wc -l || true)
-has_mysql_backup=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.mysql_backups" | wc -l || true)
-has_credhub=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.credhub_key_encryption_passwords" | wc -l || true)
-has_cni_selection=$(echo $STAGED_PRODUCT_PROPERTIES | grep ".properties\.container_networking_interface_plugin" | wc -l || true)
+has_c2c_enable_network=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties\.container_networking\.enable" | wc -l || true)
+has_c2c_disable_network=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties\.container_networking\.disable" | wc -l || true)
+has_garden_network_pool=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties\.garden_network_pool" | wc -l || true)
+has_mysql_backup=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties\.mysql_backups" | wc -l || true)
+has_credhub=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties\.credhub_key_encryption_passwords" | wc -l || true)
+has_cni_selection=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties\.container_networking_interface_plugin" | wc -l || true)
 
 
 if [[ -z "$CREDHUB_PASSWORD" ]]; then

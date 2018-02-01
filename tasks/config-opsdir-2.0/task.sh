@@ -267,7 +267,7 @@ network_configuration=$(
         },
         {
           "name": $isozone_switch1_network_name,
-          "service_network": true,
+          "service_network": false,
           "subnets": [
             {
               "iaas_identifier": $isozone_switch1_vcenter_network,
@@ -285,12 +285,12 @@ network_configuration=$(
 
 director_config=$(cat <<-EOF
 {
-  "ntp_servers_string": "$NTP_SERVER_IPS",
+  "ntp_servers_string": "$OM_NTP_SERVERS",
   "resurrector_enabled": true,
-  "max_threads": null,
+  "max_threads": "$MAX_THREADS",
   "database_type": "internal",
   "blobstore_type": "local",
-  "director_hostname": "$OPS_DIR_HOSTNAME"
+  "director_hostname": "$OM_DIR_HOSTNAME"
 }
 EOF
 )
@@ -309,11 +309,19 @@ network_az_assignment=$(
 jq -n \
   --arg infra_availability_zones "$INFRA_NW_AZ" \
   --arg network "$INFRA_NETWORK_NAME" \
+  --arg singleton_az "$AZ_SINGLETON" \
   '
+  if $singleton_az != "" then
+  {
+    "singleton_availability_zone": $singleton_az,
+    "network": { "name": $network }
+  }
+else 
   {
     "singleton_availability_zone": { "name": ($infra_availability_zones | split(",") | .[0]) },
     "network": { "name": $network }
-  }'
+  }
+  '
 )
 
 echo "Configuring IaaS and Director..."

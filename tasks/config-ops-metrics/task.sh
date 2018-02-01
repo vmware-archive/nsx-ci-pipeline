@@ -5,7 +5,7 @@ source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
 
 check_bosh_version
-check_product_version "p-metrics"
+check_available_product_version "p-metrics"
 
 om \
     -t https://$OPS_MGR_HOST \

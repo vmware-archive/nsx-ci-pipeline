@@ -21,6 +21,7 @@ params:
   OM_VM_NAME:
   GOVC_NETWORK:
   GOVC_RESOURCE_POOL:
+  GOVC_HOST:
 
 inputs:
   - name: nsx-ci-pipeline

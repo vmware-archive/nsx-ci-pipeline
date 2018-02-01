@@ -7,7 +7,7 @@ source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
 
 # Check if Bosh Director is v1.11 or higher
 check_bosh_version
-check_product_version "p-spring-cloud-services"
+check_available_product_version "p-spring-cloud-services"
 
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
 if [ $BOSH_MAJOR_VERSION -le 1 ]; then

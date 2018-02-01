@@ -61,82 +61,126 @@ function fn_get_azs {
 
 TILE_AVAILABILITY_ZONES=$(fn_get_azs $TILE_AZS_RABBIT)
 
+NETWORK=$(
+  jq -n \
+    --arg network_name "$NETWORK_NAME" \
+    --arg service_network_name "$SERVICE_NETWORK_NAME" \
+    --arg other_azs "$TILE_AZS_RABBIT" \
+    --arg singleton_az "$TILE_AZ_RABBIT_SINGLETON" \
+    '
+    {
+      "service_network": {
+        "name": $service_network_name
+      },
+      "network": {
+        "name": $network_name
+      },
+      "other_availability_zones": ($other_azs | split(",") | map({name: .})),
+      "singleton_availability_zone": {
+        "name": $singleton_az
+      }
+    }
+    '
+)
 
-NETWORK=$(cat <<-EOF
-{
-  "singleton_availability_zone": {
-    "name": "$TILE_AZ_RABBIT_SINGLETON"
-  },
-  "other_availability_zones": [
-    $TILE_AVAILABILITY_ZONES
-  ],
-  "network": {
-    "name": "$NETWORK_NAME"
-  }
-}
-EOF
+
+# Add the static ips to list above if nsx not enabled in Bosh director 
+# If nsx enabled, a security group would be dynamically created with vms 
+# and associated with the pool by Bosh
+prod_network=$(
+  jq -n \
+    --arg network_name "$NETWORK_NAME" \
+    --arg other_azs "$TILE_AZS_RABBIT" \
+    --arg singleton_az "$TILE_AZ_RABBIT_SINGLETON" \
+    '
+    {
+      "network": {
+        "name": $network_name
+      },
+      "other_availability_zones": ($other_azs | split(",") | map({name: .})),
+      "singleton_availability_zone": {
+        "name": $singleton_az
+      }
+    }
+    '
 )
 
 # Add the static ips to list above if nsx not enabled in Bosh director 
 # If nsx enabled, a security group would be dynamically created with vms 
 # and associated with the pool by Bosh
-if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
-  PROPERTIES=$(cat <<-EOF
-{
-  ".rabbitmq-haproxy.static_ips": {
-    "value": "$RABBITMQ_TILE_STATIC_IPS"
-  },
-EOF
-)
-else
-  PROPERTIES="{"
-fi
 
-PROPERTIES=$(cat <<-EOF
-$PROPERTIES
-  ".rabbitmq-server.server_admin_credentials": {
-    "value": {
-      "identity": "$TILE_RABBIT_ADMIN_USER",
-      "password": "$TILE_RABBIT_ADMIN_PASSWD"
+prod_properties=$(
+  jq -n \
+    --arg tile_rabbit_admin_user $TILE_RABBIT_ADMIN_USER \
+    --arg tile_rabbit_admin_passwd $TILE_RABBIT_ADMIN_PASSWD \
+    --arg tile_rabbit_proxy_vip $TILE_RABBIT_PROXY_VIP \
+    --arg tile_rabbit_proxy_ips $TILE_RABBIT_PROXY_IPS \
+    --arg is_nsx_enabled $IS_NSX_ENABLED \
+    --arg tile_rabbit_on_demand_plan_1_instance_quota $TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA\
+    --arg tile_az_rabbit_singleton $TILE_AZ_RABBIT_SINGLETON \
+    '
+    {
+     ".rabbitmq-server.server_admin_credentials": {
+        "value": {
+          "identity": $tile_rabbit_admin_user,
+          "password": $tile_rabbit_admin_passwd
+        }
+      },
+      ".properties.syslog_selector": {
+        "value": "disabled"
+      },
+      ".properties.on_demand_broker_plan_1_cf_service_access": {
+        "value": "enable"
+      },
+      ".properties.on_demand_broker_plan_1_instance_quota": {
+        "value": $tile_rabbit_on_demand_plan_1_instance_quota
+      },
+      ".properties.on_demand_broker_plan_1_rabbitmq_az_placement": {
+        "value": [ $tile_az_rabbit_singleton ]
+      },
+      ".properties.on_demand_broker_plan_1_disk_limit_acknowledgement": {
+        "value": ["acknowledge"]
+      },
+      ".properties.disk_alarm_threshold": {
+        "value": "mem_relative_1_0"
+      },
+      ".rabbitmq-broker.dns_host": {
+        "value": $tile_rabbit_proxy_vip
+      },
+      ".properties.metrics_tls_disabled": {
+        "value": false
+      }
     }
-  },
-  ".properties.syslog_selector": {
-    "value": "disabled"
-  },
-  ".properties.on_demand_broker_plan_1_cf_service_access": {
-    "value": "enable"
-  },
-  ".properties.on_demand_broker_plan_1_instance_quota": {
-    "value": $TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA
-  },
-  ".properties.on_demand_broker_plan_1_rabbitmq_az_placement": {
-    "value": ["$TILE_AZ_RABBIT_SINGLETON"]
-  },
-  ".properties.on_demand_broker_plan_1_disk_limit_acknowledgement": {
-    "value": ["acknowledge"]
-  },
-  ".properties.disk_alarm_threshold": {
-    "value": "mem_relative_1_0"
-  },
-  ".rabbitmq-broker.dns_host": {
-    "value": "$RABBITMQ_TILE_LBR_IP"
-  }
-}
-EOF
+
+    +
+    if $is_nsx_enabled == "" or $is_nsx_enabled == "None" then
+    {
+      ".rabbitmq-haproxy.static_ips": {
+        "value": $tile_rabbit_proxy_ips
+    }
+    else
+    .
+    end
+
+'
 )
 
-RESOURCES=$(cat <<-EOF
-{
-  "rabbitmq-haproxy": {
-    "instance_type": {"id": "automatic"},
-    "instances" : $TILE_RABBIT_PROXY_INSTANCES
-  },
-  "rabbitmq-server": {
-    "instance_type": {"id": "automatic"},
-    "instances" : $TILE_RABBIT_SERVER_INSTANCES
-  }
-}
-EOF
+prod_resources=$(
+  jq -n \
+    --arg tile_rabbit_proxy_instances "$TILE_RABBIT_PROXY_INSTANCES" \
+    --arg tile_rabbit_server_instances "$TILE_RABBIT_SERVER_INSTANCES" \
+    '
+    {
+      "rabbitmq-haproxy": {
+        "instance_type": {"id": "automatic"},
+        "instances" : $tile_rabbit_proxy_instances
+      },
+      "rabbitmq-server": {
+        "instance_type": {"id": "automatic"},
+        "instances" : $tile_rabbit_server_instances
+      }
+    }
+    '
 )
 
 om \
@@ -145,9 +189,16 @@ om \
     -p $OPS_MGR_PWD  \
     -k configure-product \
     -n $PRODUCT_NAME \
-    -p "$PROPERTIES" \
-    -pn "$NETWORK" \
-    -pr "$RESOURCES"
+    -pn "$prod_network" \
+    -pr "$prod_resources"
+
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k configure-product \
+    -n $PRODUCT_NAME \
+    -p "$prod_properties" 
 
 
 # Set Errands to on Demand for 1.10

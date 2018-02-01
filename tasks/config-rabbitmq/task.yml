@@ -20,6 +20,7 @@ params:
   TILE_RABBIT_PROXY_INSTANCES:
   TILE_RABBIT_SERVER_INSTANCES:
   TILE_RABBIT_RABBITMQ_HAPROXY_SECURITY_GROUP:
+  TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA:
   
 inputs:
   - name: nsx-ci-pipeline
@@ -27,4 +28,4 @@ inputs:
   - name: nsx-gen-output
 
 run:
-  path: nsx-ci-pipeline/tasks/config-rabbit/task.sh
+  path: nsx-ci-pipeline/tasks/config-rabbitmq/task.sh

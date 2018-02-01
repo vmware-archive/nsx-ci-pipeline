@@ -30,7 +30,7 @@ fi
 
 # Check if Bosh Director is v1.11 or higher
 check_bosh_version
-check_product_version "p-isolation-segment-${REPLICATOR_NAME}"
+check_available_product_version "p-isolation-segment-${REPLICATOR_NAME}"
 
 om \
     -t https://$OPS_MGR_HOST \

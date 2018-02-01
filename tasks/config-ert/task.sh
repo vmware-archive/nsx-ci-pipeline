@@ -161,7 +161,7 @@ CF_PROPERTIES=$(cat <<-EOF
     "value": $IGNORE_SSL_CERT
   },
   ".properties.security_acknowledgement": {
-    "value": "X"
+    "value": "$SECURITY_ACKNOWLEDGEMENT"
   },
   ".properties.system_blobstore": {
     "value": "internal"
@@ -282,7 +282,7 @@ $CF_PROPERTIES
     "value": "$MYSQL_MONITOR_EMAIL"
   },
   ".diego_cell.garden_network_mtu": {
-    "value": 1454
+    "value": $GARDEN_NETWORK_MTU
   },
   ".doppler.message_drain_buffer_size": {
     "value": 10000

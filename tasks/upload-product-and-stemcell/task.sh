@@ -11,7 +11,7 @@ if [[ -n "$NO_PROXY" ]]; then
 fi
 
 
-STEMCELL_VERSION_FROM_PRODUCT_METADATA=$(
+STEMCELL_VERSION_FROPS_PRODUCT_METADATA=$(
   cat ./pivnet-product/metadata.json |
   jq --raw-output \
     '
@@ -29,10 +29,10 @@ STEMCELL_VERSION_FROM_PRODUCT_METADATA=$(
 )
 
 tile_metadata=$(unzip -l pivnet-product/*.pivotal | grep "metadata" | grep "ml$" | awk '{print $NF}')
-STEMCELL_VERSION_FROM_TILE=$(unzip -p pivnet-product/*.pivotal $tile_metadata | grep -A4 stemcell | grep version: \
+STEMCELL_VERSION_FROPS_TILE=$(unzip -p pivnet-product/*.pivotal $tile_metadata | grep -A4 stemcell | grep version: \
                                                       | grep -Ei "[0-9]+" | awk '{print $NF}' | sed "s/'//g" )
 
-upload_stemcells "$STEMCELL_VERSION_FROM_TILE $STEMCELL_VERSION_FROM_PRODUCT_METADATA"
+upload_stemcells "$STEMCELL_VERSION_FROPS_TILE $STEMCELL_VERSION_FROPS_PRODUCT_METADATA"
 
 # Should the slug contain more than one product, pick only the first.
 FILE_PATH=`find ./pivnet-product -name *.pivotal | sort | head -1`
