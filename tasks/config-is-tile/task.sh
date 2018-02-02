@@ -193,8 +193,8 @@ is_properties=$(
     --arg segment_name "$SEGMENT_NAME" \
     --arg haproxy_forward_tls "$HAPROXY_FORWARD_TLS" \
     --arg haproxy_backend_ca "$HAPROXY_BACKEND_CA" \
-    --arg router_tls_ciphers "$ROUTER_TLS_CIPHERS" \
-    --arg haproxy_tls_ciphers "$HAPROXY_TLS_CIPHERS" \
+    --arg router_ssl_ciphers "$ROUTER_SSL_CIPHERS" \
+    --arg haproxy_ssl_ciphers "$HAPROXY_SSL_CIPHERS" \
     --arg disable_http_proxy "$DISABLE_HTTP_PROXY" \
     --arg has_routing_disable_http "$has_routing_disable_http" \
     --arg has_haproxy_forward_tls "$has_haproxy_forward_tls" \
@@ -232,6 +232,9 @@ is_properties=$(
       },
       ".isolated_diego_cell.placement_tag": {
         "value": $segment_name
+      },
+      ".isolated_router.static_ips": {
+        "value": $router_static_ips
       }
     }
     +
@@ -276,10 +279,10 @@ is_properties=$(
     if $has_gorouter_ssl_ciphers != "0" then
     {
       ".properties.gorouter_ssl_ciphers": {
-        "value": $router_tls_ciphers
+        "value": $router_ssl_ciphers
       },
       ".properties.haproxy_ssl_ciphers": {
-        "value": $haproxy_tls_ciphers
+        "value": $haproxy_ssl_ciphers
       }
     }
     else
@@ -296,16 +299,6 @@ is_properties=$(
     else
     .
     end  
-
-    +
-    if $is_nsx_enabled == "" or $is_nsx_enabled == "None" then {
-        ".isolated_router.static_ips": {
-        "value": $router_static_ips
-      }
-    }
-    else
-    .
-    end
 
     +
     if $has_cni_vtep_port != "0" then {
@@ -393,8 +386,6 @@ is_properties=$(
     else
     .
     end
-
-
 '
 )
 

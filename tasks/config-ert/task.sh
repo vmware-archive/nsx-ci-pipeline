@@ -225,7 +225,6 @@ fi
 # Add the static ips to list above if nsx not enabled in Bosh director 
 # If nsx enabled, a security group would be dynamically created with vms 
 # and associated with the pool by Bosh
-if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
 
   CF_PROPERTIES=$(cat <<-EOF
 $CF_PROPERTIES
@@ -241,13 +240,6 @@ $CF_PROPERTIES
   ".mysql_proxy.static_ips": {
     "value": "$ERT_MYSQL_STATIC_IPS"
   },
-EOF
-)
-
-fi
-
-CF_PROPERTIES=$(cat <<-EOF
-$CF_PROPERTIES
   ".cloud_controller.system_domain": {
     "value": "$SYSTEM_DOMAIN"
   },

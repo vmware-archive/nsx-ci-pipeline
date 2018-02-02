@@ -184,8 +184,8 @@ cf_properties=$(
     --arg private_key_pem "$SSL_PRIVATE_KEY" \
     --arg haproxy_forward_tls "$HAPROXY_FORWARD_TLS" \
     --arg haproxy_backend_ca "$HAPROXY_BACKEND_CA" \
-    --arg router_tls_ciphers "$ROUTER_TLS_CIPHERS" \
-    --arg haproxy_tls_ciphers "$HAPROXY_TLS_CIPHERS" \
+    --arg router_ssl_ciphers "$ROUTER_SSL_CIPHERS" \
+    --arg haproxy_ssl_ciphers "$HAPROXY_SSL_CIPHERS" \
     --arg disable_http_proxy "$DISABLE_HTTP_PROXY" \
     --arg smtp_from "$SMTP_FROM" \
     --arg smtp_address "$SMTP_ADDRESS" \
@@ -271,6 +271,24 @@ cf_properties=$(
       },
       ".properties.push_apps_manager_company_name": {
         "value": $company_name
+      },
+      ".router.static_ips": {
+        "value": $ert_gorouter_static_ips
+      },
+      ".tcp_router.static_ips": {
+        "value": $ert_tcprouter_static_ips
+      },
+      ".diego_brain.static_ips": {
+        "value": $ssh_static_ips
+      },
+      ".mysql_proxy.static_ips": {
+        "value": $ert_mysql_static_ips
+      },
+      ".mysql_proxy.service_hostname": {
+        "value": $ert_mysql_lbr_ip
+      },
+      ".properties.container_networking_interface_plugin": {
+        "value": $container_networking_interface_plugin
       }
     }
 
@@ -348,43 +366,7 @@ cf_properties=$(
     }
 
     +
-
-
-    # SABHA - NSX-V only
-    {
-      ".properties.container_networking_interface_plugin": {
-        "value": "silk"
-      }
-    }
-  
-    +
-
-    # IF NSX-V Enabled
-    if $nsx_enabled == "true" then
-    {
-      ".router.static_ips": {
-        "value": $ert_gorouter_static_ips
-      },
-      ".tcp_router.static_ips": {
-        "value": $ert_tcprouter_static_ips
-      },
-      ".diego_brain.static_ips": {
-        "value": $ssh_static_ips
-      },
-      ".mysql_proxy.static_ips": {
-        "value": $ert_mysql_static_ips
-      }
-    }
-    else
-    {
-      ".mysql_proxy.service_hostname": {
-        "value": $ert_mysql_lbr_ip
-      }
-    }
-    end
-
-    +
-
+    
     # HAProxy Forward TLS
     if $haproxy_forward_tls == "enable" then
       {
@@ -413,13 +395,13 @@ cf_properties=$(
 
     +
 
-    # TLS Cipher Suites
+    # SSL/TLS Cipher Suites
     {
       ".properties.gorouter_ssl_ciphers": {
-        "value": $router_tls_ciphers
+        "value": $router_ssl_ciphers
       },
       ".properties.haproxy_ssl_ciphers": {
-        "value": $haproxy_tls_ciphers
+        "value": $haproxy_ssl_ciphers
       }
     }
 

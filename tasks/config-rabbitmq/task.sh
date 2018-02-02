@@ -85,9 +85,8 @@ prod_properties=$(
   jq -n \
     --arg tile_rabbit_admin_user "$TILE_RABBIT_ADMIN_USER" \
     --arg tile_rabbit_admin_passwd "$TILE_RABBIT_ADMIN_PASSWD" \
-    --arg tile_rabbit_proxy_vip "$TILE_RABBIT_PROXY_VIP" \
-    --arg tile_rabbit_proxy_ips "$TILE_RABBIT_PROXY_IPS" \
-    --arg is_nsx_enabled "$IS_NSX_ENABLED"
+    --arg tile_rabbit_proxy_vip "$RABBITMQ_TILE_LBR_IP" \
+    --arg tile_rabbit_proxy_ips "$RABBITMQ_TILE_STATIC_IPS" \
     '
     {
      ".rabbitmq-server.server_admin_credentials": {
@@ -101,26 +100,18 @@ prod_properties=$(
       },
       ".properties.metrics_tls_disabled": {
         "value": false
-      }
-    }
-
-    +
-    if $is_nsx_enabled == "" or $is_nsx_enabled == "None" then
-    {
+      },
       ".rabbitmq-haproxy.static_ips": {
         "value": $tile_rabbit_proxy_ips
+      }
     }
-    else
-    .
-    end
-
 '
 )
 
 prod_resources=$(
   jq -n \
-    --arg tile_rabbit_proxy_instances "$TILE_RABBIT_PROXY_INSTANCES" \
-    --arg tile_rabbit_server_instances "$TILE_RABBIT_SERVER_INSTANCES" \
+    --argjson tile_rabbit_proxy_instances $TILE_RABBIT_PROXY_INSTANCES \
+    --argjson tile_rabbit_server_instances $TILE_RABBIT_SERVER_INSTANCES \
     '
     {
       "rabbitmq-haproxy": {

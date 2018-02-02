@@ -73,10 +73,9 @@ groups:
   - product-apply-changes-iso
   - upload-mysql-tile
   - config-mysql-tile
-  - product-apply-changes-mysql
   - upload-rabbit-tile
   - config-rabbit-tile
-  - product-apply-changes-rabbit
+  - product-apply-changes-mysql-rabbit
   - upload-scs-tile
   - config-scs-tile
   - product-apply-changes-scs
@@ -91,17 +90,13 @@ groups:
   - config-elastic-runtime-tile
   - product-apply-changes-ert
 
-- name: mysql
+- name: mysql-rabbitmq
   jobs:
   - upload-mysql-tile
   - config-mysql-tile
-  - product-apply-changes-mysql
-
-- name: rabbit
-  jobs:
   - upload-rabbit-tile
   - config-rabbit-tile
-  - product-apply-changes-rabbit
+  - product-apply-changes-mysql-rabbit
 
 - name: scs
   jobs:
@@ -469,8 +464,8 @@ jobs:
       SAML_SSL_PRIVATE_KEY: {{saml_ssl_private_key}}
       HAPROXY_FORWARD_TLS: {{haproxy_forward_tls}}
       HAPROXY_BACKEND_CA: {{haproxy_backend_ca}}
-      ROUTER_TLS_CIPHERS: {{router_tls_ciphers}}
-      HAPROXY_TLS_CIPHERS: {{haproxy_tls_ciphers}}
+      ROUTER_SSL_CIPHERS: {{router_ssl_ciphers}}
+      HAPROXY_SSL_CIPHERS: {{haproxy_ssl_ciphers}}
       DISABLE_HTTP_PROXY: {{disable_http_proxy}}
       TCP_ROUTING: {{tcp_routing}}
       TCP_ROUTING_PORTS: {{tcp_routing_ports}}
@@ -581,9 +576,9 @@ jobs:
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
 
-###########
-## Mysql ##
-###########
+######################
+## Mysql & RabbitMQ ##
+######################
 
 - name: upload-mysql-tile
   plan:
@@ -644,34 +639,12 @@ jobs:
       TILE_MYSQL_BROKER_INSTANCES: {{tile_mysql_broker_instances}} 
       TILE_MYSQL_PROXY_SECURITY_GROUP: {{tile_mysql_proxy_security_group}}
       
-- name: product-apply-changes-mysql
-  plan:
-  - aggregate:
-    - get: nsx-ci-pipeline
-      passed: [config-mysql-tile]
-      trigger: true
-    - get: om-cli
-      params:
-        globs: [om-linux]
-      passed: [config-mysql-tile]
-
-  - task: apply-changes
-    file: nsx-ci-pipeline/tasks/apply-changes/task.yml
-    params:
-      OPS_MGR_HOST: {{om_host}}
-      OPS_MGR_USR: {{om_usr}}
-      OPS_MGR_PWD: {{om_pwd}}
-
-############
-## Rabbit ##
-############
-
 - name: upload-rabbit-tile
   plan:
   - aggregate:
     - get: nsx-ci-pipeline
       trigger: true
-      passed: [product-apply-changes-mysql]
+      passed: [upload-mysql-tile]
     - get: pivnet-product
       resource: pivnet-rabbit-product
       params: { globs: ["*.pivotal"]}
@@ -726,7 +699,7 @@ jobs:
       SERVICE_NETWORK_NAME: {{dynamic_services_network_name}}
       TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA: {{tile_rabbit_on_demand_plan_1_instance_quota}}
 
-- name: product-apply-changes-rabbit
+- name: product-apply-changes-mysql-rabbit
   plan:
   - aggregate:
     - get: nsx-ci-pipeline
@@ -754,7 +727,7 @@ jobs:
   - aggregate:
     - get: nsx-ci-pipeline
       trigger: true
-      passed: [product-apply-changes-rabbit]
+      passed: [product-apply-changes-mysql-rabbit]
     - get: pivnet-product
       resource: pivnet-scs-product
       params: { globs: ["*.pivotal"]}
@@ -878,8 +851,8 @@ jobs:
       SSL_PRIVATE_KEY: {{tile_iso_ssl_private_key_1}}
       HAPROXY_FORWARD_TLS: {{tile_iso_haproxy_forward_tls_1}}
       HAPROXY_BACKEND_CA: {{tile_iso_haproxy_backend_ca_1}}
-      ROUTER_TLS_CIPHERS: {{tile_iso_router_tls_ciphers_1}}
-      HAPROXY_TLS_CIPHERS: {{tile_iso_haproxy_tls_ciphers_1}}
+      ROUTER_SSL_CIPHERS: {{tile_iso_router_ssl_ciphers_1}}
+      HAPROXY_SSL_CIPHERS: {{tile_iso_haproxy_ssl_ciphers_1}}
       DISABLE_HTTP_PROXY: {{tile_iso_disable_http_proxy_1}}
       ROUTER_SSL_CIPHERS: {{tile_iso_router_ssl_ciphers_1}}
       ROUTER_STATIC_IPS: {{tile_iso_router_static_ips_1}}

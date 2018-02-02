@@ -570,8 +570,8 @@ jobs:
       SSL_PRIVATE_KEY: {{tile_iso_ssl_private_key_1}}
       HAPROXY_FORWARD_TLS: {{tile_iso_haproxy_forward_tls_1}}
       HAPROXY_BACKEND_CA: {{tile_iso_haproxy_backend_ca_1}}
-      ROUTER_TLS_CIPHERS: {{tile_iso_router_tls_ciphers_1}}
-      HAPROXY_TLS_CIPHERS: {{tile_iso_haproxy_tls_ciphers_1}}
+      ROUTER_SSL_CIPHERS: {{tile_iso_router_ssl_ciphers_1}}
+      HAPROXY_SSL_CIPHERS: {{tile_iso_haproxy_ssl_ciphers_1}}
       DISABLE_HTTP_PROXY: {{tile_iso_disable_http_proxy_1}}
       ROUTER_SSL_CIPHERS: {{tile_iso_router_ssl_ciphers_1}}
       ROUTER_STATIC_IPS: {{tile_iso_router_static_ips_1}}

@@ -59,43 +59,19 @@ function fn_get_azs {
      echo $azs_csv | awk -F "," -v braceopen='{' -v braceclose='}' -v name='"name":' -v quote='"' -v OFS='"},{"name":"' '$1=$1 {print braceopen name quote $0 quote braceclose}'
 }
 
-TILE_AVAILABILITY_ZONES=$(fn_get_azs $TILE_AZS_RABBIT)
-
-NETWORK=$(
-  jq -n \
-    --arg network_name "$NETWORK_NAME" \
-    --arg service_network_name "$SERVICE_NETWORK_NAME" \
-    --arg other_azs "$TILE_AZS_RABBIT" \
-    --arg singleton_az "$TILE_AZ_RABBIT_SINGLETON" \
-    '
-    {
-      "service_network": {
-        "name": $service_network_name
-      },
-      "network": {
-        "name": $network_name
-      },
-      "other_availability_zones": ($other_azs | split(",") | map({name: .})),
-      "singleton_availability_zone": {
-        "name": $singleton_az
-      }
-    }
-    '
-)
-
-
-# Add the static ips to list above if nsx not enabled in Bosh director 
-# If nsx enabled, a security group would be dynamically created with vms 
-# and associated with the pool by Bosh
 prod_network=$(
   jq -n \
     --arg network_name "$NETWORK_NAME" \
     --arg other_azs "$TILE_AZS_RABBIT" \
     --arg singleton_az "$TILE_AZ_RABBIT_SINGLETON" \
+    --arg service_network_name "$SERVICE_NETWORK_NAME" \
     '
     {
       "network": {
         "name": $network_name
+      },
+      "service_network": {
+        "name": $service_network_name
       },
       "other_availability_zones": ($other_azs | split(",") | map({name: .})),
       "singleton_availability_zone": {
@@ -113,9 +89,8 @@ prod_properties=$(
   jq -n \
     --arg tile_rabbit_admin_user $TILE_RABBIT_ADMIN_USER \
     --arg tile_rabbit_admin_passwd $TILE_RABBIT_ADMIN_PASSWD \
-    --arg tile_rabbit_proxy_vip $TILE_RABBIT_PROXY_VIP \
-    --arg tile_rabbit_proxy_ips $TILE_RABBIT_PROXY_IPS \
-    --arg is_nsx_enabled $IS_NSX_ENABLED \
+    --arg tile_rabbit_proxy_vip "$RABBITMQ_TILE_LBR_IP" \
+    --arg tile_rabbit_proxy_ips "$RABBITMQ_TILE_STATIC_IPS" \
     --arg tile_rabbit_on_demand_plan_1_instance_quota $TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA\
     --arg tile_az_rabbit_singleton $TILE_AZ_RABBIT_SINGLETON \
     '
@@ -147,28 +122,18 @@ prod_properties=$(
       ".rabbitmq-broker.dns_host": {
         "value": $tile_rabbit_proxy_vip
       },
-      ".properties.metrics_tls_disabled": {
-        "value": false
-      }
-    }
-
-    +
-    if $is_nsx_enabled == "" or $is_nsx_enabled == "None" then
-    {
+      {
       ".rabbitmq-haproxy.static_ips": {
         "value": $tile_rabbit_proxy_ips
+      }
     }
-    else
-    .
-    end
-
 '
 )
 
 prod_resources=$(
   jq -n \
-    --arg tile_rabbit_proxy_instances "$TILE_RABBIT_PROXY_INSTANCES" \
-    --arg tile_rabbit_server_instances "$TILE_RABBIT_SERVER_INSTANCES" \
+    --arg tile_rabbit_proxy_instances $TILE_RABBIT_PROXY_INSTANCES \
+    --arg tile_rabbit_server_instances $TILE_RABBIT_SERVER_INSTANCES \
     '
     {
       "rabbitmq-haproxy": {
