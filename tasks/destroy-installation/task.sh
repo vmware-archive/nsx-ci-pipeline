@@ -13,3 +13,6 @@ om \
 	-k -u $OPS_MGR_USR \
 	-p $OPS_MGR_PWD \
 	delete-installation
+
+STATUS=$?
+exit $STATUS

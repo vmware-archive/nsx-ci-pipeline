@@ -81,6 +81,10 @@ prod_network=$(
     '
 )
 
+has_odb_plan_vm_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.on_demand_broker_plan.*rabbitmq_vm_type" | wc -l || true)
+has_odb_plan_disk_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties.on_demand_broker_plan.*rabbitmq_persistent_disk_type" | wc -l || true)
+
+
 # Add the static ips to list above if nsx not enabled in Bosh director 
 # If nsx enabled, a security group would be dynamically created with vms 
 # and associated with the pool by Bosh
@@ -93,6 +97,10 @@ prod_properties=$(
     --arg tile_rabbit_proxy_ips "$RABBITMQ_TILE_STATIC_IPS" \
     --arg tile_rabbit_on_demand_plan_1_instance_quota $TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA\
     --arg tile_az_rabbit_singleton $TILE_AZ_RABBIT_SINGLETON \
+    --arg has_odb_plan_vm_type "$has_odb_plan_vm_type" \
+    --arg has_odb_plan_disk_type "$has_odb_plan_disk_type" \
+    --arg tile_rabbit_odb_plan_1_vm_type "$TILE_RABBIT_ON_DEMAND_PLAN_1_VM_TYPE" \
+    --arg tile_rabbit_odb_plan_1_persistent_disk_type "$TILE_RABBIT_ON_DEMAND_PLAN_1_PERSISTENT_DISK_TYPE" \
     '
     {
      ".rabbitmq-server.server_admin_credentials": {
@@ -121,19 +129,41 @@ prod_properties=$(
       },
       ".rabbitmq-broker.dns_host": {
         "value": $tile_rabbit_proxy_vip
-      },
-      {
+      },      
       ".rabbitmq-haproxy.static_ips": {
         "value": $tile_rabbit_proxy_ips
       }
     }
+
+    +
+
+    if $has_odb_plan_vm_type != "0" then {
+      ".properties.on_demand_broker_plan_1_rabbitmq_vm_type": {
+        "value": $tile_rabbit_odb_plan_1_vm_type
+      }
+    }
+    else
+      .
+    end
+
+    +
+
+    if $has_odb_plan_disk_type != "0" then {
+      ".properties.on_demand_broker_plan_1_rabbitmq_persistent_disk_type": {
+        "value": $tile_rabbit_odb_plan_1_persistent_disk_type
+      }
+    }
+    else
+      .
+    end
+
 '
 )
 
 prod_resources=$(
   jq -n \
-    --arg tile_rabbit_proxy_instances $TILE_RABBIT_PROXY_INSTANCES \
-    --arg tile_rabbit_server_instances $TILE_RABBIT_SERVER_INSTANCES \
+    --argjson tile_rabbit_proxy_instances $TILE_RABBIT_PROXY_INSTANCES \
+    --argjson tile_rabbit_server_instances $TILE_RABBIT_SERVER_INSTANCES \
     '
     {
       "rabbitmq-haproxy": {

@@ -33,3 +33,6 @@ om \
 	curl -p "/api/v0/staged/products/$CF_GUID/errands" \
 	-x PUT \
 	-d "$ERT_ERRANDS"
+
+STATUS=$?
+echo $STATUS

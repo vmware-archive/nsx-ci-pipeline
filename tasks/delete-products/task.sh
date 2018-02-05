@@ -10,3 +10,6 @@ om \
 	-p $OPS_MGR_PWD \
 	curl -p "/api/v0/installation_asset_collection" \
 	-x DELETE 
+
+STATUS=$?
+exit $STATUS

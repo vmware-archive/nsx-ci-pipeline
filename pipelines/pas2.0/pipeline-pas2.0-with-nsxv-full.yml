@@ -698,7 +698,9 @@ jobs:
       TILE_RABBIT_RABBITMQ_HAPROXY_SECURITY_GROUP: {{tile_rabbit_haproxy_security_group}}
       SERVICE_NETWORK_NAME: {{dynamic_services_network_name}}
       TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA: {{tile_rabbit_on_demand_plan_1_instance_quota}}
-
+      TILE_RABBIT_ON_DEMAND_PLAN_1_VM_TYPE: {{tile_rabbit_on_demand_plan_1_vm_type}}
+      TILE_RABBIT_ON_DEMAND_PLAN_1_PERSISTENT_DISK_TYPE: {{tile_rabbit_on_demand_plan_1_persistent_disk_type}}
+      
 - name: product-apply-changes-mysql-rabbit
   plan:
   - aggregate:

@@ -105,7 +105,7 @@ if [ "$SUPPORTS_SYSLOG" == "true" ]; then
   MYSQL_TILE_PROPERTIES=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/properties" \
                       2>/dev/null)
-  supports_syslog=$(echo $MYSQL_TILE_PROPERTIES | grep properties.syslog)
+  supports_syslog=$(echo $MYSQL_TILE_PROPERTIES | grep properties.syslog || true)
   if [ "$supports_syslog" != "" ]; then
     PROPERTIES=$(cat <<-EOF
 $PROPERTIES
@@ -122,6 +122,9 @@ PROPERTIES=$(cat <<-EOF
 $PROPERTIES
   ".cf-mysql-broker.bind_hostname": {
     "value": "$MYSQL_TILE_LBR_IP"
+  },
+  ".properties.optional_protections": {
+    "value": "enable"
   },
   ".properties.optional_protections.enable.recipient_email": {
     "value": "$TILE_MYSQL_MONITOR_EMAIL"

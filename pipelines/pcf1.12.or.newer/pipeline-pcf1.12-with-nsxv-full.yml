@@ -93,17 +93,13 @@ groups:
   jobs:
   - nsx-edge-destroy
 
-- name: mysql
+- name: mysql-rabbitmq
   jobs:
   - upload-mysql-tile
   - config-mysql-tile
-  - product-apply-changes-mysql
-
-- name: rabbit
-  jobs:
   - upload-rabbit-tile
   - config-rabbit-tile
-  - product-apply-changes-rabbit
+  - product-apply-changes-mysql-rabbit
 
 - name: scs
   jobs:
@@ -189,7 +185,7 @@ resources:
   type: pivnet
   source:
     api_token: {{pivnet_token}}
-    product_slug: pivotal-rabbitmq-service
+    product_slug: p-rabbitmq
     product_version: {{rabbit_product_version}}
     sort_by: semver
 
@@ -673,7 +669,7 @@ jobs:
     params: *nsx-edge-params
 
   - task: config-rabbit-tile
-    file: nsx-ci-pipeline/tasks/config-rabbitmq/task.yml
+    file: nsx-ci-pipeline/tasks/config-rabbitmq-2.0/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
       OPS_MGR_USR: {{om_usr}}
