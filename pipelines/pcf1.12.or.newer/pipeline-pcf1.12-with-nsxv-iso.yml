@@ -85,11 +85,22 @@ groups:
   jobs:
   - nsx-edge-destroy
 
+- name: ert
+  jobs:
+  - nsx-edge-gen
+  - install-opsmgr
+  - configure-ops-director
+  - opsman-apply-changes
+  - upload-elastic-runtime-tile
+  - config-elastic-runtime-tile
+  - product-apply-changes-ert
+
 - name: iso
   jobs:
   - upload-iso-tile
   - config-iso-tile
   - product-apply-changes-iso
+
 
 resource_types:
 - name: pivnet
@@ -139,7 +150,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: ops-manager
-    product_version: {{opsman_product_version}} #'1\.11\..*'
+    product_version: {{opsman_product_version}}
     sort_by: semver
 
 - name: pivnet-ert-product
@@ -147,7 +158,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: elastic-runtime
-    product_version: {{ert_product_version}} #'1\.11\.*'
+    product_version: {{ert_product_version}}
     sort_by: semver
 
 - name: pivnet-iso-product
@@ -302,13 +313,13 @@ jobs:
       DYNAMIC_SERVICES_NW_GATEWAY: {{dynamic_services_nw_gateway}}
       DYNAMIC_SERVICES_NW_AZ: {{dynamic_services_nw_az}}
       AZ_1: {{az_1_name}}
-      AZ_1_CUSTER_NAME: {{az_1_cluster_name}}
+      AZ_1_CLUSTER_NAME: {{az_1_cluster_name}}
       AZ_1_RP_NAME: {{az_1_rp_name}}
       AZ_2: {{az_2_name}}
-      AZ_2_CUSTER_NAME: {{az_2_cluster_name}}
+      AZ_2_CLUSTER_NAME: {{az_2_cluster_name}}
       AZ_2_RP_NAME: {{az_2_rp_name}}
       AZ_3: {{az_3_name}}
-      AZ_3_CUSTER_NAME: {{az_3_cluster_name}}
+      AZ_3_CLUSTER_NAME: {{az_3_cluster_name}}
       AZ_3_RP_NAME: {{az_3_rp_name}}
       AZ_SINGLETON: {{az_singleton}}
       OM_NTP_SERVERS: {{om_ntp_servers}}
@@ -383,7 +394,7 @@ jobs:
     file: nsx-ci-pipeline/tasks/nsx-edge-list/task.yml
     params: *nsx-edge-params
 
-  - task: config-er-tile
+  - task: config-ert-tile
     file: nsx-ci-pipeline/tasks/config-ert-1.12/task.yml
     params:
       OPS_MGR_HOST: {{om_host}}
@@ -517,6 +528,7 @@ jobs:
       OPS_MGR_USR: {{om_usr}}
       OPS_MGR_PWD: {{om_pwd}}
 
+
 #######################
 ## Isolation Segment ##
 #######################
@@ -526,7 +538,7 @@ jobs:
   - aggregate:
     - get: nsx-ci-pipeline
       trigger: true
-      passed: [product-apply-changes-scs]
+      passed: [product-apply-changes-ert]
     - get: pivnet-product
       resource: pivnet-iso-product
       params: { globs: ["*.pivotal"]}
@@ -623,33 +635,6 @@ jobs:
 #############
 ## Cleanup ##
 #############
-# Just to delete products and opsman while leaving the nsx edge as-is
-# - name: destroy-installation
-#   plan:
-#   - aggregate:
-#     - get: nsx-ci-pipeline
-#     - get: om-cli
-#     - get: govc
-#       params:
-#         globs:
-#         - "*linux_amd64*"
-#   - task: delete-installation
-#     file: nsx-ci-pipeline/tasks/delete-installation/task.yml
-#     params:
-#       OPS_MGR_HOST: {{om_host}}
-#       OPS_MGR_USR: {{om_usr}}
-#       OPS_MGR_PWD: {{om_pwd}}
-
-#   - task: delete-opsman
-#     file: nsx-ci-pipeline/tasks/delete-opsman/task.yml
-#     params:
-#       GOVC_INSECURE: 1
-#       GOVC_URL: {{vcenter_host}}
-#       GOVC_USERNAME: {{vcenter_usr}}
-#       GOVC_PASSWORD: {{vcenter_pwd}}
-#       GOVC_DATACENTER: {{vcenter_data_center}}
-#       OM_VM_NAME: {{om_vm_name}}
-
 - name: uninstall-products
   plan:
   - aggregate:

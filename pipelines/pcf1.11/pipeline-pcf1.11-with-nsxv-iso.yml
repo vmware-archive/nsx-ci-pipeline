@@ -71,8 +71,7 @@ groups:
   - upload-iso-tile
   - config-iso-tile
   - product-apply-changes-iso
-
-  
+   
 - name: ert
   jobs:
   - nsx-edge-gen
@@ -93,6 +92,10 @@ groups:
   jobs:
   - uninstall-products
   - uninstall-opsmgr-nsx-edge
+
+- name: nsx-edge-destroy
+  jobs:
+  - nsx-edge-destroy
 
 resource_types:
 - name: pivnet
@@ -143,7 +146,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: ops-manager
-    product_version: {{opsman_product_version}} #'1\.11\..*'
+    product_version: {{opsman_product_version}}
     sort_by: semver
 
 - name: pivnet-ert-product
@@ -151,7 +154,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: elastic-runtime
-    product_version: {{ert_product_version}} #'1\.11\.*'
+    product_version: {{ert_product_version}}
     sort_by: semver
 
 - name: pivnet-iso-product
@@ -159,7 +162,7 @@ resources:
   source:
     api_token: {{pivnet_token}}
     product_slug: isolation-segment
-    product_version: {{iso_product_version}} #'1\.10\.*'
+    product_version: {{iso_product_version}}
     sort_by: semver
 
 jobs:
@@ -315,7 +318,7 @@ jobs:
       AZ_3_CLUSTER_NAME: {{az_3_cluster_name}}
       AZ_3_RP_NAME: {{az_3_rp_name}}
       AZ_SINGLETON: {{az_singleton}}
-      OM_NTP_SERVERS: {{ntp_servers}}
+      OM_NTP_SERVERS: {{om_ntp_servers}}
       OM_DIR_HOSTNAME: {{ops_dir_hostname}}
       NSX_EDGE_GEN_NAME: {{nsx_edge_gen_name}}
       ISOZONE_SWITCH_NAME_1: {{isozone_switch_name_1}}
@@ -612,33 +615,6 @@ jobs:
 #############
 ## Cleanup ##
 #############
-
-# Just to delete products and opsman while leaving the nsx edge as-is
-- name: destroy-installation
-  plan:
-  - aggregate:
-    - get: nsx-ci-pipeline
-    - get: om-cli
-    - get: govc
-      params:
-        globs:
-        - "*linux_amd64*"
-  - task: delete-installation
-    file: nsx-ci-pipeline/tasks/destroy-installation/task.yml
-    params:
-      OPS_MGR_HOST: {{om_host}}
-      OPS_MGR_USR: {{om_usr}}
-      OPS_MGR_PWD: {{om_pwd}}
-
-  - task: delete-opsman
-    file: nsx-ci-pipeline/tasks/delete-opsman/task.yml
-    params:
-      GOVC_INSECURE: 1
-      GOVC_URL: {{vcenter_host}}
-      GOVC_USERNAME: {{vcenter_usr}}
-      GOVC_PASSWORD: {{vcenter_pwd}}
-      GOVC_DATACENTER: {{vcenter_data_center}}
-      OM_VM_NAME: {{om_vm_name}}
 
 - name: uninstall-products
   plan:

@@ -669,7 +669,7 @@ jobs:
   - aggregate:
     - get: nsx-ci-pipeline
       trigger: true
-      passed: [upload-rabbit-tile]
+      passed: [upload-rabbit-tile, config-mysql-tile ]
     - get: om-cli
       params:
         globs: [om-linux]
@@ -705,7 +705,7 @@ jobs:
   plan:
   - aggregate:
     - get: nsx-ci-pipeline
-      passed: [config-rabbit-tile]
+      passed: [config-mysql-tile, config-rabbit-tile]
       trigger: true
     - get: om-cli
       params:

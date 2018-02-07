@@ -69,16 +69,6 @@ groups:
   - config-elastic-runtime-tile
   - product-apply-changes-ert
 
-- name: ert
-  jobs:
-  - nsx-edge-gen
-  - install-opsmgr
-  - configure-ops-director
-  - opsman-apply-changes
-  - upload-elastic-runtime-tile
-  - config-elastic-runtime-tile
-  - product-apply-changes-ert
-
 - name: cleanup
   jobs:
   - uninstall-products

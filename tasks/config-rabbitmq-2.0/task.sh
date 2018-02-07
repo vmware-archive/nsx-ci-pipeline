@@ -81,8 +81,11 @@ prod_network=$(
     '
 )
 
-has_odb_plan_vm_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.on_demand_broker_plan.*rabbitmq_vm_type" | wc -l || true)
-has_odb_plan_disk_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties.on_demand_broker_plan.*rabbitmq_persistent_disk_type" | wc -l || true)
+has_older_odb_dedicated_plan=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.on_demand_broker_dedicated" | wc -l || true)
+has_odb_plan_1=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.on_demand_broker_plan_1" | wc -l || true)
+
+has_odb_plan_vm_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.*rabbitmq_vm_type" | wc -l || true)
+has_odb_plan_disk_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties.*rabbitmq_persistent_disk_type" | wc -l || true)
 
 
 # Add the static ips to list above if nsx not enabled in Bosh director 
@@ -95,10 +98,14 @@ prod_properties=$(
     --arg tile_rabbit_admin_passwd $TILE_RABBIT_ADMIN_PASSWD \
     --arg tile_rabbit_proxy_vip "$RABBITMQ_TILE_LBR_IP" \
     --arg tile_rabbit_proxy_ips "$RABBITMQ_TILE_STATIC_IPS" \
-    --arg tile_rabbit_on_demand_plan_1_instance_quota $TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA\
+    --argjson tile_rabbit_on_demand_plan_1_instance_quota $TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA\
     --arg tile_az_rabbit_singleton $TILE_AZ_RABBIT_SINGLETON \
     --arg has_odb_plan_vm_type "$has_odb_plan_vm_type" \
     --arg has_odb_plan_disk_type "$has_odb_plan_disk_type" \
+    --arg has_older_odb_plan_vm_type "$has_odb_plan_vm_type" \
+    --arg has_older_odb_plan_disk_type "$has_odb_plan_disk_type" \
+    --arg has_older_odb_dedicated_plan "$has_older_odb_dedicated_plan" \
+    --arg has_odb_plan_1 "$has_odb_plan_1" \
     --arg tile_rabbit_odb_plan_1_vm_type "$TILE_RABBIT_ON_DEMAND_PLAN_1_VM_TYPE" \
     --arg tile_rabbit_odb_plan_1_persistent_disk_type "$TILE_RABBIT_ON_DEMAND_PLAN_1_PERSISTENT_DISK_TYPE" \
     '
@@ -111,18 +118,6 @@ prod_properties=$(
       },
       ".properties.syslog_selector": {
         "value": "disabled"
-      },
-      ".properties.on_demand_broker_plan_1_cf_service_access": {
-        "value": "enable"
-      },
-      ".properties.on_demand_broker_plan_1_instance_quota": {
-        "value": $tile_rabbit_on_demand_plan_1_instance_quota
-      },
-      ".properties.on_demand_broker_plan_1_rabbitmq_az_placement": {
-        "value": [ $tile_az_rabbit_singleton ]
-      },
-      ".properties.on_demand_broker_plan_1_disk_limit_acknowledgement": {
-        "value": ["acknowledge"]
       },
       ".properties.disk_alarm_threshold": {
         "value": "mem_relative_1_0"
@@ -137,26 +132,87 @@ prod_properties=$(
 
     +
 
-    if $has_odb_plan_vm_type != "0" then {
-      ".properties.on_demand_broker_plan_1_rabbitmq_vm_type": {
-        "value": $tile_rabbit_odb_plan_1_vm_type
+    if $has_odb_plan_1 != "0" then
+       {
+        ".properties.on_demand_broker_plan_1_cf_service_access": {
+          "value": "enable"
+        },
+        ".properties.on_demand_broker_plan_1_instance_quota": {
+          "value": $tile_rabbit_on_demand_plan_1_instance_quota
+        },
+        ".properties.on_demand_broker_plan_1_rabbitmq_az_placement": {
+          "value": [ $tile_az_rabbit_singleton ]
+        },
+        ".properties.on_demand_broker_plan_1_disk_limit_acknowledgement": {
+          "value": ["acknowledge"]
+        }
       }
-    }
+
+      +
+
+      if $has_odb_plan_vm_type != "0" then 
+      {
+        ".properties.on_demand_broker_plan_1_rabbitmq_vm_type": {
+          "value": $tile_rabbit_odb_plan_1_vm_type
+        }
+      }
+      else
+      .
+      end
+
+      +
+      if $has_odb_plan_disk_type != "0" then 
+      {
+        ".properties.on_demand_broker_plan_1_rabbitmq_persistent_disk_type": {
+          "value": $tile_rabbit_odb_plan_1_persistent_disk_type
+        }
+      }
+      else
+        .
+      end
+
+    elif $has_older_odb_dedicated_plan != "0" then
+       {
+        ".properties.on_demand_broker_dedicated_single_node_plan_cf_service_access": {
+          "value": "enable"
+        },
+        ".properties.on_demand_broker_dedicated_single_node_plan_instance_quota": {
+          "value": $tile_rabbit_on_demand_plan_1_instance_quota
+        },
+        ".properties.on_demand_broker_dedicated_single_node_plan_rabbitmq_az_placement": {
+          "value": [ $tile_az_rabbit_singleton ]
+        },
+        ".properties.on_demand_broker_dedicated_single_node_plan_disk_limit_acknowledgement": {
+          "value": ["acknowledge"]
+        }
+      }
+
+      +
+
+      if $has_odb_plan_vm_type != "0" then 
+      {
+        ".properties.on_demand_broker_dedicated_single_node_plan_rabbitmq_vm_type": {
+          "value": $tile_rabbit_odb_plan_1_vm_type
+        }
+      }
+      else
+      .
+      end
+
+      +
+
+      if $has_odb_plan_disk_type != "0" then 
+      {
+        ".properties.on_demand_broker_dedicated_single_node_plan_rabbitmq_persistent_disk_type": {
+          "value": $tile_rabbit_odb_plan_1_persistent_disk_type
+        }
+      }
+      else
+        .
+      end
     else
       .
     end
-
-    +
-
-    if $has_odb_plan_disk_type != "0" then {
-      ".properties.on_demand_broker_plan_1_rabbitmq_persistent_disk_type": {
-        "value": $tile_rabbit_odb_plan_1_persistent_disk_type
-      }
-    }
-    else
-      .
-    end
-
 '
 )
 
