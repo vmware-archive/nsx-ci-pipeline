@@ -1,9 +1,12 @@
 #!/bin/bash
 
-chmod +x om-cli/om-linux
 
-CMD=./om-cli/om-linux
+
 export ROOT_DIR=`pwd`
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
+
+
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -18,20 +21,20 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   # created by hte NSX_GEN_UTIL script
   source /tmp/jobs_lbr_map.out
 
-  IS_NSX_ENABLED=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+  IS_NSX_ENABLED=$(om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
                curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
+
+
+  # if nsx is enabled
+  if [ "$IS_NSX_ENABLED" != "null" -a "$IS_NSX_ENABLED" != "" ]; then
+    IS_NSX_ENABLED=true
+  fi
 
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
 fi
 
-
-# Check if Bosh Director is v1.11 or higher
-export BOSH_PRODUCT_VERSION=$($CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
-export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
 
 
 # No need to associate a static ip for MySQL Proxy for ERT
@@ -40,21 +43,24 @@ export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}'
 #                            awk -F '.' '{print $1"."$2"."$3".250"}' ) 
 # use $ERT_MYSQL_LBR_IP for proxy - retreived from nsx-gen-list
 
-TILE_RELEASE=`$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep cf`
+check_bosh_version
+check_available_product_version "cf"
 
-export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
-
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
-
-export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k stage-product \
+    -p $PRODUCT_NAME \
+    -v $PRODUCT_VERSION
+  
+check_staged_product_guid "cf-"
 
 # when-changed option for errands is only applicable from Ops Mgr 1.10+
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
 
-if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
-  if [ "$BOSH_MINOR_VERSION" -ge 10 ]; then
+if [ $BOSH_MAJOR_VERSION -le 1 ]; then
+  if [ $BOSH_MINOR_VERSION -ge 10 ]; then
     export IS_ERRAND_WHEN_CHANGED_ENABLED=true
   fi
 else
@@ -64,8 +70,8 @@ fi
 # No C2C support in PCF 1.9, 1.10 and older versions
 # only from 1.11+
 export SUPPORTS_C2C=false
-if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
-  if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
+if [ $PRODUCT_MAJOR_VERSION -le 1 ]; then
+  if [ $PRODUCT_MINOR_VERSION -ge 11 ]; then
     export SUPPORTS_C2C=true   
   fi
 else
@@ -80,42 +86,37 @@ function fn_get_azs {
 OTHER_AVAILABILITY_ZONES=$(fn_get_azs $AZS_ERT)
 
 
-CF_NETWORK=$(cat <<-EOF
-{
-  "singleton_availability_zone": {
-    "name": "$AZ_ERT_SINGLETON"
-  },
-  "other_availability_zones": [
-    $OTHER_AVAILABILITY_ZONES
-  ],
-  "network": {
-    "name": "$NETWORK_NAME"
-  }
-}
-EOF
-)
+# if [[ -z "$SSL_CERT" ]]; then
+# DOMAINS=$(cat <<-EOF
+#   {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
+# EOF
+# )
 
-if [[ -z "$SSL_CERT" ]]; then
-DOMAINS=$(cat <<-EOF
-  {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
-EOF
-)
+#   CERTIFICATES=`om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$DOMAINS"`
 
-  CERTIFICATES=`$$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "/api/v0/certificates/generate" -x POST -d "$DOMAINS"`
+#   export SSL_CERT=`echo $CERTIFICATES | jq '.certificate'`
+#   export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key'`
+#   # echo "SSL_CERT is" $SSL_CERT
+#   # echo "SSL_PRIVATE_KEY is" $SSL_PRIVATE_KEY
+# else
+#   echo "Using certs passed in YML"
+# fi
 
-  export SSL_CERT=`echo $CERTIFICATES | jq '.certificate'`
-  export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key'`
-  # echo "SSL_CERT is" $SSL_CERT
-  # echo "SSL_PRIVATE_KEY is" $SSL_PRIVATE_KEY
-else
-  echo "Using certs passed in YML"
-fi
 
+# saml_cert_domains=$(cat <<-EOF
+#   {"domains": ["*.$SYSTEM_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
+# EOF
+# )
+
+# saml_cert_response=`om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$saml_cert_domains"`
+
+# SAML_SSL_CERT=$(echo $saml_cert_response | jq --raw-output '.certificate')
+# SAML_SSL_PRIVATE_KEY=$(echo $saml_cert_response | jq --raw-output '.key')
 
 
 set -eu
 
-source nsx-ci-pipeline/functions/generate_cert.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/generate_cert.sh
 
 if [[ -z "$SSL_CERT" ]]; then
   domains=(
@@ -154,16 +155,10 @@ if [ "$CREDHUB_PASSWORD" == "" ]; then
 fi
 
 
-TILE_RELEASE=`$CMD -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS -u $OPSMAN_USERNAME -p $OPSMAN_PASSWORD -k available-products | grep cf`
-
-PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
-
-$CMD -t https://$OPSMAN_DOMAIN_OR_IP_ADDRESS -u $OPSMAN_USERNAME -p $OPSMAN_PASSWORD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
-
 
 cf_properties=$(
   jq -n \
+    --arg nsx_enabled "$IS_NSX_ENABLED" \
     --arg tcp_routing "$TCP_ROUTING" \
     --arg tcp_routing_ports "$TCP_ROUTING_PORTS" \
     --arg loggregator_endpoint_port "$LOGGREGATOR_ENDPOINT_PORT" \
@@ -177,19 +172,20 @@ cf_properties=$(
     --arg allow_app_ssh_access "$ALLOW_APP_SSH_ACCESS" \
     --arg ha_proxy_ips "$HA_PROXY_IPS" \
     --arg skip_cert_verify "$SKIP_CERT_VERIFY" \
-    --arg router_static_ips "$ROUTER_STATIC_IPS" \
+    --arg ert_gorouter_static_ips "$ERT_GOROUTER_STATIC_IPS" \
     --arg disable_insecure_cookies "$DISABLE_INSECURE_COOKIES" \
     --arg router_request_timeout_seconds "$ROUTER_REQUEST_TIMEOUT_IN_SEC" \
     --arg mysql_monitor_email "$MYSQL_MONITOR_EMAIL" \
-    --arg tcp_router_static_ips "$TCP_ROUTER_STATIC_IPS" \
+    --arg ert_tcprouter_static_ips "$ERT_TCPROUTER_STATIC_IPS" \
+    --arg ert_mysql_static_ips "$ERT_MYSQL_STATIC_IPS" \
     --arg company_name "$COMPANY_NAME" \
     --arg ssh_static_ips "$SSH_STATIC_IPS" \
     --arg cert_pem "$SSL_CERT" \
     --arg private_key_pem "$SSL_PRIVATE_KEY" \
     --arg haproxy_forward_tls "$HAPROXY_FORWARD_TLS" \
     --arg haproxy_backend_ca "$HAPROXY_BACKEND_CA" \
-    --arg router_tls_ciphers "$ROUTER_TLS_CIPHERS" \
-    --arg haproxy_tls_ciphers "$HAPROXY_TLS_CIPHERS" \
+    --arg router_ssl_ciphers "$ROUTER_SSL_CIPHERS" \
+    --arg haproxy_ssl_ciphers "$HAPROXY_SSL_CIPHERS" \
     --arg disable_http_proxy "$DISABLE_HTTP_PROXY" \
     --arg smtp_from "$SMTP_FROM" \
     --arg smtp_address "$SMTP_ADDRESS" \
@@ -216,6 +212,7 @@ cf_properties=$(
     --arg saml_cert_pem "$SAML_SSL_CERT" \
     --arg saml_key_pem "$SAML_SSL_PRIVATE_KEY" \
     --arg mysql_backups "$MYSQL_BACKUPS" \
+    --arg ert_mysql_lbr_ip "$ERT_MYSQL_LBR_IP" \
     --arg mysql_backups_s3_endpoint_url "$MYSQL_BACKUPS_S3_ENDPOINT_URL" \
     --arg mysql_backups_s3_bucket_name "$MYSQL_BACKUPS_S3_BUCKET_NAME" \
     --arg mysql_backups_s3_bucket_path "$MYSQL_BACKUPS_S3_BUCKET_PATH" \
@@ -263,9 +260,6 @@ cf_properties=$(
       ".ha_proxy.skip_cert_verify": {
         "value": $skip_cert_verify
       },
-      ".router.static_ips": {
-        "value": $router_static_ips
-      },
       ".router.disable_insecure_cookies": {
         "value": $disable_insecure_cookies
       },
@@ -275,14 +269,26 @@ cf_properties=$(
       ".mysql_monitor.recipient_email": {
         "value": $mysql_monitor_email
       },
-      ".tcp_router.static_ips": {
-        "value": $tcp_router_static_ips
-      },
       ".properties.push_apps_manager_company_name": {
         "value": $company_name
       },
+      ".router.static_ips": {
+        "value": $ert_gorouter_static_ips
+      },
+      ".tcp_router.static_ips": {
+        "value": $ert_tcprouter_static_ips
+      },
       ".diego_brain.static_ips": {
         "value": $ssh_static_ips
+      },
+      ".mysql_proxy.static_ips": {
+        "value": $ert_mysql_static_ips
+      },
+      ".mysql_proxy.service_hostname": {
+        "value": $ert_mysql_lbr_ip
+      },
+      ".properties.container_networking_interface_plugin": {
+        "value": $container_networking_interface_plugin
       }
     }
 
@@ -360,17 +366,7 @@ cf_properties=$(
     }
 
     +
-
-
-    # SABHA - NSX-V only
-    {
-      ".properties.container_networking_interface_plugin": {
-        "value": "silk"
-      }
-    }
-  
-    +
-
+    
     # HAProxy Forward TLS
     if $haproxy_forward_tls == "enable" then
       {
@@ -399,13 +395,13 @@ cf_properties=$(
 
     +
 
-    # TLS Cipher Suites
+    # SSL/TLS Cipher Suites
     {
       ".properties.gorouter_ssl_ciphers": {
-        "value": $router_tls_ciphers
+        "value": $router_ssl_ciphers
       },
       ".properties.haproxy_ssl_ciphers": {
-        "value": $haproxy_tls_ciphers
+        "value": $haproxy_ssl_ciphers
       }
     }
 
@@ -589,13 +585,11 @@ cf_properties=$(
 #       },
       
 
-
-
 cf_network=$(
   jq -n \
     --arg network_name "$NETWORK_NAME" \
-    --arg other_azs "$DEPLOYMENT_NW_AZS" \
-    --arg singleton_az "$ERT_SINGLETON_JOB_AZ" \
+    --arg other_azs "$AZS_ERT" \
+    --arg singleton_az "$AZ_ERT_SINGLETON" \
     '
     {
       "network": {
@@ -616,7 +610,7 @@ cf_resources=$(
     --argjson consul_server_instances $CONSUL_SERVER_INSTANCES \
     --argjson nats_instances $NATS_INSTANCES \
     --argjson nfs_server_instances $NFS_SERVER_INSTANCES \
-    --argjson mysql_proxy_instances $$ERT_MYSQL_LBR_IP \
+    --argjson mysql_proxy_instances $MYSQL_PROXY_INSTANCES \
     --argjson mysql_instances $MYSQL_INSTANCES \
     --argjson backup_prepare_instances $BACKUP_PREPARE_INSTANCES \
     --argjson diego_database_instances $DIEGO_DATABASE_INSTANCES \
@@ -635,44 +629,6 @@ cf_resources=$(
     --argjson doppler_instances $DOPPLER_INSTANCES \
     --argjson internet_connected $INTERNET_CONNECTED \
     '
-    if $iaas == "azure" then
-
-    {
-      "consul_server": { "instances": $consul_server_instances, "internet_connected": $internet_connected },
-      "nats": { "instances": $nats_instances, "internet_connected": $internet_connected },
-      "nfs_server": { "instances": $nfs_server_instances, "internet_connected": $internet_connected },
-      "mysql_proxy": { "instances": $mysql_proxy_instances, "internet_connected": $internet_connected },
-      "mysql": { "instances": $mysql_instances, "internet_connected": $internet_connected },
-      "backup-prepare": { "instances": $backup_prepare_instances, "internet_connected": $internet_connected },
-      "diego_database": { "instances": $diego_database_instances, "internet_connected": $internet_connected },
-      "uaa": { "instances": $uaa_instances, "internet_connected": $internet_connected },
-      "cloud_controller": { "instances": $cloud_controller_instances, "internet_connected": $internet_connected },
-      "ha_proxy": { "instances": $ha_proxy_instances, "internet_connected": $internet_connected },
-      "router": { "instances": $router_instances, "internet_connected": $internet_connected },
-      "mysql_monitor": { "instances": $mysql_monitor_instances, "internet_connected": $internet_connected },
-      "clock_global": { "instances": $clock_global_instances, "internet_connected": $internet_connected },
-      "cloud_controller_worker": { "instances": $cloud_controller_worker_instances, "internet_connected": $internet_connected },
-      "diego_brain": { "instances": $diego_brain_instances, "internet_connected": $internet_connected },
-      "diego_cell": { "instances": $diego_cell_instances, "internet_connected": $internet_connected },
-      "loggregator_trafficcontroller": { "instances": $loggregator_tc_instances, "internet_connected": $internet_connected },
-      "tcp_router": { "instances": $tcp_router_instances, "internet_connected": $internet_connected },
-      "syslog_adapter": { "instances": $syslog_adapter_instances, "internet_connected": $internet_connected },
-      "syslog_scheduler": {"internet_connected": $internet_connected},
-      "doppler": { "instances": $doppler_instances, "internet_connected": $internet_connected },
-      "smoke-tests": {"internet_connected": $internet_connected},
-      "push-apps-manager": {"internet_connected": $internet_connected},
-      "notifications": {"internet_connected": $internet_connected},
-      "notifications-ui": {"internet_connected": $internet_connected},
-      "push-pivotal-account": {"internet_connected": $internet_connected},
-      "autoscaling": {"internet_connected": $internet_connected},
-      "autoscaling-register-broker": {"internet_connected": $internet_connected},
-      "nfsbrokerpush": {"internet_connected": $internet_connected},
-      "bootstrap": {"internet_connected": $internet_connected},
-      "mysql-rejoin-unsafe": {"internet_connected": $internet_connected}
-    }
-
-    else
-
     {
       "consul_server": { "instances": $consul_server_instances },
       "nats": { "instances": $nats_instances },
@@ -695,22 +651,48 @@ cf_resources=$(
       "syslog_adapter": { "instances": $syslog_adapter_instances },
       "doppler": { "instances": $doppler_instances }
     }
-
-    end
     '
 )
 
-$CMD \
-  --target https://$OPSMAN_DOMAIN_OR_IP_ADDRESS \
-  --username $OPSMAN_USERNAME \
-  --password $OPSMAN_PASSWORD \
-  --skip-ssl-validation \
-  configure-product \
-  --product-name cf \
-  --product-properties "$cf_properties" \
-  --product-network "$cf_network" \
-  --product-resources "$cf_resources"
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k configure-product \
+    -n cf \
+    -p "$cf_properties" \
+    -pn "$cf_network" \
+    -pr "$cf_resources"
 
+
+
+# Set Errands to on Demand for 1.10
+if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
+  echo "applying errand configuration"
+  sleep 6
+  ERT_ERRANDS=$(cat <<-EOF
+{"errands":[
+  {"name":"smoke_tests","post_deploy":"when-changed"},
+  {"name":"push-usage-service","post_deploy":"when-changed"},
+  {"name":"push-apps-manager","post_deploy":"when-changed"},
+  {"name":"deploy-notifications","post_deploy":"when-changed"},
+  {"name":"deploy-notifications-ui","post_deploy":"when-changed"},
+  {"name":"push-pivotal-account","post_deploy":"when-changed"},
+  {"name":"deploy-autoscaling","post_deploy":"when-changed"},
+  {"name":"register-broker","post_deploy":"when-changed"},
+  {"name":"nfsbrokerpush","post_deploy":"when-changed"}
+]}
+EOF
+)
+
+  om \
+      -t https://$OPS_MGR_HOST \
+      -u $OPS_MGR_USR \
+      -p $OPS_MGR_PWD \
+      -k curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
+      -x PUT -d "$ERT_ERRANDS"
+
+fi
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
@@ -728,7 +710,7 @@ JOBS_REQUIRING_LBR=$ERT_TILE_JOBS_REQUIRING_LBR
 JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 
 # Get job guids for deployment (from staged product)
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                               curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" 2>/dev/null \
                               | jq '.[] | .[] ' > /tmp/jobs_list.log
 
@@ -743,18 +725,16 @@ do
 
   match=$(echo $job_name | grep -e $JOBS_REQUIRING_LBR_PATTERN  || true)
   if [ "$match" != "" -o "$SECURITY_GROUP" != "" ]; then
-    echo "$job requires Loadbalancer or security group..."
+    echo "$job_name requires Loadbalancer or security group..."
     
-    # Use an auto-security group based on product guid by Bosh 
+    # Check if User has specified their own security group
+    # Club that with an auto-security group based on product guid by Bosh 
     # for grouping all vms with the same security group
-    NEW_SECURITY_GROUP=\"${PRODUCT_GUID}\"
-     # Check if there are multiple security groups
-    # If so, wrap them with quotes
-    for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
-    do
-      NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP, \"$secgrp\",)
-    done
-    SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
+    if [ "$SECURITY_GROUP" != "" ]; then
+      SECURITY_GROUP="${SECURITY_GROUP},${PRODUCT_GUID}"
+    else
+      SECURITY_GROUP=${PRODUCT_GUID}
+    fi  
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
@@ -764,7 +744,7 @@ do
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
     LBR_DETAILS=${ERT_TILE_JOBS_LBR_MAP[$job_name]}
 
-    RESOURCE_CONFIG=$($CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+    RESOURCE_CONFIG=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config" \
                       2>/dev/null)
     #echo "Resource config : $RESOURCE_CONFIG"
@@ -783,16 +763,8 @@ do
     # }
     # Strip the ending brace and also "nsx_security_group": null
 
-    # Strip last braces
-    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG | sed -e '$ s/}$//')
-    # Strip any empty nsx_security_groups
-    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG1 | sed -e 's/"nsx_security_groups": null//')
-    # Remove any empty parameters and strip any existing last commas
-    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG1 | sed -e 's/, ,/,/g' | sed -e '$ s/,$//' )
-    # Now add back a comma so we can add additional parameters
-    RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG ,")
-        
-    NSX_LBR_PAYLOAD=" \"nsx_lbs\": ["
+
+    nsx_lbr_payload_json='{ "nsx_lbs": [ ] }'
 
     index=1
     for variable in $(echo $LBR_DETAILS)
@@ -808,27 +780,82 @@ do
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
       #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
-      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
+      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
-      if [ "$index" == "1" ]; then          
-        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD $ENTRY ")
-      else
-        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD, $ENTRY ")
-      fi
-      index=$(expr $index + 1)
+      ENTRY=$(jq -n \
+                  --arg edge_name $edge_name \
+                  --arg pool_name $pool_name \
+                  --argjson port $port \
+                  --arg monitor_port $monitor_port \
+                  --arg security_group "$job_security_grp" \
+                  '{
+                     "edge_name": $edge_name,
+                     "pool_name": $pool_name,
+                     "port": $port,
+                     "security_group": $security_group
+                   }
+                   +
+                   if $monitor_port != null and $monitor_port != "None" then
+                   {
+                      "monitor_port": $monitor_port
+                   }
+                   else
+                    .
+                   end
+              ')
+
+      nsx_lbr_payload_json=$(echo $nsx_lbr_payload_json \
+                                | jq --argjson new_entry "$ENTRY" \
+                                '.nsx_lbs += [$new_entry] ')
+      
+      #index=$(expr $index + 1)
     done
 
-    NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD ] ")
-    #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
+    nsx_security_group_json=$(jq -n \
+                              --arg nsx_security_groups $SECURITY_GROUP \
+                              '{ "nsx_security_groups": ($nsx_security_groups | split(",") ) }')
 
-    UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
+    #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
+    echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
+    
+    #UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
+    UPDATED_RESOURCE_CONFIG=$( echo $RESOURCE_CONFIG \
+                              | jq  \
+                              --argjson nsx_lbr_payload "$nsx_lbr_payload_json" \
+                              --argjson nsx_security_groups "$nsx_security_group_json" \
+                              ' . |= . + $nsx_security_groups +  $nsx_lbr_payload ')
     echo "Job: $job_name with GUID: $job_guid and RESOURCE_CONFIG : $UPDATED_RESOURCE_CONFIG"
 
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
-    $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD  \
-            curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
-            -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
+    om \
+        -t https://$OPS_MGR_HOST \
+        -k -u $OPS_MGR_USR \
+        -p $OPS_MGR_PWD  \
+        curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
+        -x PUT  -d "${UPDATED_RESOURCE_CONFIG}" 2>/dev/null
+
+    # final structure
+    # {
+    #   "instance_type": {
+    #     "id": "automatic"
+    #   },
+    #   "instances": 1,
+    #   "persistent_disk": {
+    #     "size_mb": "automatic"
+    #   },
+    #   "nsx_security_groups": [
+    #     "cf-a7e3e3f819a68a3ee869"
+    #   ],
+    #   "nsx_lbs": [
+    #     {
+    #       "edge_name": "esg-sabha-test",
+    #       "pool_name": "tcp-router31-Pool",
+    #       "security_group": "cf-a7e3e3f819a68a3ee869-tcp_router",
+    #       "port": "5000"
+    #     }
+    #   ]
+    # }
 
   fi
 done

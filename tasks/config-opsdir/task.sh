@@ -1,10 +1,11 @@
 #!/bin/bash -e
 
-chmod +x om-cli/om-linux
-
-CMD=./om-cli/om-linux
 
 export ROOT_DIR=`pwd`
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
+
+
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -12,6 +13,7 @@ export NSX_GEN_UTIL=${NSX_GEN_OUTPUT_DIR}/nsx_parse_util.sh
 
 if [ -e "${NSX_GEN_OUTPUT}" ]; then
   source ${NSX_GEN_UTIL} ${NSX_GEN_OUTPUT}
+
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
   exit 1
@@ -130,15 +132,21 @@ cat > /tmp/iaas_conf.txt <<-EOF
 EOF
 
 # Check if Bosh Director is v1.11 or higher
-export BOSH_PRODUCT_VERSION=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/staged/products" 2>/dev/null | jq '.[]| select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
+export BOSH_PRODUCT_VERSION=$(om \
+                              -t https://$OPS_MGR_HOST \
+                              -k -u $OPS_MGR_USR \
+                              -p $OPS_MGR_PWD \
+                              -k curl -p "/api/v0/staged/products" \
+                              2>/dev/null \
+                              | jq '.[]| select(.installation_name=="p-bosh") | .product_version' \
+                              | tr -d '"')
 export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
+export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' | sed -e 's/-.*//g')
 
 
 export IS_NSX_ENABLED=false
-if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
-  if [ "$BOSH_MINOR_VERSION" -ge 11 ]; then
+if [ $BOSH_MAJOR_VERSION -le 1 ]; then
+  if [ $BOSH_MINOR_VERSION -ge 11 ]; then
     export IS_NSX_ENABLED=true
   fi
 else
@@ -177,17 +185,17 @@ AZ_CONFIGURATION=$(cat <<-EOF
   "availability_zones": [
     {
       "name": "$AZ_1",
-      "cluster": "$AZ_1_CUSTER_NAME",
+      "cluster": "$AZ_1_CLUSTER_NAME",
       "resource_pool": "$AZ_1_RP_NAME"
     },
     {
       "name": "$AZ_2",
-      "cluster": "$AZ_2_CUSTER_NAME",
+      "cluster": "$AZ_2_CLUSTER_NAME",
       "resource_pool": "$AZ_2_RP_NAME"
     },
     {
       "name": "$AZ_3",
-      "cluster": "$AZ_3_CUSTER_NAME",
+      "cluster": "$AZ_3_CLUSTER_NAME",
       "resource_pool": "$AZ_3_RP_NAME"
     }
   ]
@@ -292,13 +300,13 @@ EOF
 
 DIRECTOR_CONFIG=$(cat <<-EOF
 {
-  "ntp_servers_string": "$NTP_SERVER_IPS",
+  "ntp_servers_string": "$OM_NTP_SERVERS",
   "metrics_ip": null,
   "resurrector_enabled": true,
   "max_threads": null,
   "database_type": "internal",
   "blobstore_type": "local",
-  "director_hostname": "$OPS_DIR_HOSTNAME"
+  "director_hostname": "$OM_DIR_HOSTNAME"
 }
 EOF
 )
@@ -318,12 +326,12 @@ EOF
 )
 
 # OM Cli v0.23.0 does not support nsx related configs
-# $CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
+# om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
 #.            -i "$IAAS_CONFIGURATION" \
 #             -d "$DIRECTOR_CONFIG"
 
 # So post it directly to the ops mgr endpoint
-$CMD  -t https://$OPS_MGR_HOST -skip-ssl-validation -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om  -t https://$OPS_MGR_HOST -skip-ssl-validation -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
         curl  -p "/api/v0/staged/director/properties" \
         -x PUT -d "{ \"iaas_configuration\": $IAAS_CONFIGURATION }"
 # Check for errors
@@ -332,7 +340,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
+om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD configure-bosh \
             -d "$DIRECTOR_CONFIG"
 # Check for errors
 if [ $? != 0 ]; then
@@ -340,7 +348,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/director/availability_zones" \
             -x PUT -d "$AZ_CONFIGURATION"
 # Check for errors
@@ -349,7 +357,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/director/networks" \
             -x PUT -d "$NETWORK_CONFIGURATION"
 # Check for errors
@@ -358,7 +366,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-$CMD -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
             curl -p "/api/v0/staged/director/network_and_az" \
             -x PUT -d "$NETWORK_ASSIGNMENT"
 # Check for errors

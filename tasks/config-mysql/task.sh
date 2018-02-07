@@ -1,9 +1,9 @@
 #!/bin/bash -e
 
-
-chmod +x om-cli/om-linux
-
 export ROOT_DIR=`pwd`
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
+
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -14,8 +14,13 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   # Read back associate array of jobs to lbr details
   # created by hte NSX_GEN_UTIL script
   source /tmp/jobs_lbr_map.out
-  IS_NSX_ENABLED=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+  IS_NSX_ENABLED=$(om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
                curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
+
+  # if nsx is enabled
+  if [ "$IS_NSX_ENABLED" != "null" -a "$IS_NSX_ENABLED" != "" ]; then
+    IS_NSX_ENABLED=true
+  fi
 
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
@@ -23,35 +28,27 @@ else
 fi
 
 # Check if Bosh Director is v1.11 or higher
-export BOSH_PRODUCT_VERSION=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
-export BOSH_MAJOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export BOSH_MINOR_VERSION=$(echo $BOSH_PRODUCT_VERSION | awk -F '.' '{print $2}' )
-
+check_bosh_version
+check_available_product_version "p-mysql"
 
 export IS_ERRAND_WHEN_CHANGED_ENABLED=false
-if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
-  if [ "$BOSH_MINOR_VERSION" -ge 10 ]; then
+if [ $BOSH_MAJOR_VERSION -le 1 ]; then
+  if [ $BOSH_MINOR_VERSION -ge 10 ]; then
     export IS_ERRAND_WHEN_CHANGED_ENABLED=true
   fi
 else
   export IS_ERRAND_WHEN_CHANGED_ENABLED=true
 fi
 
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k stage-product \
+    -p $PRODUCT_NAME \
+    -v $PRODUCT_VERSION
 
-TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-mysql`
-
-export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
-
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
-
-export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
-
-export PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                     curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("p-mysql-")) | .guid' | tr -d '"')
+check_staged_product_guid "p-mysql"
 
 
 function fn_get_azs {
@@ -94,8 +91,8 @@ fi
 
 # Check if bosh director is v1.11+
 export SUPPORTS_SYSLOG=false
-if [ "$BOSH_MAJOR_VERSION" -le 1 ]; then
-  if [ "$BOSH_MINOR_VERSION" -ge 11 ]; then
+if [ $BOSH_MAJOR_VERSION -le 1 ]; then
+  if [ $BOSH_MINOR_VERSION -ge 11 ]; then
     SUPPORTS_SYSLOG=true
   fi
 else
@@ -105,10 +102,10 @@ fi
 # Check if the tile metadata supports syslog 
 if [ "$SUPPORTS_SYSLOG" == "true" ]; then
 
-  MYSQL_TILE_PROPERTIES=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+  MYSQL_TILE_PROPERTIES=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/properties" \
                       2>/dev/null)
-  supports_syslog=$(echo $MYSQL_TILE_PROPERTIES | grep properties.syslog)
+  supports_syslog=$(echo $MYSQL_TILE_PROPERTIES | grep properties.syslog || true)
   if [ "$supports_syslog" != "" ]; then
     PROPERTIES=$(cat <<-EOF
 $PROPERTIES
@@ -125,6 +122,9 @@ PROPERTIES=$(cat <<-EOF
 $PROPERTIES
   ".cf-mysql-broker.bind_hostname": {
     "value": "$MYSQL_TILE_LBR_IP"
+  },
+  ".properties.optional_protections": {
+    "value": "enable"
   },
   ".properties.optional_protections.enable.recipient_email": {
     "value": "$TILE_MYSQL_MONITOR_EMAIL"
@@ -157,7 +157,15 @@ EOF
 )
 
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k configure-product \
+    -n $PRODUCT_NAME \
+    -p "$PROPERTIES" \
+    -pn "$NETWORK" \
+    -pr "$RESOURCES"
 
 # Set Errands to on Demand for 1.10
 if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
@@ -170,11 +178,16 @@ if [ "$IS_ERRAND_WHEN_CHANGED_ENABLED" == "true" ]; then
 EOF
 )
 
-  ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                            curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
-                            -x PUT -d "$MYSQL_ERRANDS"
+
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k curl -p "/api/v0/staged/products/$PRODUCT_GUID/errands" \
+    -x PUT -d "$MYSQL_ERRANDS"
 
 fi
+
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
@@ -193,7 +206,7 @@ JOBS_REQUIRING_LBR=$MYSQL_TILE_JOBS_REQUIRING_LBR
 JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 
 # Get job guids for deployment (from staged product)
-./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                               curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" 2>/dev/null \
                               | jq '.[] | .[] ' > /tmp/jobs_list.log
 
@@ -208,18 +221,16 @@ do
 
   match=$(echo $job_name | grep -e $JOBS_REQUIRING_LBR_PATTERN  || true)
   if [ "$match" != "" -o  "$SECURITY_GROUP" != "" ]; then
-    echo "$job requires Loadbalancer or security group..."
+    echo "$job_name requires Loadbalancer or security group..."
 
-    # Use an auto-security group based on product guid by Bosh 
+    # Check if User has specified their own security group
+    # Club that with an auto-security group based on product guid by Bosh 
     # for grouping all vms with the same security group
-    NEW_SECURITY_GROUP=\"${PRODUCT_GUID}\"
-     # Check if there are multiple security groups
-    # If so, wrap them with quotes
-    for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
-    do
-      NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP, \"$secgrp\",)
-    done
-    SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
+    if [ "$SECURITY_GROUP" != "" ]; then
+      SECURITY_GROUP="${SECURITY_GROUP},${PRODUCT_GUID}"
+    else
+      SECURITY_GROUP=${PRODUCT_GUID}
+    fi 
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
@@ -229,7 +240,7 @@ do
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
     LBR_DETAILS=${MYSQL_TILE_JOBS_LBR_MAP[$job_name]}
 
-    RESOURCE_CONFIG=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+    RESOURCE_CONFIG=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config" \
                       2>/dev/null)
     #echo "Resource config : $RESOURCE_CONFIG"
@@ -248,16 +259,8 @@ do
     # }
     # Strip the ending brace and also "nsx_security_group": null
 
-    # Strip last braces
-    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG | sed -e '$ s/}$//')
-    # Strip any empty nsx_security_groups
-    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG1 | sed -e 's/"nsx_security_groups": null//')
-    # Remove any empty parameters and strip any existing last commas
-    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG1 | sed -e 's/, ,/,/g' | sed -e '$ s/,$//' )
-    # Now add back a comma so we can add additional parameters
-    RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG ,")
-        
-    NSX_LBR_PAYLOAD=" \"nsx_lbs\": ["
+
+    nsx_lbr_payload_json='{ "nsx_lbs": [ ] }'
 
     index=1
     for variable in $(echo $LBR_DETAILS)
@@ -273,27 +276,83 @@ do
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
       #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
-      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
+      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
-      if [ "$index" == "1" ]; then          
-        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD $ENTRY ")
-      else
-        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD, $ENTRY ")
-      fi
-      index=$(expr $index + 1)
+      ENTRY=$(jq -n \
+                  --arg edge_name $edge_name \
+                  --arg pool_name $pool_name \
+                  --argjson port $port \
+                  --arg monitor_port $monitor_port \
+                  --arg security_group "$job_security_grp" \
+                  '{
+                     "edge_name": $edge_name,
+                     "pool_name": $pool_name,
+                     "port": $port,
+                     "security_group": $security_group
+                   }
+                   +
+                   if $monitor_port != null and $monitor_port != "None" then
+                   {
+                      "monitor_port": $monitor_port
+                   }
+                   else
+                    .
+                   end
+              ')
+
+      nsx_lbr_payload_json=$(echo $nsx_lbr_payload_json \
+                                | jq --argjson new_entry "$ENTRY" \
+                                '.nsx_lbs += [$new_entry] ')
+
+      #index=$(expr $index + 1)
     done
 
-    NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD ] ")
-    #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
+    nsx_security_group_json=$(jq -n \
+                              --arg nsx_security_groups $SECURITY_GROUP \
+                              '{ "nsx_security_groups": ($nsx_security_groups | split(",") ) }')
+      
 
-    UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
+    #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
+    echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
+    
+    #UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
+    UPDATED_RESOURCE_CONFIG=$( echo $RESOURCE_CONFIG \
+                              | jq  \
+                              --argjson nsx_lbr_payload "$nsx_lbr_payload_json" \
+                              --argjson nsx_security_groups "$nsx_security_group_json" \
+                              ' . |= . + $nsx_security_groups +  $nsx_lbr_payload ')
     echo "Job: $job_name with GUID: $job_guid and RESOURCE_CONFIG : $UPDATED_RESOURCE_CONFIG"
 
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
-    ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD  \
-            curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
-            -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
+    om \
+        -t https://$OPS_MGR_HOST \
+        -k -u $OPS_MGR_USR \
+        -p $OPS_MGR_PWD  \
+        curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
+        -x PUT  -d "${UPDATED_RESOURCE_CONFIG}" 2>/dev/null
+
+    # final structure
+    # {
+    #   "instance_type": {
+    #     "id": "automatic"
+    #   },
+    #   "instances": 1,
+    #   "persistent_disk": {
+    #     "size_mb": "automatic"
+    #   },
+    #   "nsx_security_groups": [
+    #     "cf-a7e3e3f819a68a3ee869"
+    #   ],
+    #   "nsx_lbs": [
+    #     {
+    #       "edge_name": "esg-sabha-test",
+    #       "pool_name": "tcp-router31-Pool",
+    #       "security_group": "cf-a7e3e3f819a68a3ee869-tcp_router",
+    #       "port": "5000"
+    #     }
+    #   ]
+    # }
 
   fi
 done

@@ -1,13 +1,21 @@
 #!/bin/bash
 
-chmod +x om-cli/om-linux
+export ROOT_DIR=`pwd`
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
 
-TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-metrics`
+check_bosh_version
+check_available_product_version "p-metrics"
 
-PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k stage-product \
+    -p $PRODUCT_NAME \
+    -v $PRODUCT_VERSION
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
+check_staged_product_guid "p-metrics"
 
 NETWORK=$(cat <<-EOF
 {
@@ -56,4 +64,12 @@ RESOURCES=$(cat <<-EOF
 EOF
 )
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD \
+    -k configure-product \
+    -n $PRODUCT_NAME \
+    -p "$PROPERTIES" \
+    -pn "$NETWORK" \
+    -pr "$RESOURCES"

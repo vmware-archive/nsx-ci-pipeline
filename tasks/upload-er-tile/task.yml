@@ -15,9 +15,9 @@ params:
 
 inputs:
   - name: pivnet-er-product
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: pivnet-cli
 
 run:
-  path: concourse-vsphere/tasks/upload-er-tile/task.sh
+  path: nsx-ci-pipeline/tasks/upload-er-tile/task.sh

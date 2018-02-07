@@ -18,9 +18,9 @@ params:
   JMX_USE_SSL:
 
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: nsx-gen-output
   
 run:
-  path: concourse-vsphere/tasks/config-ops-metrics/task.sh
+  path: nsx-ci-pipeline/tasks/config-ops-metrics/task.sh

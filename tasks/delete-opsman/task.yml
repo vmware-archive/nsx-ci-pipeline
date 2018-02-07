@@ -21,10 +21,11 @@ params:
   OM_VM_NAME:
   GOVC_NETWORK:
   GOVC_RESOURCE_POOL:
+  GOVC_HOST:
 
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: govc
 
 run:
-  path: concourse-vsphere/tasks/delete-opsman/task.sh
+  path: nsx-ci-pipeline/tasks/delete-opsman/task.sh

@@ -29,8 +29,8 @@
 - All desired vSphere Datacenter,Cluster,& Resource Pool objects must exist.  The pipeline will not create them.
 - vCenter Account must have proper permissions.
 
-## Support for PCF 1.11 integration with NSX and C2C
-Modify the pivnet resources to refer to '1\.11\..*' version for the ops man, ert, iso and other tiles to use the PCF 1.11 version that has integration with NSX Security Groups and LBR features along with Container to Container networking. For PCF 1.10 or older versions, the jobs (like gorouter) would use static ip based membership unlike the dynamic security group based membership in PCF1.11. 
+## Support for PCF 1.11+ and 2.0 integration with NSX and C2C
+Modify the pivnet resources to refer to '1\.11\..*' version for the ops man, ert, iso and other tiles to use the PCF 1.11 version that has integration with NSX Security Groups and LBR features along with Container to Container networking. For PCF 1.10 or older versions, the jobs (like gorouter) would use static ip based membership unlike the dynamic security group based membership in PCF1.11 and beyond. 
 
 Note: The BOSH and Ops Mgr 1.11 integration requires the NSX Manager to present a self-signed or appropriate CA signed cert that matches the hostname specified for the NSX Manager.
 Ops Mgr would report failures in validation of the cert if:
@@ -52,6 +52,8 @@ openssl s_client -host $NSX_MANAGER_ADDRESS \
 3) Complete application of the Director tile
 4) Once Bosh director comes up, repeat the same on the director vm (ssh and edit its /etc/hosts) so it does not again report validation errors.
 
+## Pipelines for PCF 1.11, 1.12+ and PAS 2.0
+There are minor differences in tile configurations across PCF1.11. 1.12 and 2.0. Please use the appropriate pipeline and sample parameters to register and run the pipelines.
 
 Video Link(s)
 
@@ -82,7 +84,8 @@ Video Link(s)
 Use the add-additional-iso-segment pipeline and provide the params as specified in the sample template (without indexes) while modifying the network, replicator name, segment names.. and then run the `add-additional-iso-segment` pipeline for each additional iso-segment. The network should have already been created using nsx-edge-gen (following the ISOZONE-0* marker). Atmost 3 iso segments are supported.
 Any additional segments would require extending the nsx-edge-list and nsx-edge-gen tasks along with the pipeline constructs (add additional input params in pipeline/tasks.yml and task.sh).
 
-**To use this pipeline to create the env1-params.yml file with the following sample.  Replace all variables commented as `REQUIRED`!!!**
+**To use this pipeline to create the env1-params.yml file with the following sample. There are also sample parameter files for different versions of the product installs.
+Replace all variables commented as `REQUIRED`!!!**
 
 ```
 #########################
@@ -309,15 +312,43 @@ ssl_private_key: #Default - auto-generate
 #  .....
 #  GuMpLQeNPvgGf/jpKWyjuQurh9lzmC9eYP8=
 #  -----END CERTIFICATE-----
+saml_ssl_cert:
+saml_ssl_private_key:
+
+# An ordered, colon-delimited list of Golang supported TLS cipher suites in OpenSSL format.
+# Operators should verify that these are supported by any clients or downstream components that will initiate TLS handshakes with the Router/HAProxy.
+router_tls_ciphers: "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384"        # The recommended setting is "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384".
+haproxy_tls_ciphers: "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384"       # The recommended setting is "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384".
 
 
+haproxy_forward_tls: disable # If enabled HAProxy will forward all requests to the router over TLS (enable|disable)
+haproxy_backend_ca:         # HAProxy will use the CA provided to verify the certificates provided by the router.
 
-disable_http_proxy: true
+disable_http_proxy: false
+security_acknowledgement: X # Must be set to 'X'. See explanation here: https://docs.pivotal.io/pivotalcf/latest/customizing/config-er-vmware.html#app-security
+company_name: nsxgen-test
+company_proxy_domain:  
 
 ## Get this from the OPS Manager API docs for your release. Possible values are
 ## - /api/v0/certificates/generate (for 1.10)
 ## - /api/v0/rsa_certificates (for 1.9)
 om_generate_ssl_endpoint: /api/v0/certificates/generate
+
+## Credhub
+credhub_password: <YOUR CREDHUB PASSWORD> # Needs to be min 20 characters for Credhub
+
+## C2C Container to Container networking - applicable only for PCF1.11+ 
+container_networking_nw_cidr: 10.255.0.0/16 # c2c networking network cidr
+# Enable external or silk as CNI plugin
+container_networking_interface_plugin: silk # Default to use "silk"
+
+# Following are for older installs PCF1.11 or older
+## valid values: [enable|disable]
+ert_enable_c2c: enable               # Default
+ert_c2c_network_cidr: 10.255.0.0/16
+ert_c2c_vtep_port: 4789
+garden_network_pool_cidr: 10.254.0.0/22 # Only change this if you need to avoid address collision with a third-party service on the same subnet.
+garden_network_mtu: 1454                # Applications Network Maximum Transmission Unit bytes
 
 ## ERT TCP routing and routing services
 tcp_routing: enable
@@ -354,6 +385,13 @@ system_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR SYSTEM URL> #REQUIRED ex
 apps_domain: <YOUR WILDCARD DNS MAPPED TO ERT VIP FOR DEFAULT APPS URL> #REQUIRED example: apps1.domain.local,apps2.domain.local
 
 skip_cert_verify: true
+disable_insecure_cookies: false # If true, disable insecure cookies on the router.
+
+## New flags in PAS 2.0
+default_quota_memory_limit_mb: 10240
+default_quota_max_number_services: 1000
+allow_app_ssh_access: true
+router_request_timeout_in_seconds: 900
 
 ## Apps manager name
 nsx_apps_mgr_name:          # Example: NSXAppsManager
@@ -366,11 +404,6 @@ tcp_router_static_ips:
 ssh_static_ips:
 ert_mysql_static_ips:
 
-## C2C Container to Container networking - applicable only for PCF1.11+ 
-## valid values: [enable|disable]
-ert_enable_c2c: enable               # Default
-ert_c2c_network_cidr: 10.255.0.0/16
-ert_c2c_vtep_port: 4789
 
 ## NSX Security Group tie-up
 ## Needs to be filled for automatic registration of job against NSX Security Group 
@@ -387,7 +420,21 @@ ert_diego_cell_security_group:
 # ERT_<JOB_NAME>_SECURITY_GROUP: {{ert_<job_name>_security_group}}
 
 ## ERT Target email address to receive mysql monitor notifications
-mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED example: mglynn@pivotal.io
+mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED
+# New mysql backup options for ERT
+mysql_backups:
+mysql_backups_scp_server:
+mysql_backups_scp_port:
+mysql_backups_scp_user:
+mysql_backups_scp_key:
+mysql_backups_scp_destination:
+mysql_backups_scp_cron_schedule:
+mysql_backups_s3_endpoint_url:
+mysql_backups_s3_bucket_name:
+mysql_backups_s3_bucket_path:
+mysql_backups_s3_access_key_id:
+mysql_backups_s3_secret_access_key:
+mysql_backups_s3_cron_schedule:
 
 ## ERT Default resource configuration
 consul_server_instances: 1
@@ -412,6 +459,7 @@ diego_cell_instances: 3              # Override number of Diego Cells
 doppler_instances: 1
 loggregator_traffic_controller_instances: 1
 tcp_router_instances: 1              # Override number of TCP Routers
+internet_connected: true
 
 ##################
 ## MYSQL config ##
@@ -429,7 +477,7 @@ tile_mysql_broker_instances: 2
 ## - will be filled using nsx-gen generated config
 tile_mysql_proxy_ips:
 tile_mysql_proxy_vip:
-tile_mysql_monitor_email: mglynn@pivotal.io
+tile_mysql_monitor_email: <SMTP FOR MYSQL ALERTS> #REQUIRED
 
 ## NSX Security Group tie-up
 ## Needs to be filled for automatic registration of job against NSX Security Group 
@@ -468,6 +516,39 @@ tile_rabbit_haproxy_security_group:
 # And also a parameter in upper case into the pipeline with this value:
 # TILE_RABBIT_<JOB_NAME>_SECURITY_GROUP: {{tile_rabbit_<job_name>_security_group}}
 
+# For newer ODB style rabbitmq deployment
+# Need to provide vm type and disk size for rabbitmq default plan1
+# -----------------------------------------
+# name        |  ram  |cpu|ephemeral_disk |
+# -----------------------------------------
+# nano        |    512| 1 |     8192      |
+# micro       |   1024| 1 |     8192      |
+# micro.ram   |   1024| 2 |     8192      |
+# small       |   2048| 1 |     8192      |
+# small.disk  |   2048| 1 |    16384      |
+# medium      |   4096| 2 |     8192      |
+# medium.mem  |   8192| 1 |     8192      |
+# medium.disk |   4096| 2 |    32768      |
+# medium.cpu  |   2048| 4 |     8192      |
+# large       |   8192| 2 |    16384      |       
+# large.mem   |  16384| 1 |    16384      |
+# large.disk  |   8192| 2 |    65536      |
+# large.cpu   |   4096| 4 |    16384      |
+# xlarge      |  16384| 4 |    32768      |
+# xlarge.mem  |  32768| 2 |    32768      |
+# xlarge.disk |  16384| 4 |   131072      |   
+# xlarge.cpu  |   8192| 8 |    32768      |
+# 2xlarge     |  32768| 8 |    65536      |
+# 2xlarge.mem |  65536| 4 |    65536      |  
+# 2xlarge.disk|  32768| 8 |   262144      |
+# 2xlarge.cpu |  16384|16 |    65536      |       
+# -----------------------------------------
+# Disk sizes (in mbs): 1024,2048,5012,10240,20480,30720,40960,50120,76800,102400..
+tile_rabbit_on_demand_plan_1_vm_type: medium.cpu
+tile_rabbit_on_demand_plan_1_persistent_disk_type: 10240
+
+tile_rabbit_on_demand_plan_1_instance_quota: 20 # Cannot be over 50
+tile_rabbit_errands_to_run_on_change: all
 
 ###################
 ## SCS config ##
@@ -507,7 +588,10 @@ tile_iso_ssl_private_key_1: # Default - auto-generate
 #  GuMpLQeNPvgGf/jpKWyjuQurh9lzmC9eYP8=
 #  -----END CERTIFICATE-----
 
-tile_iso_router_ssl_ciphers_1: 
+tile_iso_disable_http_proxy_1: false
+tile_iso_router_ssl_ciphers_1: "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384"        # The recommended setting is "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384".
+tile_iso_haproxy_ssl_ciphers_1: "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384"       # The recommended setting is "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384".
+
 
 
 ## C2C Container to Container networking - applicable only for PCF1.11+ 
@@ -605,20 +689,22 @@ tile_iso_diego_cell_security_group:
 5. Now you can execute the following commands:
 
  -	`fly -t lite login`
- -  `fly -t lite set-pipeline -p pcf -c pipelines/new-setup-with-nsx-edge-gen/pipeline.yml -l params/env1-params.yml`
- -	`fly -t lite unpause-pipeline -p pcf`
+ -  `fly -t lite set-pipeline -p pas2.0 -c pipelines/pas2.0/pipeline-pas2.0-with-nsxv.yml -l params/env1-params.yml`
+ -	`fly -t lite unpause-pipeline -p pas2.0`
 
-Note: The pipeline in `pipelines/new-setup-with-nsx-edge-gen/pipeline.yml` would install the NSX Edge components together with the Ops Mgr and ERT tile. 
+Note: The pipeline in `pipelines/pas2.0/pipeline-pas2.0-with-nsxv.yml` would install the NSX Edge components together with the Ops Mgr 2.0 and PAS 2.0 tile. 
 
 ![](./images/pipeline_nsx.png)
 
-Use the `pipelines/new-setup-with-nsx-edge-gen-iso-segment/pipeline.yml` for  installation of NSX Edge with Ops Mgr, ERT and Isolation Segment Tile. 
+Use the `pipelines/pipelines/pas2.0/pipeline-pas2.0-with-nsxv-iso.yml` for  installation of NSX Edge with Ops Mgr, ERT and Isolation Segment Tile. 
 
--  `fly -t lite set-pipeline -p pcf -c pipelines/new-setup-with-nsx-edge-gen-iso-segment/pipeline.yml -l params/env1-params.yml`
+-  `fly -t lite set-pipeline -p pas2.0 -c pipelines/pas2.0/pipeline-pas2.0-with-nsxv-iso.yml -l params/env1-params.yml`
 
-Use the `pipelines/new-setup-with-nsx-edge-gen-SCS/pipeline.yml` for complete installation of NSX Edge with Ops Mgr, ERT, Isolation Segment, MySQL, RabbitMQ and Spring Cloud Services Tiles. Edit the set-pipeline to following:
+Use the `pipelines/pas2.0/pipeline-pas2.0-with-nsxv-full/pipeline.yml` for complete installation of NSX Edge with Ops Mgr 2.0, PAS 2.0, Isolation Segment, MySQL, RabbitMQ and Spring Cloud Services Tiles. Edit the set-pipeline to following:
 
- -  `fly -t lite set-pipeline -p pcf -c pipelines/new-setup-with-nsx-edge-gen-SCS/pipeline.yml -l params/env1-params.yml`
+ -  `fly -t lite set-pipeline -p pas2.0 -c pipelines/pas2.0/pipeline-pas2.0-with-nsxv-full/pipeline.yml -l params/env1-params.yml`
+
+Similarly, use the `pcf1.11` or `pcf1.12.or.newer` subfolders under `pipelines` against PCF 1.11 (older) or PCF 1.12+ (newer) installs.
 
 ![](./images/pipeline_nsx_full1.png)
 ![](./images/pipeline_nsx_full2.png)

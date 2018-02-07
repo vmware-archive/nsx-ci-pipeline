@@ -17,6 +17,11 @@ params:
   NETWORK_NAME:
   SYSTEM_DOMAIN:
   APPS_DOMAIN:
+  HAPROXY_FORWARD_TLS:
+  HAPROXY_BACKEND_CA:
+  ROUTER_SSL_CIPHERS:
+  HAPROXY_SSL_CIPHERS:
+  DISABLE_HTTP_PROXY:
   SSL_TERMINATION_POINT:
   SSL_CERT:
   SSL_PRIVATE_KEY:
@@ -39,9 +44,9 @@ params:
   TILE_ISO_ISOLATED_DIEGO_CELL_SECURITY_GROUP:
   
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: nsx-gen-output
 
 run:
-  path: concourse-vsphere/tasks/config-is-tile/task.sh
+  path: nsx-ci-pipeline/tasks/config-is-tile/task.sh

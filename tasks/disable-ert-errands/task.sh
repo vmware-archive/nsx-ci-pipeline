@@ -1,6 +1,9 @@
 #!/bin/bash
 
-chmod +x om-cli/om-linux
+
+export ROOT_DIR=`pwd`
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+
 
 ERT_ERRANDS=$(cat <<-EOF
 {"errands": [
@@ -15,6 +18,21 @@ ERT_ERRANDS=$(cat <<-EOF
 EOF
 )
 
-CF_GUID=`./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD curl -p "/api/v0/deployed/products" -x GET | jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"'`
+CF_GUID=`om \
+			-t https://$OPS_MGR_HOST \
+			-k -u $OPS_MGR_USR \
+			-p $OPS_MGR_PWD \
+			curl -p "/api/v0/deployed/products" \
+			-x GET \
+			| jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"'`
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD curl -p "/api/v0/staged/products/$CF_GUID/errands" -x PUT -d "$ERT_ERRANDS"
+om \
+	-t https://$OPS_MGR_HOST \
+	-k -u $OPS_MGR_USR \
+	-p $OPS_MGR_PWD \
+	curl -p "/api/v0/staged/products/$CF_GUID/errands" \
+	-x PUT \
+	-d "$ERT_ERRANDS"
+
+STATUS=$?
+echo $STATUS

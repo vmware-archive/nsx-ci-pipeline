@@ -1,9 +1,12 @@
 #!/bin/bash -e
 
-chmod +x om-cli/om-linux
-CMD=./om-cli/om-linux
+
 
 export ROOT_DIR=`pwd`
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
+
+
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
 export NSX_GEN_OUTPUT=${NSX_GEN_OUTPUT_DIR}/nsx-gen-out.log
@@ -14,8 +17,13 @@ if [ -e "${NSX_GEN_OUTPUT}" ]; then
   # Read back associate array of jobs to lbr details
   # created by hte NSX_GEN_UTIL script
   source /tmp/jobs_lbr_map.out
-  IS_NSX_ENABLED=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
+  IS_NSX_ENABLED=$(om -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
              curl -p "/api/v0/deployed/director/manifest" 2>/dev/null | jq '.cloud_provider.properties.vcenter.nsx' || true )
+
+  # if nsx is enabled
+  if [ "$IS_NSX_ENABLED" != "null" -a "$IS_NSX_ENABLED" != "" ]; then
+    IS_NSX_ENABLED=true
+  fi
 
 else
   echo "Unable to retreive nsx gen output generated from previous nsx-gen-list task!!"
@@ -23,34 +31,31 @@ else
 fi
 
 # Check if Bosh Director is v1.11 or higher
-export bosh_product_version=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k \
-           curl -p "/api/v0/deployed/products" 2>/dev/null | jq '.[] | select(.installation_name=="p-bosh") | .product_version' | tr -d '"')
-export bosh_major_version=$(echo $bosh_product_version | awk -F '.' '{print $1}' )
-export bosh_minor_version=$(echo $bosh_product_version | awk -F '.' '{print $2}' )
+check_bosh_version
+check_installed_cf_version
+check_available_product_version "p-isolation"
 
-export cf_product_version=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-          curl -p "/api/v0/staged/products" -x GET | jq '.[] | select(.installation_name | contains("cf-")) | .product_version' | tr -d '"')
-
-export cf_major_version=$(echo $cf_product_version | awk -F '.' '{print $1}' )
-export cf_minor_version=$(echo $cf_product_version | awk -F '.' '{print $2}' )
-
+#check_installed_srt_version
 
 # Can only support one version of the default isolation segment tile
 # Search for the tile using the specified product name if available
 # or search using p-iso as default iso product name
+
 if [ -z "$PRODUCT_NAME" -o "$PRODUCT_NAME" == "p-isolation-segment" ]; then
-  TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment`
+  check_available_product_version "p-isolation-segment"
 else
-  TILE_RELEASE=`./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k available-products | grep p-isolation-segment-${PRODUCT_NAME}`
+  check_available_product_version "p-isolation-segment-${PRODUCT_NAME}"
 fi
 
-export PRODUCT_NAME=`echo $TILE_RELEASE | cut -d"|" -f2 | tr -d " "`
-export PRODUCT_VERSION=`echo $TILE_RELEASE | cut -d"|" -f3 | tr -d " "`
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k stage-product \
+    -p $PRODUCT_NAME \
+    -v $PRODUCT_VERSION 2>/dev/null 
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k stage-product -p $PRODUCT_NAME -v $PRODUCT_VERSION
-
-export PRODUCT_MAJOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $1}' )
-export PRODUCT_MINOR_VERSION=$(echo $PRODUCT_VERSION | awk -F '.' '{print $2}' )
+check_staged_product_guid $PRODUCT_NAME
 
 
 function fn_get_azs {
@@ -61,34 +66,52 @@ function fn_get_azs {
 TILE_AVAILABILITY_ZONES=$(fn_get_azs $TILE_AZS_ISO)
 
 
-NETWORK=$(cat <<-EOF
-{
-  "singleton_availability_zone": {
-    "name": "$TILE_AZ_ISO_SINGLETON"
-  },
-  "other_availability_zones": [
-    $TILE_AVAILABILITY_ZONES
-  ],
-  "network": {
-    "name": "$NETWORK_NAME"
-  }
-}
-EOF
-)
+# if [[ -z "$SSL_CERT" ]]; then
+# DOMAINS=$(cat <<-EOF
+#   {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
+# EOF
+# )
+
+#   CERTIFICATES=$(om \
+#                   -t https://$OPS_MGR_HOST \
+#                   -u $OPS_MGR_USR \
+#                   -p $OPS_MGR_PWD  \
+#                   -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" \
+#                   -x POST -d "$DOMAINS")
+
+#   export SSL_CERT=`echo $CERTIFICATES | jq '.certificate' | tr -d '"'`
+#   export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key' | tr -d '"'`
+
+#   echo "Using self signed certificates generated using Ops Manager..."
+
+# fi
+
+source $ROOT_DIR/nsx-ci-pipeline/functions/generate_cert.sh
 
 if [[ -z "$SSL_CERT" ]]; then
-DOMAINS=$(cat <<-EOF
-  {"domains": ["*.$SYSTEM_DOMAIN", "*.$APPS_DOMAIN", "*.login.$SYSTEM_DOMAIN", "*.uaa.$SYSTEM_DOMAIN"] }
-EOF
-)
+  domains=(
+    "*.${SYSTEM_DOMAIN}"
+    "*.${APPS_DOMAIN}"
+    "*.login.${SYSTEM_DOMAIN}"
+    "*.uaa.${SYSTEM_DOMAIN}"
+  )
 
-  CERTIFICATES=`$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k curl -p "$OPS_MGR_GENERATE_SSL_ENDPOINT" -x POST -d "$DOMAINS"`
+  certificates=$(generate_cert "${domains[*]}")
+  SSL_CERT=`echo $certificates | jq --raw-output '.certificate'`
+  SSL_PRIVATE_KEY=`echo $certificates | jq --raw-output '.key'`
+fi
 
-  export SSL_CERT=`echo $CERTIFICATES | jq '.certificate' | tr -d '"'`
-  export SSL_PRIVATE_KEY=`echo $CERTIFICATES | jq '.key' | tr -d '"'`
 
-  echo "Using self signed certificates generated using Ops Manager..."
+if [[ -z "$SAML_SSL_CERT" ]]; then
+  saml_cert_domains=(
+    "*.${SYSTEM_DOMAIN}"
+    "*.login.${SYSTEM_DOMAIN}"
+    "*.uaa.${SYSTEM_DOMAIN}"
+  )
 
+  saml_certificates=$(generate_cert "${saml_cert_domains[*]}")
+  SAML_SSL_CERT=$(echo $saml_certificates | jq --raw-output '.certificate')
+  SAML_SSL_PRIVATE_KEY=$(echo $saml_certificates | jq --raw-output '.key')
 fi
 
 # Supporting atmost 3 isolation segments
@@ -107,160 +130,342 @@ case "$NETWORK_NAME" in
   ;;
 esac
 
-
-PROPERTIES=$(cat <<-EOF
-{
-  ".isolated_diego_cell.executor_disk_capacity": {
-    "value": "$CELL_DISK_CAPACITY"
-  },
-  ".isolated_diego_cell.executor_memory_capacity": {
-    "value": "$CELL_MEMORY_CAPACITY"
-  },
-  ".isolated_diego_cell.garden_network_mtu": {
-    "value": $APPLICATION_NETWORK_MTU
-  },
-  ".isolated_diego_cell.insecure_docker_registry_list": {
-    "value": "$INSECURE_DOCKER_REGISTRY_LIST"
-  },
-  ".isolated_diego_cell.placement_tag": {
-    "value": "$SEGMENT_NAME"
-  },
-EOF
+is_network=$(
+  jq -n \
+    --arg network_name "$NETWORK_NAME" \
+    --arg other_azs "$TILE_AZS_ISO" \
+    --arg singleton_az "$TILE_AZ_ISO_SINGLETON" \
+    '
+    {
+      "network": {
+        "name": $network_name
+      },
+      "other_availability_zones": ($other_azs | split(",") | map({name: .})),
+      "singleton_availability_zone": {
+        "name": $singleton_az
+      }
+    }
+    '    
+    
 )
-
-# Add the static ips to list above if nsx not enabled in Bosh director 
-# If nsx enabled, a security group would be dynamically created with vms 
-# and associated with the pool by Bosh
-if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
-  PROPERTIES=$(cat <<-EOF
-$PROPERTIES
-  ".isolated_router.static_ips": {
-    "value": "$ROUTER_STATIC_IPS"
-  },
-EOF
-)
-fi
 
 # No C2C support in PCF 1.9, 1.10 and older versions
 export SUPPORTS_C2C=false
-if [ "$PRODUCT_MAJOR_VERSION" -le 1 ]; then
-  if [ "$PRODUCT_MINOR_VERSION" -ge 11 ]; then
+if [ $PRODUCT_MAJOR_VERSION -le 1 ]; then
+  if [ $PRODUCT_MINOR_VERSION -ge 11 ]; then
     export SUPPORTS_C2C=true   
   fi
 else
   export SUPPORTS_C2C=true
 fi
 
-# PCF IsoSegment tile 1.11.1 had following properties
-# but not exposed in versions 1.11.2+:
-  # ".properties.container_networking.enable.network_cidr": {
-  #     "value": "$TILE_ISO_C2C_NETWORK_CIDR"
-  # },
-  # ".properties.container_networking.enable.vtep_port": {
-  #   "value": "$TILE_ISO_C2C_VTEP_PORT"
-  # }
 
-# PCF supports C2C
-if [ "$SUPPORTS_C2C" == "true" ]; then
+has_routing_disable_http=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.routing_disable_http" | wc -l || true)
+has_haproxy_forward_tls=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.haproxy_forward_tls" | wc -l || true)
+has_gorouter_ssl_ciphers=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.gorouter_ssl_ciphers" | wc -l || true)
+has_haproxy_ssl_ciphers=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.haproxy_ssl_ciphers" | wc -l || true)
 
-  # If user wants C2C enabled, then add additional properties
-  if [ "$TILE_ISO_ENABLE_C2C" == "enable" ]; then
-    PROPERTIES=$(cat <<-EOF
-$PROPERTIES
-  ".properties.container_networking": {
-      "value": "enable"
-  }
-}
-EOF
-)
-  else
-    # User does not want c2c
-    PROPERTIES=$(cat <<-EOF
-$PROPERTIES
-  ".properties.container_networking.disable.garden_network_pool": {
-    "value": "$APPLICATION_NETWORK_CIDR"
-  }
-}
-EOF
-)
-  fi
-  # End of SUPPORTS_C2C
-else  
-  # Older version, no C2C support
-  PROPERTIES=$(cat <<-EOF
-$PROPERTIES
-  ".isolated_diego_cell.garden_network_pool": {
-      "value": "$APPLICATION_NETWORK_CIDR"
+has_garden_network_mtu=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".isolated_diego_cell.garden_network_mtu" | wc -l || true)
+has_garden_network_pool=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".isolated_diego_cell.garden_network_pool" | wc -l || true)
+
+has_cni_vtep_port=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.container_networking.enable.vtep_port" | wc -l || true)
+has_cni_network_cidr=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".container_networking.enable.network_cidr" | wc -l || true)
+has_c2c_enable_network=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties\.container_networking\.enable" | wc -l || true)
+has_c2c_disable_network=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties\.container_networking\.disable" | wc -l || true)
+
+has_networking_poe_ssl_certs=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties.networking_poe_ssl_certs" | wc -l || true)
+has_networking_poe_ssl_single_cert=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties.networking_poe_ssl_cert" | grep -v ".properties.networking_poe_ssl_certs" | wc -l || true)
+
+
+# following not yet used in Iso-segment tile
+# has_cni_selection=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".properties\.container_networking_interface_plugin" | wc -l || true)
+# --arg supports_c2c  "$SUPPORTS_C2C" \
+# --arg has_cni_selection "$has_cni_selection" \
+# --arg tile_ert_enable_c2c "$TILE_ERT_ENABLE_C2C" \
+# --arg tile_ert_c2c_network_cidr "$TILE_ERT_C2C_NETWORK_CIDR" \
+# --arg tile_ert_c2c_vtep_port "$TILE_ERT_C2C_VTEP_PORT" \
+
+is_properties=$(
+  jq -n \
+    --arg cell_disk_capacity "$CELL_DISK_CAPACITY" \
+    --arg cell_memory_capacity "$CELL_MEMORY_CAPACITY" \
+    --arg insecure_docker_registry_list "$INSECURE_DOCKER_REGISTRY_LIST" \
+    --arg segment_name "$SEGMENT_NAME" \
+    --arg haproxy_forward_tls "$HAPROXY_FORWARD_TLS" \
+    --arg haproxy_backend_ca "$HAPROXY_BACKEND_CA" \
+    --arg router_ssl_ciphers "$ROUTER_SSL_CIPHERS" \
+    --arg haproxy_ssl_ciphers "$HAPROXY_SSL_CIPHERS" \
+    --arg disable_http_proxy "$DISABLE_HTTP_PROXY" \
+    --arg has_routing_disable_http "$has_routing_disable_http" \
+    --arg has_haproxy_forward_tls "$has_haproxy_forward_tls" \
+    --arg has_gorouter_ssl_ciphers "$has_gorouter_ssl_ciphers" \
+    --arg has_haproxy_ssl_ciphers "$has_haproxy_ssl_ciphers" \
+    --arg has_garden_network_mtu "$has_garden_network_mtu" \
+    --arg application_network_mtu "$APPLICATION_NETWORK_MTU" \
+    --arg has_garden_network_mtu "$has_garden_network_mtu" \
+    --arg has_cni_vtep_port "$has_c2c_enable_network" \
+    --arg has_cni_network_cidr "$has_c2c_enable_network" \
+    --arg tile_iso_c2c_vtep_port "$TILE_ISO_C2C_VTEP_PORT" \
+    --arg tile_iso_c2c_network_cidr "$TILE_ISO_C2C_NETWORK_CIDR" \
+    --arg supports_c2c  "$SUPPORTS_C2C" \
+    --arg tile_iso_enable_c2c "$TILE_ISO_ENABLE_C2C" \
+    --arg has_c2c_enable_network "$has_c2c_enable_network" \
+    --arg has_c2c_disable_network "$has_c2c_disable_network" \
+    --arg has_networking_poe_ssl_certs "$has_networking_poe_ssl_certs" \
+    --arg has_networking_poe_ssl_single_cert "$has_networking_poe_ssl_single_cert" \
+    --arg cert_pem "$SSL_CERT" \
+    --arg private_key_pem "$SSL_PRIVATE_KEY" \
+    --arg has_garden_network_pool "$has_garden_network_pool" \
+    --arg application_network_cidr "$APPLICATION_NETWORK_CIDR" \
+    --arg is_nsx_enabled "$IS_NSX_ENABLED" \
+    --arg router_static_ips "$ROUTER_STATIC_IPS" \
+'
+    {
+      ".isolated_diego_cell.executor_disk_capacity": {
+        "value": $cell_disk_capacity
+      },
+      ".isolated_diego_cell.executor_memory_capacity": {
+        "value": $cell_memory_capacity
+      },
+      ".isolated_diego_cell.insecure_docker_registry_list": {
+        "value": $insecure_docker_registry_list
+      },
+      ".isolated_diego_cell.placement_tag": {
+        "value": $segment_name
+      },
+      ".isolated_router.static_ips": {
+        "value": $router_static_ips
+      }
     }
-}
-EOF
+    +
+
+    # HAProxy Forward TLS
+    if $has_haproxy_forward_tls != "0" then
+      if $haproxy_forward_tls == "enable" then
+      {
+        ".properties.haproxy_forward_tls": {
+          "value": "enable"
+        },
+        ".properties.haproxy_forward_tls.enable.backend_ca": {
+          "value": $haproxy_backend_ca
+        }
+      }
+      else
+        {
+          ".properties.haproxy_forward_tls": {
+            "value": "disable"
+          }
+        }
+      end
+    else
+    .
+    end
+
+    +
+
+    if $has_routing_disable_http != "0" then
+    {
+      ".properties.routing_disable_http": {
+        "value": $disable_http_proxy
+      }
+    }
+    else
+    .
+    end
+
+    +
+
+    # TLS Cipher Suites
+    if $has_gorouter_ssl_ciphers != "0" then
+    {
+      ".properties.gorouter_ssl_ciphers": {
+        "value": $router_ssl_ciphers
+      },
+      ".properties.haproxy_ssl_ciphers": {
+        "value": $haproxy_ssl_ciphers
+      }
+    }
+    else
+    .
+    end
+
+    +
+
+    if $has_garden_network_mtu != "0" then {
+        ".isolated_diego_cell.garden_network_mtu": {
+        "value": $application_network_mtu
+      }
+    }
+    else
+    .
+    end  
+
+    +
+    if $has_cni_vtep_port != "0" then {
+        ".properties.container_networking.enable.vtep_port": {
+        "value": $tile_iso_c2c_vtep_port
+      }
+    }
+    else
+    .
+    end
+
+    +
+    if $has_cni_network_cidr != "0" then {
+        ".properties.container_networking.enable.network_cidr": {
+        "value": $tile_iso_c2c_network_cidr
+      }
+    }
+    else
+    .
+    end 
+
+    +
+
+    if $supports_c2c == "true" then 
+      if $tile_iso_enable_c2c == "enable" and $has_c2c_enable_network != "0" then
+       {
+          ".properties.container_networking": {
+              "value": "enable"
+          },
+          ".properties.container_networking.enable.network_cidr": {
+              "value": $tile_iso_c2c_network_cidr
+          },
+          ".properties.container_networking.enable.vtep_port": {
+            "value": $tile_iso_c2c_vtep_port
+          }
+       }
+      elif $tile_iso_enable_c2c == "disable" and $has_c2c_disable_network != "0" then
+      {
+        ".properties.container_networking": {
+            "value": "disable"
+        },
+        ".properties.container_networking.disable.garden_network_pool": {
+            "value": "10.254.0.0/22"
+        }
+      }
+      else
+      .
+      end
+
+    else
+      if $has_garden_network_pool != "0" then
+        {
+          ".isolated_diego_cell.garden_network_pool": {
+            "value": $application_network_cidr
+          }
+        }
+      else
+      .
+      end
+    end
+
+    + if $has_networking_poe_ssl_certs != "0" then
+    {
+      ".properties.networking_poe_ssl_certs": {
+        "value": [ 
+          {
+            "name": "certificate",
+            "certificate": {
+              "cert_pem": $cert_pem,
+              "private_key_pem": $private_key_pem
+            }
+          } 
+        ]
+      }
+    }
+    elif $has_networking_poe_ssl_single_cert != "0" then
+    {
+      ".properties.networking_poe_ssl_cert": {
+        "value": {
+          "cert_pem": $cert_pem,
+          "private_key_pem": $private_key_pem
+        }
+      }
+    }
+    else
+    .
+    end
+'
 )
-fi
+
+
 # End of PROPERTIES block
 
-
-
-RESOURCES=$(cat <<-EOF
+is_resources=$(
+  jq -n \
+   --argjson is_router_instances $IS_ROUTER_INSTANCES \
+   --argjson is_diego_cell_instances $IS_DIEGO_CELL_INSTANCES \
+'
 {
   "isolated_router": {
     "instance_type": {"id": "automatic"},
-    "instances" : $IS_ROUTER_INSTANCES
+    "instances" : $is_router_instances
   },
   "isolated_diego_cell": {
     "instance_type": {"id": "automatic"},
-    "instances" : $IS_DIEGO_CELL_INSTANCES
+    "instances" : $is_diego_cell_instances
   }
 }
-EOF
+'
 )
 
-$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$PROPERTIES" -pn "$NETWORK" -pr "$RESOURCES"
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k configure-product \
+    -n $PRODUCT_NAME \
+    -p "$is_properties" \
+    -pn "$is_network" \
+    -pr "$is_resources"
 
-if [[ "$SSL_TERMINATION_POINT" == "terminate_at_router" ]]; then
-echo "Terminating SSL at the goRouters and using self signed/provided certs..."
-SSL_PROPERTIES=$(cat <<-EOF
-{
-  ".properties.networking_point_of_entry": {
-    "value": "$SSL_TERMINATION_POINT"
-  },
-  ".properties.networking_point_of_entry.terminate_at_router.ssl_rsa_certificate": {
-    "value": {
-      "cert_pem": "$SSL_CERT",
-      "private_key_pem": "$SSL_PRIVATE_KEY"
+has_networking_poe_terminate=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties.networking_point_of_entry.terminate" | wc -l || true)
+
+ssl_properties=$( jq -n \
+    --arg has_networking_poe_terminate "$has_networking_poe_terminate" \
+    --arg ssl_termination_point "$SSL_TERMINATION_POINT" \
+    --arg ssl_cert "$SSL_CERT" \
+    --arg ssl_private_key "$SSL_PRIVATE_KEY" \
+    --arg router_ssl_ciphers "$ROUTER_SSL_CIPHERS" \
+'
+  {
+      ".properties.networking_point_of_entry": {
+        "value": $ssl_termination_point
+      }
+  }
+  +
+  if $has_networking_poe_terminate != "0" then
+    if $ssl_termination_point == "terminate_at_router" then
+    # Terminating SSL at the goRouters and using self signed/provided certs... 
+    {
+      ".properties.networking_point_of_entry.terminate_at_router.ssl_rsa_certificate": {
+        "value": {
+          "cert_pem": $ssl_cert,
+          "private_key_pem": $ssl_private_key
+        }
+      },
+      ".properties.networking_point_of_entry.terminate_at_router.ssl_ciphers": {
+        "value": $router_ssl_ciphers
+      }
     }
-  },
-  ".properties.networking_point_of_entry.terminate_at_router.ssl_ciphers": {
-    "value": "$ROUTER_SSL_CIPHERS"
-  }
-}
-EOF
+    else
+    .
+    end
+  else
+    .
+  end
+
+'
 )
 
-elif [[ "$SSL_TERMINATION_POINT" == "terminate_at_router_ert_cert" ]]; then
-echo "Terminating SSL at the goRouters and reusing self signed/provided certs from ERT tile..."
-SSL_PROPERTIES=$(cat <<-EOF
-{
-  ".properties.networking_point_of_entry": {
-    "value": "$SSL_TERMINATION_POINT"
-  }
-}
-EOF
-)
-
-elif [[ "$SSL_TERMINATION_POINT" == "terminate_before_router" ]]; then
-echo "Unencrypted traffic to goRouters as SSL terminated at load balancer..."
-SSL_PROPERTIES=$(cat <<-EOF
-{
-  ".properties.networking_point_of_entry": {
-    "value": "$SSL_TERMINATION_POINT"
-  }
-}
-EOF
-)
-
-fi
-
-$CMD -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k configure-product -n $PRODUCT_NAME -p "$SSL_PROPERTIES"
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k configure-product \
+    -n $PRODUCT_NAME \
+    -p "$ssl_properties"
 
 # if nsx is not enabled, skip remaining steps
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
@@ -270,10 +475,6 @@ fi
 # Proceed if NSX is enabled on Bosh Director
 # Support NSX LBR Integration
 
-PRODUCT_GUID=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                     curl -p "/api/v0/staged/products" -x GET \
-                     | jq '.[] | select(.installation_name | contains("p-isolation-segment-")) | .guid' | tr -d '"')
-
 # $ISO_TILE_JOBS_REQUIRING_LBR comes filled by nsx-edge-gen list command
 # Sample: ERT_TILE_JOBS_REQUIRING_LBR='mysql_proxy,tcp_router,router,diego_brain'
 JOBS_REQUIRING_LBR=$ISO_TILE_JOBS_REQUIRING_LBR
@@ -282,9 +483,13 @@ JOBS_REQUIRING_LBR=$ISO_TILE_JOBS_REQUIRING_LBR
 JOBS_REQUIRING_LBR_PATTERN=$(echo $JOBS_REQUIRING_LBR | sed -e 's/,/\\|/g')
 
 # Get job guids for deployment (from staged product)
-./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
-                              curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" 2>/dev/null \
-                              | jq '.[] | .[] ' > /tmp/jobs_list.log
+om \
+    -t https://$OPS_MGR_HOST \
+    -u $OPS_MGR_USR \
+    -p $OPS_MGR_PWD  \
+    -k curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs" \
+    2>/dev/null \
+    | jq '.[] | .[] ' > /tmp/jobs_list.log
 
 for job_guid in $(cat /tmp/jobs_list.log | jq '.guid' | tr -d '"')
 do
@@ -298,18 +503,16 @@ do
 
   match=$(echo $job_name | grep -e $JOBS_REQUIRING_LBR_PATTERN  || true)
   if [ "$match" != "" -o "$SECURITY_GROUP" != "" ]; then
-    echo "$job requires Loadbalancer or security group..."
+    echo "$job_name requires Loadbalancer or security group..."
 
-    # Use an auto-security group based on product guid by Bosh 
+    # Check if User has specified their own security group
+    # Club that with an auto-security group based on product guid by Bosh 
     # for grouping all vms with the same security group
-    NEW_SECURITY_GROUP=\"${PRODUCT_GUID}\"
-     # Check if there are multiple security groups
-    # If so, wrap them with quotes
-    for secgrp in $(echo $SECURITY_GROUP |sed -e 's/,/ /g' )
-    do
-      NEW_SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP, \"$secgrp\",)
-    done
-    SECURITY_GROUP=$(echo $NEW_SECURITY_GROUP | sed -e 's/,$//')
+    if [ "$SECURITY_GROUP" != "" ]; then
+      SECURITY_GROUP="${SECURITY_GROUP},${PRODUCT_GUID}"
+    else
+      SECURITY_GROUP=${PRODUCT_GUID}
+    fi  
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
@@ -331,7 +534,7 @@ do
       ;;
     esac
 
-    RESOURCE_CONFIG=$(./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
+    RESOURCE_CONFIG=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
                       curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config" \
                       2>/dev/null)
     #echo "Resource config : $RESOURCE_CONFIG"
@@ -350,16 +553,8 @@ do
     # }
     # Strip the ending brace and also "nsx_security_group": null
 
-    # Strip last braces
-    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG | sed -e '$ s/}$//')
-    # Strip any empty nsx_security_groups
-    RESOURCE_CONFIG1=$(echo $RESOURCE_CONFIG1 | sed -e 's/"nsx_security_groups": null//')
-    # Remove any empty parameters and strip any existing last commas
-    RESOURCE_CONFIG=$(echo $RESOURCE_CONFIG1 | sed -e 's/, ,/,/g' | sed -e '$ s/,$//' )
-    # Now add back a comma so we can add additional parameters
-    RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG ,")
-        
-    NSX_LBR_PAYLOAD=" \"nsx_lbs\": ["
+
+    nsx_lbr_payload_json='{ "nsx_lbs": [ ] }'
 
     index=1
     for variable in $(echo $LBR_DETAILS)
@@ -375,27 +570,82 @@ do
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
       #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"security_group\": \"$job_security_grp\" }"
-      ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
+      #ENTRY="{ \"edge_name\": \"$edge_name\", \"pool_name\": \"$pool_name\", \"port\": \"$port\", \"monitor_port\": \"$monitor_port\", \"security_group\": \"$job_security_grp\" }"
       #echo "Created lbr entry for job: $job_guid with value: $ENTRY"
 
-      if [ "$index" == "1" ]; then          
-        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD $ENTRY ")
-      else
-        NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD, $ENTRY ")
-      fi
-      index=$(expr $index + 1)
+      ENTRY=$(jq -n \
+                  --arg edge_name $edge_name \
+                  --arg pool_name $pool_name \
+                  --argjson port $port \
+                  --arg monitor_port $monitor_port \
+                  --arg security_group "$job_security_grp" \
+                  '{
+                     "edge_name": $edge_name,
+                     "pool_name": $pool_name,
+                     "port": $port,
+                     "security_group": $security_group
+                   }
+                   +
+                   if $monitor_port != null and $monitor_port != "None" then
+                   {
+                      "monitor_port": $monitor_port
+                   }
+                   else
+                    .
+                   end
+              ')
+
+      nsx_lbr_payload_json=$(echo $nsx_lbr_payload_json \
+                                | jq --argjson new_entry "$ENTRY" \
+                                '.nsx_lbs += [$new_entry] ')
+      
+      #index=$(expr $index + 1)
     done
 
-    NSX_LBR_PAYLOAD=$(echo "$NSX_LBR_PAYLOAD ] ")
-    #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
+    nsx_security_group_json=$(jq -n \
+                              --arg nsx_security_groups $SECURITY_GROUP \
+                              '{ "nsx_security_groups": ($nsx_security_groups | split(",") ) }')
 
-    UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
+    #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
+    echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
+    
+    #UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
+    UPDATED_RESOURCE_CONFIG=$( echo $RESOURCE_CONFIG \
+                              | jq  \
+                              --argjson nsx_lbr_payload "$nsx_lbr_payload_json" \
+                              --argjson nsx_security_groups "$nsx_security_group_json" \
+                              ' . |= . + $nsx_security_groups +  $nsx_lbr_payload ')
     echo "Job: $job_name with GUID: $job_guid and RESOURCE_CONFIG : $UPDATED_RESOURCE_CONFIG"
 
     # Register job with NSX Pool in Ops Mgr (gets passed to Bosh)
-    ./om-cli/om-linux -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD  \
-            curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
-            -x PUT  -d "${UPDATED_RESOURCE_CONFIG}"
+    om \
+        -t https://$OPS_MGR_HOST \
+        -u $OPS_MGR_USR \
+        -p $OPS_MGR_PWD  \
+        -k curl -p "/api/v0/staged/products/${PRODUCT_GUID}/jobs/${job_guid}/resource_config"  \
+        -x PUT  -d "${UPDATED_RESOURCE_CONFIG}" 2>/dev/null
+
+    # final structure
+    # {
+    #   "instance_type": {
+    #     "id": "automatic"
+    #   },
+    #   "instances": 1,
+    #   "persistent_disk": {
+    #     "size_mb": "automatic"
+    #   },
+    #   "nsx_security_groups": [
+    #     "cf-a7e3e3f819a68a3ee869"
+    #   ],
+    #   "nsx_lbs": [
+    #     {
+    #       "edge_name": "esg-sabha-test",
+    #       "pool_name": "tcp-router31-Pool",
+    #       "security_group": "cf-a7e3e3f819a68a3ee869-tcp_router",
+    #       "port": "5000"
+    #     }
+    #   ]
+    # }
 
   fi
 done

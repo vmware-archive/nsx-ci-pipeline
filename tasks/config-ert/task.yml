@@ -78,6 +78,7 @@ params:
   TCP_ROUTER_INSTANCES:
   DEPLOYMENT_NW_CIDR:
   NSX_APPS_MGR_NAME:
+  COMPANY_NAME:  
   TILE_ERT_ENABLE_C2C:
   TILE_ERT_C2C_NETWORK_CIDR:
   TILE_ERT_C2C_VTEP_PORT:
@@ -86,11 +87,20 @@ params:
   TILE_ERT_DIEGO_BRAIN_SECURITY_GROUP:
   TILE_ERT_MYSQL_PROXY_SECURITY_GROUP:
   TILE_ERT_DIEGO_CELL_SECURITY_GROUP:
-
+  COMPANY_NAME:
+  GARDEN_NETWORK_MTU:
+  GARDEN_NETWORK_POOL_CIDR:
+  ALLOW_APP_SSH_ACCESS:
+  INTERNET_CONNECTED:
+  SECURITY_ACKNOWLEDGEMENT:
+  DISABLE_INSECURE_COOKIES:
+  CONTAINER_NETWORKING_NW_CIDR:
+  CONTAINER_NETWORKING_INTERFACE_PLUGIN:
+    
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: nsx-gen-output
   
 run:
-  path: concourse-vsphere/tasks/config-ert/task.sh
+  path: nsx-ci-pipeline/tasks/config-ert/task.sh

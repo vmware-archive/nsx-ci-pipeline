@@ -20,11 +20,12 @@ params:
   TILE_RABBIT_PROXY_INSTANCES:
   TILE_RABBIT_SERVER_INSTANCES:
   TILE_RABBIT_RABBITMQ_HAPROXY_SECURITY_GROUP:
+  TILE_RABBIT_ON_DEMAND_PLAN_1_INSTANCE_QUOTA:
   
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
   - name: nsx-gen-output
 
 run:
-  path: concourse-vsphere/tasks/config-rabbit/task.sh
+  path: nsx-ci-pipeline/tasks/config-rabbitmq/task.sh

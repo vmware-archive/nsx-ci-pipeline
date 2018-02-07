@@ -1,23 +1,33 @@
 #!/bin/bash
 
-PIVNET_CLI=`find ./pivnet-cli -name "*linux-amd64*"`
-chmod +x $PIVNET_CLI
+export ROOT_DIR=`pwd`
+source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
 
-chmod +x om-cli/om-linux
 
 FILE_PATH=`find ./pivnet-$SERVICE_STRING-product -name *.pivotal`
 
 STEMCELL_VERSION=`cat ./pivnet-$SERVICE_STRING-product/metadata.json | jq '.Dependencies[] | select(.Release.Product.Name | contains("Stemcells")) | .Release.Version'`
 
 echo "Downloading stemcell $STEMCELL_VERSION for $SERVICE_STRING product"
-$PIVNET_CLI login --api-token="$PIVNET_API_TOKEN"
-$PIVNET_CLI download-product-files -p stemcells -r $STEMCELL_VERSION -g "*vsphere*" --accept-eula
+pivnet-cli login --api-token="$PIVNET_API_TOKEN"
+pivnet-cli download-product-files -p stemcells -r $STEMCELL_VERSION -g "*vsphere*" --accept-eula
 
 SC_FILE_PATH=`find ./ -name *.tgz`
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k upload-product -p $FILE_PATH
+om \
+	-t https://$OPS_MGR_HOST \
+	-k -u $OPS_MGR_USR \
+	-p $OPS_MGR_PWD \
+	-k upload-product \
+	-p $FILE_PATH
 
-./om-cli/om-linux -t https://$OPS_MGR_HOST -u $OPS_MGR_USR -p $OPS_MGR_PWD -k upload-stemcell -s $SC_FILE_PATH
+om \
+	-t https://$OPS_MGR_HOST \
+	-k -u $OPS_MGR_USR \
+	-p $OPS_MGR_PWD \
+	-k upload-stemcell \
+	-s $SC_FILE_PATH
 
 if [ ! -f "$SC_FILE_PATH" ]; then
     echo "Stemcell file not found!"

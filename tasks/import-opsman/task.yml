@@ -35,9 +35,9 @@ params:
 
 inputs:
   - name: pivnet-opsman-product
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: govc
   - name: nsx-gen-output
 
 run:
-  path: concourse-vsphere/tasks/import-opsman/task.sh
+  path: nsx-ci-pipeline/tasks/import-opsman/task.sh

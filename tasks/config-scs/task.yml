@@ -15,8 +15,8 @@ params:
   TILE_AZS_SCS:
 
 inputs:
-  - name: concourse-vsphere
+  - name: nsx-ci-pipeline
   - name: om-cli
 
 run:
-  path: concourse-vsphere/tasks/config-scs/task.sh
+  path: nsx-ci-pipeline/tasks/config-scs/task.sh
