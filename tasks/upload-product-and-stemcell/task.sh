@@ -29,7 +29,7 @@ STEMCELL_VERSION_FROPS_PRODUCT_METADATA=$(
 )
 
 tile_metadata=$(unzip -l pivnet-product/*.pivotal | grep "metadata" | grep "ml$" | awk '{print $NF}')
-STEMCELL_VERSION_FROPS_TILE=$(unzip -p pivnet-product/*.pivotal $tile_metadata | grep -A4 stemcell | grep version: \
+STEMCELL_VERSION_FROPS_TILE=$(unzip -p pivnet-product/*.pivotal $tile_metadata | grep -A4 stemcell_criteria: | grep version: \
                                                       | grep -Ei "[0-9]+{4}" | awk '{print $NF}' | sed "s/'//g" )
 
 upload_stemcells "$STEMCELL_VERSION_FROPS_TILE $STEMCELL_VERSION_FROPS_PRODUCT_METADATA"
