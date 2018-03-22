@@ -484,6 +484,7 @@ jobs:
       COMPANY_NAME: {{company_name}}
       GARDEN_NETWORK_MTU: 1454
       GARDEN_NETWORK_POOL_CIDR: 10.254.0.0/22
+      BLOBSTORE_INTERNAL_ACCESS_SUBNET: {{blobstore_internal_access_subnet}}
 
 - name: product-apply-changes-ert
   plan:
