@@ -317,7 +317,7 @@ cf_properties=$(
     if $has_grootfs != "0" then
     {
         ".properties.enable_grootfs": {
-        "value": $ENABLE_GROOTFS
+        "value": $enable_grootfs
       }
     }
     else
