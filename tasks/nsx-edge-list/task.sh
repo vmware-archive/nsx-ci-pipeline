@@ -139,7 +139,9 @@ pushd "${ROOT_DIR}/nsx-edge-gen"
 -esg_ert_certs_config_appd_1 "$ESG_ERT_CERTS_CONFIG_APPDOMAIN_1"   \
 -esg_go_router_ssl_term_1 "$ESG_GO_ROUTER_SSL_TERM_1" \
 -esg_opsmgr_uplink_ip_1 $ESG_OPSMGR_UPLINK_IP_1   \
--esg_go_router_uplink_ip_1 $ESG_GO_ROUTER_UPLINK_IP_1   \
+-esg_opsdir_uplink_ip_1 "$ESG_OPSDIR_UPLINK_IP_1" \
+-esg_go_router_uplink_ip_1 "$ESG_GO_ROUTER_UPLINK_IP_1" \
+-esg_go_router_nossl_uplink_ip_1 "$ESG_GO_ROUTER_NOSSL_UPLINK_IP_1" \
 -esg_diego_brain_uplink_ip_1 $ESG_DIEGO_BRAIN_UPLINK_IP_1   \
 -esg_tcp_router_uplink_ip_1 $ESG_TCP_ROUTER_UPLINK_IP_1   \
 -esg_go_router_inst_1 $ESG_GO_ROUTER_INSTANCES_1 \
