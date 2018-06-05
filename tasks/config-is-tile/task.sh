@@ -5,7 +5,7 @@
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
-
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_null_variables.sh
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -53,7 +53,7 @@ om \
     -p $OPS_MGR_PWD  \
     -k stage-product \
     -p $PRODUCT_NAME \
-    -v $PRODUCT_VERSION 2>/dev/null 
+    -v $PRODUCT_VERSION 2>/dev/null
 
 check_staged_product_guid $PRODUCT_NAME
 
@@ -116,7 +116,7 @@ fi
 
 # Supporting atmost 3 isolation segments
 case "$NETWORK_NAME" in
-  *01) 
+  *01)
   export ROUTER_STATIC_IPS=$ISOZONE_SWITCH_1_GOROUTER_STATIC_IPS
   export TCP_ROUTER_STATIC_IPS=$ISOZONE_SWITCH_1_TCPROUTER_STATIC_IPS
   ;;
@@ -145,15 +145,15 @@ is_network=$(
         "name": $singleton_az
       }
     }
-    '    
-    
+    '
+
 )
 
 # No C2C support in PCF 1.9, 1.10 and older versions
 export SUPPORTS_C2C=false
 if [ $PRODUCT_MAJOR_VERSION -le 1 ]; then
   if [ $PRODUCT_MINOR_VERSION -ge 11 ]; then
-    export SUPPORTS_C2C=true   
+    export SUPPORTS_C2C=true
   fi
 else
   export SUPPORTS_C2C=true
@@ -298,7 +298,7 @@ is_properties=$(
     }
     else
     .
-    end  
+    end
 
     +
     if $has_cni_vtep_port != "0" then {
@@ -318,11 +318,11 @@ is_properties=$(
     }
     else
     .
-    end 
+    end
 
     +
 
-    if $supports_c2c == "true" then 
+    if $supports_c2c == "true" then
       if $tile_iso_enable_c2c == "enable" and $has_c2c_enable_network != "0" then
        {
           ".properties.container_networking": {
@@ -363,14 +363,14 @@ is_properties=$(
     + if $has_networking_poe_ssl_certs != "0" then
     {
       ".properties.networking_poe_ssl_certs": {
-        "value": [ 
+        "value": [
           {
             "name": "certificate",
             "certificate": {
               "cert_pem": $cert_pem,
               "private_key_pem": $private_key_pem
             }
-          } 
+          }
         ]
       }
     }
@@ -437,7 +437,7 @@ ssl_properties=$( jq -n \
   +
   if $has_networking_poe_terminate != "0" then
     if $ssl_termination_point == "terminate_at_router" then
-    # Terminating SSL at the goRouters and using self signed/provided certs... 
+    # Terminating SSL at the goRouters and using self signed/provided certs...
     {
       ".properties.networking_point_of_entry.terminate_at_router.ssl_rsa_certificate": {
         "value": {
@@ -496,7 +496,7 @@ do
 
   job_name=$(cat /tmp/jobs_list.log | grep -B1 $job_guid | grep name | awk -F '"' '{print $4}')
   job_name_upper=$(echo ${job_name^^} | sed -e 's/-/_/')
-  
+
   # Check for security group defined for the given job from Env
   # Expecting only one security group env variable per job (can have a comma separated list)
   SECURITY_GROUP=$(env | grep "TILE_ISO_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
@@ -506,24 +506,24 @@ do
     echo "$job_name requires Loadbalancer or security group..."
 
     # Check if User has specified their own security group
-    # Club that with an auto-security group based on product guid by Bosh 
+    # Club that with an auto-security group based on product guid by Bosh
     # for grouping all vms with the same security group
     if [ "$SECURITY_GROUP" != "" ]; then
       SECURITY_GROUP="${SECURITY_GROUP},${PRODUCT_GUID}"
     else
       SECURITY_GROUP=${PRODUCT_GUID}
-    fi  
+    fi
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
     # Sample associative array content:
-    # ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS" 
+    # ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS"
     # .. ["diego_brain"]="$SSH_LBR_DETAILS"  ["router"]="$ERT_GOROUTER_LBR_DETAILS" )
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
 
     # We support atmost 3 iso segments...
     case "$NETWORK_NAME" in
-      *01) 
+      *01)
       LBR_DETAILS=${ISO_TILE_1_JOBS_LBR_MAP[$job_name]}
       ;;
       *02)
@@ -565,7 +565,7 @@ do
       port=$(echo $variable | awk -F ':' '{print $4}')
       monitor_port=$(echo $variable | awk -F ':' '{print $5}')
       echo "ESG: $edge_name, LBR: $lbr_name, Pool: $pool_name, Port: $port, Monitor port: $monitor_port"
-      
+
       # Create a security group with Product Guid and job name for lbr security grp
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
@@ -598,7 +598,7 @@ do
       nsx_lbr_payload_json=$(echo $nsx_lbr_payload_json \
                                 | jq --argjson new_entry "$ENTRY" \
                                 '.nsx_lbs += [$new_entry] ')
-      
+
       #index=$(expr $index + 1)
     done
 
@@ -608,7 +608,7 @@ do
 
     #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
     echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
-    
+
     #UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
     UPDATED_RESOURCE_CONFIG=$( echo $RESOURCE_CONFIG \
                               | jq  \

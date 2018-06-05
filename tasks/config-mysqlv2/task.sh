@@ -3,6 +3,7 @@
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_null_variables.sh
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -72,8 +73,8 @@ prod_network=$(
     '
 )
 
-# Add the static ips to list above if nsx not enabled in Bosh director 
-# If nsx enabled, a security group would be dynamically created with vms 
+# Add the static ips to list above if nsx not enabled in Bosh director
+# If nsx enabled, a security group would be dynamically created with vms
 # and associated with the pool by Bosh
 if [ "$IS_NSX_ENABLED" == "null" -o "$IS_NSX_ENABLED" == "" ]; then
   PROPERTIES=$(cat <<-EOF
@@ -97,7 +98,7 @@ else
   export SUPPORTS_SYSLOG=true
 fi
 
-# Check if the tile metadata supports syslog 
+# Check if the tile metadata supports syslog
 if [ "$SUPPORTS_SYSLOG" == "true" ]; then
 
   MYSQL_TILE_PROPERTIES=$(om -t https://$OPS_MGR_HOST -k -u $OPS_MGR_USR -p $OPS_MGR_PWD \
@@ -109,11 +110,11 @@ if [ "$SUPPORTS_SYSLOG" == "true" ]; then
 $PROPERTIES
   ".properties.syslog": {
     "value": "disabled"
-  }, 
+  },
 EOF
-) 
+)
   fi
-fi 
+fi
 
 
 PROPERTIES=$(cat <<-EOF
@@ -233,19 +234,19 @@ prod_properties=$(
       },
       ".properties.plan1_selector.active.description": {
         "value": $plan1_description
-      },      
+      },
       ".properties.plan1_selector.active.instance_limit": {
         "value": $plan1_instance_limit
-      },      
+      },
       ".properties.plan1_selector.active.vm_type": {
         "value": $plan1_vm_type
-      },      
+      },
       ".properties.plan1_selector.active.disk_size": {
         "value": $plan1_disk_size
-      },      
+      },
       ".properties.plan1_selector.active.az_multi_select": {
         "value": $($other_azs | split(","))
-      },      
+      },
       ".properties.plan1_selector.active.access_dropdown": {
         "value": $plan1_access
       }
@@ -266,19 +267,19 @@ prod_properties=$(
         },
         ".properties.plan2_selector.active.description": {
           "value": $plan2_description
-        },       
+        },
         ".properties.plan2_selector.active.instance_limit": {
           "value": $plan2_instance_limit
-        },      
+        },
         ".properties.plan2_selector.active.vm_type": {
           "value": $plan2_vm_type
-        },      
+        },
         ".properties.plan2_selector.active.disk_size": {
           "value": $plan2_disk_size
-        },      
+        },
         ".properties.plan2_selector.active.az_multi_select": {
           "value": $($other_azs | split(","))
-        },      
+        },
         ".properties.plan2_selector.active.access_dropdown": {
           "value": $plan2_access
         }
@@ -303,22 +304,22 @@ prod_properties=$(
         },
         ".properties.plan3_selector.active.name": {
           "value": $plan3_name
-        },      
+        },
         ".properties.plan3_selector.active.description": {
           "value": $plan3_description
-        },   
+        },
         ".properties.plan3_selector.active.instance_limit": {
           "value": $plan3_instance_limit
-        },      
+        },
         ".properties.plan3_selector.active.vm_type": {
           "value": $plan3_vm_type
-        },      
+        },
         ".properties.plan3_selector.active.disk_size": {
           "value": $plan3_disk_size
-        },      
+        },
         ".properties.plan3_selector.active.az_multi_select": {
           "value": $($other_azs | split(","))
-        },      
+        },
         ".properties.plan3_selector.active.access_dropdown": {
           "value": $plan3_access
         }
@@ -343,22 +344,22 @@ prod_properties=$(
         },
         ".properties.plan4_selector.active.name": {
           "value": $plan4_name
-        },      
+        },
         ".properties.plan4_selector.active.description": {
           "value": $plan4_description
-        },   
+        },
         ".properties.plan4_selector.active.instance_limit": {
           "value": $plan4_instance_limit
-        },      
+        },
         ".properties.plan4_selector.active.vm_type": {
           "value": $plan4_vm_type
-        },      
+        },
         ".properties.plan4_selector.active.disk_size": {
           "value": $plan4_disk_size
-        },      
+        },
         ".properties.plan4_selector.active.az_multi_select": {
           "value": $($other_azs | split(","))
-        },      
+        },
         ".properties.plan4_selector.active.access_dropdown": {
           "value": $plan4_access
         }
@@ -383,22 +384,22 @@ prod_properties=$(
         },
         ".properties.plan5_selector.active.name": {
           "value": $plan5_name
-        },      
+        },
         ".properties.plan5_selector.active.description": {
           "value": $plan5_description
-        },   
+        },
         ".properties.plan5_selector.active.instance_limit": {
           "value": $plan5_instance_limit
-        },      
+        },
         ".properties.plan5_selector.active.vm_type": {
           "value": $plan5_vm_type
-        },      
+        },
         ".properties.plan5_selector.active.disk_size": {
           "value": $plan5_disk_size
-        },      
+        },
         ".properties.plan5_selector.active.az_multi_select": {
           "value": $($other_azs | split(","))
-        },      
+        },
         ".properties.plan5_selector.active.access_dropdown": {
           "value": $plan5_access
         }
@@ -409,9 +410,9 @@ prod_properties=$(
         "value": "Inactive"
       }
     }
-    end    
+    end
 
-    + 
+    +
 
     if $enabled_backup == "s3" then
     {
@@ -423,22 +424,22 @@ prod_properties=$(
       },
       ".properties.backups_selector.s3.secret_access_key": {
         "value": $plan5_name
-      },      
+      },
       ".properties.backups_selector.s3.endpoint_url": {
         "value": $plan5_description
-      },   
+      },
       ".properties.backups_selector.s3.bucket_name": {
         "value": $plan5_instance_limit
-      },      
+      },
       ".properties.backups_selector.s3.path": {
         "value": $plan5_vm_type
-      },      
+      },
       ".properties.backups_selector.s3.cron_schedule": {
         "value": $backup_cron_schedule
-      },      
+      },
       ".properties.backups_selector.s3.enable_email_alerts": {
         "value": $backup_email_alerts
-      },      
+      },
       ".properties.backups_selector.s3.region": {
         "value": $plan5_access
       }
@@ -468,7 +469,7 @@ prod_properties=$(
       },
       ".properties.backups_selector.azure.enable_email_alerts": {
         "value": $backup_email_alerts
-      }        
+      }
     }
     elif $enabled_backup == "scp" then
     {
@@ -492,13 +493,13 @@ prod_properties=$(
       },
       ".properties.backups_selector.scp.port": {
         "value": $
-      },      
+      },
       ".properties.backups_selector.scp.cron_schedule": {
         "value": $backup_cron_schedule
-      },      
+      },
       ".properties.backups_selector.scp.enable_email_alerts": {
         "value": $backup_email_alerts
-      }  
+      }
     }
     elif $enabled_backup == "azure" then
     {
@@ -519,15 +520,15 @@ prod_properties=$(
       },
       ".properties.backups_selector.gcs.enable_email_alerts": {
         "value": $backup_email_alerts
-      }    
+      }
     }
-    else 
+    else
     {
       ".properties.backups_selector": {
         "value": "No backups"
       }
     }
-    end    
+    end
 '
 )
 
@@ -612,7 +613,7 @@ for job_guid in $(cat /tmp/jobs_list.log | jq '.guid' | tr -d '"')
 do
   job_name=$(cat /tmp/jobs_list.log | grep -B1 $job_guid | grep name | awk -F '"' '{print $4}')
   job_name_upper=$(echo ${job_name^^} | sed -e 's/-/_/')
-  
+
   # Check for security group defined for the given job from Env
   # Expecting only one security group env variable per job (can have a comma separated list)
   SECURITY_GROUP=$(env | grep "TILE_MYSQL_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
@@ -622,18 +623,18 @@ do
     echo "$job_name requires Loadbalancer or security group..."
 
     # Check if User has specified their own security group
-    # Club that with an auto-security group based on product guid by Bosh 
+    # Club that with an auto-security group based on product guid by Bosh
     # for grouping all vms with the same security group
     if [ "$SECURITY_GROUP" != "" ]; then
       SECURITY_GROUP="${SECURITY_GROUP},${PRODUCT_GUID}"
     else
       SECURITY_GROUP=${PRODUCT_GUID}
-    fi 
+    fi
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
     # Sample associative array content:
-    # ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS" 
+    # ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS"
     # .. ["diego_brain"]="$SSH_LBR_DETAILS"  ["router"]="$ERT_GOROUTER_LBR_DETAILS" )
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
     LBR_DETAILS=${MYSQL_TILE_JOBS_LBR_MAP[$job_name]}
@@ -669,7 +670,7 @@ do
       port=$(echo $variable | awk -F ':' '{print $4}')
       monitor_port=$(echo $variable | awk -F ':' '{print $5}')
       echo "ESG: $edge_name, LBR: $lbr_name, Pool: $pool_name, Port: $port, Monitor port: $monitor_port"
-      
+
       # Create a security group with Product Guid and job name for lbr security grp
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
@@ -709,11 +710,11 @@ do
     nsx_security_group_json=$(jq -n \
                               --arg nsx_security_groups $SECURITY_GROUP \
                               '{ "nsx_security_groups": ($nsx_security_groups | split(",") ) }')
-      
+
 
     #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
     echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
-    
+
     #UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
     UPDATED_RESOURCE_CONFIG=$( echo $RESOURCE_CONFIG \
                               | jq  \

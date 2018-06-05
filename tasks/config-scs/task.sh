@@ -3,7 +3,7 @@
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
-
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_null_variables.sh
 
 # Check if Bosh Director is v1.11 or higher
 check_bosh_version
@@ -55,7 +55,7 @@ PROPERTIES=$(cat <<-EOF
 {
   ".deploy-service-broker.broker_max_instances": {
     "value": 100
-  },  
+  },
   ".deploy-service-broker.disable_cert_check": {
     "value": true
   }

@@ -2,6 +2,7 @@
 
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_null_variables.sh
 
 # Check for pending changes before starting deletion
 pending_changes=$( om \

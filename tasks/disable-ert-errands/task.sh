@@ -3,36 +3,55 @@
 
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
+source $ROOT_DIR/nsx-t-ci-pipeline/functions/check_versions.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_null_variables.sh
 
+check_available_product_version "cf"
 
-ERT_ERRANDS=$(cat <<-EOF
-{"errands": [
-  {"name": "smoke-tests","post_deploy": false},
-  {"name": "push-apps-manager","post_deploy": false},
-  {"name": "notifications","post_deploy": false},
-  {"name": "notifications-ui","post_deploy": false},
-  {"name": "push-pivotal-account","post_deploy": false},
-  {"name": "autoscaling","post_deploy": false},
-  {"name": "autoscaling-register-broker","post_deploy": false}
-]}
-EOF
+enabled_errands=$(
+  om-linux \
+    --target "https://${OPS_MGR_HOST}" \
+    --skip-ssl-validation \
+    --username $OPS_MGR_USR \
+    --password $OPS_MGR_PWD \
+    errands \
+    --product-name "$PRODUCT_NAME" |
+  tail -n+4 | head -n-1 | grep -v false | cut -d'|' -f2 | tr -d ' '
 )
 
-CF_GUID=`om \
-			-t https://$OPS_MGR_HOST \
-			-k -u $OPS_MGR_USR \
-			-p $OPS_MGR_PWD \
-			curl -p "/api/v0/deployed/products" \
-			-x GET \
-			| jq '.[] | select(.installation_name | contains("cf-")) | .guid' | tr -d '"'`
+errands_to_run_on_change="${enabled_errands[@]}"
 
-om \
-	-t https://$OPS_MGR_HOST \
-	-k -u $OPS_MGR_USR \
-	-p $OPS_MGR_PWD \
-	curl -p "/api/v0/staged/products/$CF_GUID/errands" \
-	-x PUT \
-	-d "$ERT_ERRANDS"
+will_run_on_change=$(
+  echo $enabled_errands |
+  jq \
+    --arg run_on_change "${errands_to_run_on_change[@]}" \
+    --raw-input \
+    --raw-output \
+    'split(" ")
+    | reduce .[] as $errand ([];
+       if $run_on_change | contains($errand) then
+         . + [$errand]
+       else
+         .
+       end)
+    | join("\n")'
+)
 
-STATUS=$?
-echo $STATUS
+if [ -z "$will_run_on_change" ]; then
+  echo Nothing to do.
+  exit 0
+fi
+
+while read errand; do
+  echo -n Set $errand to run on change...
+  om-linux \
+    --target "https://${OPS_MGR_HOST}" \
+    --skip-ssl-validation \
+    --username "$OPS_MGR_USR" \
+    --password "$OPS_MGR_PWD" \
+    set-errand-state \
+    --product-name "$PRODUCT_NAME" \
+    --errand-name $errand \
+    --post-deploy-state "when-changed"
+  echo done
+done < <(echo "$will_run_on_change")

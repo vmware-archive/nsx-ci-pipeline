@@ -4,7 +4,7 @@
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
-
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_null_variables.sh
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -27,8 +27,8 @@ openssl s_client  -servername $NSX_MANAGER_ADDRESS \
 
 NSX_MANAGER_CERT_ADDRESS=`cat /tmp/complete_nsx_manager_cert.log \
                         | grep Subject | grep "CN=" \
-                        | awk '{print $NF}' \
-                        | sed -e 's/CN=//g' `
+                        | tr , '\n' | grep 'CN=' \
+                        | sed -e 's/.* CN=//' `
 
 echo "Fully qualified domain name for NSX Manager: $NSX_MANAGER_FQDN"
 echo "Host name associated with NSX Manager cert: $NSX_MANAGER_CERT_ADDRESS"
@@ -75,7 +75,7 @@ function fn_get_component_static_ips {
    grep  "static ips" |
    grep ${search_switch} | \
    grep ${search_component} | \
-   awk -F '|' '{print$5}' 
+   awk -F '|' '{print$5}'
   )
   echo $component_static_ips
 }
@@ -84,7 +84,7 @@ function fn_get_component_static_ips {
 if [ "$INFRA_VCENTER_NETWORK" == "" \
   -o "$DEPLOYMENT_VCENTER_NETWORK" == "" \
   -o "$SERVICES_VCENTER_NETWORK" == "" \
-  -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" ]; then 
+  -o "$DYNAMIC_SERVICES_VCENTER_NETWORK" == "" ]; then
   echo "Some networks could not be located from NSX!!"
   echo "      INFRASTRUCTURE: $INFRA_VCENTER_NETWORK"
   echo "      ERT DEPLOYMENT: $DEPLOYMENT_VCENTER_NETWORK"

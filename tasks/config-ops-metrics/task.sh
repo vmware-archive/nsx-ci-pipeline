@@ -3,6 +3,7 @@
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_null_variables.sh
 
 check_bosh_version
 check_available_product_version "p-metrics"

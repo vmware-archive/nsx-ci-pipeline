@@ -5,6 +5,7 @@
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_null_variables.sh
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -38,7 +39,7 @@ fi
 # No need to associate a static ip for MySQL Proxy for ERT
 # export MYSQL_ERT_PROXY_IP=$(echo ${DEPLOYMENT_NW_CIDR} | \
 #                            sed -e 's/\/.*//g' | \
-#                            awk -F '.' '{print $1"."$2"."$3".250"}' ) 
+#                            awk -F '.' '{print $1"."$2"."$3".250"}' )
 # use $ERT_MYSQL_LBR_IP for proxy - retreived from nsx-gen-list
 
 check_bosh_version
@@ -69,7 +70,7 @@ fi
 export SUPPORTS_C2C=false
 if [ $PRODUCT_MAJOR_VERSION -le 1 ]; then
   if [ $PRODUCT_MINOR_VERSION -ge 11 ]; then
-    export SUPPORTS_C2C=true   
+    export SUPPORTS_C2C=true
   fi
 else
   export SUPPORTS_C2C=true
@@ -147,7 +148,7 @@ CF_PROPERTIES=$(cat <<-EOF
 {
   ".properties.logger_endpoint_port": {
     "value": "$LOGGREGATOR_ENDPOINT_PORT"
-  },  
+  },
   ".properties.tcp_routing": {
     "value": "$TCP_ROUTING"
   },
@@ -222,8 +223,8 @@ EOF
 
 fi
 
-# Add the static ips to list above if nsx not enabled in Bosh director 
-# If nsx enabled, a security group would be dynamically created with vms 
+# Add the static ips to list above if nsx not enabled in Bosh director
+# If nsx enabled, a security group would be dynamically created with vms
 # and associated with the pool by Bosh
 
   CF_PROPERTIES=$(cat <<-EOF
@@ -315,7 +316,7 @@ EOF
 )
   fi
   # End of SUPPORTS_C2C
-else  
+else
   # Older version, no C2C support
   CF_PROPERTIES=$(cat <<-EOF
 $CF_PROPERTIES
@@ -492,7 +493,7 @@ CF_AUTH_PROPERTIES=$(cat <<-EOF
           "cert_pem": "",
           "private_key_pem": ""
         }
-  }  
+  }
 }
 EOF
 )
@@ -658,7 +659,7 @@ for job_guid in $(cat /tmp/jobs_list.log | jq '.guid' | tr -d '"')
 do
   job_name=$(cat /tmp/jobs_list.log | grep -B1 $job_guid | grep name | awk -F '"' '{print $4}')
   job_name_upper=$(echo ${job_name^^} | sed -e 's/-/_/')
-  
+
   # Check for security group defined for the given job from Env
   # Expecting only one security group env variable per job (can have a comma separated list)
   SECURITY_GROUP=$(env | grep "TILE_ERT_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
@@ -666,20 +667,20 @@ do
   match=$(echo $job_name | grep -e $JOBS_REQUIRING_LBR_PATTERN  || true)
   if [ "$match" != "" -o "$SECURITY_GROUP" != "" ]; then
     echo "$job_name requires Loadbalancer or security group..."
-    
+
     # Check if User has specified their own security group
-    # Club that with an auto-security group based on product guid by Bosh 
+    # Club that with an auto-security group based on product guid by Bosh
     # for grouping all vms with the same security group
     if [ "$SECURITY_GROUP" != "" ]; then
       SECURITY_GROUP="${SECURITY_GROUP},${PRODUCT_GUID}"
     else
       SECURITY_GROUP=${PRODUCT_GUID}
-    fi  
+    fi
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
     # Sample associative array content:
-    # ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS" 
+    # ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS"
     # .. ["diego_brain"]="$SSH_LBR_DETAILS"  ["router"]="$ERT_GOROUTER_LBR_DETAILS" )
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
     LBR_DETAILS=${ERT_TILE_JOBS_LBR_MAP[$job_name]}
@@ -715,7 +716,7 @@ do
       port=$(echo $variable | awk -F ':' '{print $4}')
       monitor_port=$(echo $variable | awk -F ':' '{print $5}')
       echo "ESG: $edge_name, LBR: $lbr_name, Pool: $pool_name, Port: $port, Monitor port: $monitor_port"
-      
+
       # Create a security group with Product Guid and job name for lbr security grp
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
@@ -748,7 +749,7 @@ do
       nsx_lbr_payload_json=$(echo $nsx_lbr_payload_json \
                                 | jq --argjson new_entry "$ENTRY" \
                                 '.nsx_lbs += [$new_entry] ')
-      
+
       #index=$(expr $index + 1)
     done
 
@@ -758,7 +759,7 @@ do
 
     #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
     echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
-    
+
     #UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
     UPDATED_RESOURCE_CONFIG=$( echo $RESOURCE_CONFIG \
                               | jq  \
@@ -799,4 +800,3 @@ do
 
   fi
 done
-

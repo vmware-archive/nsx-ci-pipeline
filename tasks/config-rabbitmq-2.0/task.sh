@@ -5,7 +5,7 @@ set -eu
 export ROOT_DIR=`pwd`
 source $ROOT_DIR/nsx-ci-pipeline/functions/copy_binaries.sh
 source $ROOT_DIR/nsx-ci-pipeline/functions/check_versions.sh
-
+source $ROOT_DIR/nsx-ci-pipeline/functions/check_null_variables.sh
 
 export SCRIPT_DIR=$(dirname $0)
 export NSX_GEN_OUTPUT_DIR=${ROOT_DIR}/nsx-gen-output
@@ -88,8 +88,8 @@ has_odb_plan_vm_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . | grep ".propertie
 has_odb_plan_disk_type=$(echo $STAGED_PRODUCT_PROPERTIES | jq . |grep ".properties.*rabbitmq_persistent_disk_type" | wc -l || true)
 
 
-# Add the static ips to list above if nsx not enabled in Bosh director 
-# If nsx enabled, a security group would be dynamically created with vms 
+# Add the static ips to list above if nsx not enabled in Bosh director
+# If nsx enabled, a security group would be dynamically created with vms
 # and associated with the pool by Bosh
 
 prod_properties=$(
@@ -124,7 +124,7 @@ prod_properties=$(
       },
       ".rabbitmq-broker.dns_host": {
         "value": $tile_rabbit_proxy_vip
-      },      
+      },
       ".rabbitmq-haproxy.static_ips": {
         "value": $tile_rabbit_proxy_ips
       }
@@ -150,7 +150,7 @@ prod_properties=$(
 
       +
 
-      if $has_odb_plan_vm_type != "0" then 
+      if $has_odb_plan_vm_type != "0" then
       {
         ".properties.on_demand_broker_plan_1_rabbitmq_vm_type": {
           "value": $tile_rabbit_odb_plan_1_vm_type
@@ -161,7 +161,7 @@ prod_properties=$(
       end
 
       +
-      if $has_odb_plan_disk_type != "0" then 
+      if $has_odb_plan_disk_type != "0" then
       {
         ".properties.on_demand_broker_plan_1_rabbitmq_persistent_disk_type": {
           "value": $tile_rabbit_odb_plan_1_persistent_disk_type
@@ -189,7 +189,7 @@ prod_properties=$(
 
       +
 
-      if $has_odb_plan_vm_type != "0" then 
+      if $has_odb_plan_vm_type != "0" then
       {
         ".properties.on_demand_broker_dedicated_single_node_plan_rabbitmq_vm_type": {
           "value": $tile_rabbit_odb_plan_1_vm_type
@@ -201,7 +201,7 @@ prod_properties=$(
 
       +
 
-      if $has_odb_plan_disk_type != "0" then 
+      if $has_odb_plan_disk_type != "0" then
       {
         ".properties.on_demand_broker_dedicated_single_node_plan_rabbitmq_persistent_disk_type": {
           "value": $tile_rabbit_odb_plan_1_persistent_disk_type
@@ -249,7 +249,7 @@ om \
     -p $OPS_MGR_PWD  \
     -k configure-product \
     -n $PRODUCT_NAME \
-    -p "$prod_properties" 
+    -p "$prod_properties"
 
 
 # Set Errands to on Demand for 1.10
@@ -297,7 +297,7 @@ for job_guid in $(cat /tmp/jobs_list.log | jq '.guid' | tr -d '"')
 do
   job_name=$(cat /tmp/jobs_list.log | grep -B1 $job_guid | grep name | awk -F '"' '{print $4}')
   job_name_upper=$(echo ${job_name^^} | sed -e 's/-/_/')
-  
+
   # Check for security group defined for the given job from Env
   # Expecting only one security group env variable per job (can have a comma separated list)
   SECURITY_GROUP=$(env | grep "TILE_RABBIT_${job_name_upper}_SECURITY_GROUP" | awk -F '=' '{print $2}')
@@ -307,18 +307,18 @@ do
     echo "$job_name requires Loadbalancer or security group..."
 
     # Check if User has specified their own security group
-    # Club that with an auto-security group based on product guid by Bosh 
+    # Club that with an auto-security group based on product guid by Bosh
     # for grouping all vms with the same security group
     if [ "$SECURITY_GROUP" != "" ]; then
       SECURITY_GROUP="${SECURITY_GROUP},${PRODUCT_GUID}"
     else
       SECURITY_GROUP=${PRODUCT_GUID}
-    fi  
+    fi
 
     # The associative array comes from sourcing the /tmp/jobs_lbr_map.out file
     # filled earlier by nsx-edge-gen list command
     # Sample associative array content:
-    # ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS" 
+    # ERT_TILE_JOBS_LBR_MAP=( ["mysql_proxy"]="$ERT_MYSQL_LBR_DETAILS" ["tcp_router"]="$ERT_TCPROUTER_LBR_DETAILS"
     # .. ["diego_brain"]="$SSH_LBR_DETAILS"  ["router"]="$ERT_GOROUTER_LBR_DETAILS" )
     # SSH_LBR_DETAILS=[diego_brain]="esg-sabha6:VIP-diego-brain-tcp-21:diego-brain21-Pool:2222"
     LBR_DETAILS=${RABBITMQ_TILE_JOBS_LBR_MAP[$job_name]}
@@ -354,7 +354,7 @@ do
       port=$(echo $variable | awk -F ':' '{print $4}')
       monitor_port=$(echo $variable | awk -F ':' '{print $5}')
       echo "ESG: $edge_name, LBR: $lbr_name, Pool: $pool_name, Port: $port, Monitor port: $monitor_port"
-      
+
       # Create a security group with Product Guid and job name for lbr security grp
       job_security_grp=${PRODUCT_GUID}-${job_name}
 
@@ -387,7 +387,7 @@ do
       nsx_lbr_payload_json=$(echo $nsx_lbr_payload_json \
                                 | jq --argjson new_entry "$ENTRY" \
                                 '.nsx_lbs += [$new_entry] ')
-      
+
       #index=$(expr $index + 1)
     done
 
@@ -397,7 +397,7 @@ do
 
     #echo "Job: $job_name with GUID: $job_guid and NSX_LBR_PAYLOAD : $NSX_LBR_PAYLOAD"
     echo "Job: $job_name with GUID: $job_guid has SG: $nsx_security_group_json and NSX_LBR_PAYLOAD : $nsx_lbr_payload_json"
-    
+
     #UPDATED_RESOURCE_CONFIG=$(echo "$RESOURCE_CONFIG \"nsx_security_groups\": [ $SECURITY_GROUP ], $NSX_LBR_PAYLOAD }")
     UPDATED_RESOURCE_CONFIG=$( echo $RESOURCE_CONFIG \
                               | jq  \
@@ -438,4 +438,3 @@ do
 
   fi
 done
-
