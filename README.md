@@ -1,3 +1,5 @@
+# nsx-ci-pipeline is no longer actively maintained by VMware.
+
 ## Pipeline 'Environment Pre-Reqs'
 
 - vSphere 6.x or greater functional environment
